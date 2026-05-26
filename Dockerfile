@@ -10,10 +10,10 @@ RUN npm run build
 FROM node:20-alpine AS server
 RUN apk add --no-cache python3 make g++
 WORKDIR /app
-COPY server/package*.json ./
-RUN npm ci --omit=dev
-COPY server/ ./
+COPY server/package*.json ./server/
+RUN cd server && npm ci --omit=dev
+COPY server/ ./server/
 COPY public/ ./public/
 COPY --from=admin-builder /admin/dist ./admin/dist
 EXPOSE 3000
-CMD ["node", "src/index.js"]
+CMD ["node", "server/src/index.js"]
