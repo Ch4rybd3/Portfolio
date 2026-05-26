@@ -7,14 +7,17 @@ services:
       - ./data:/app/data
       - ./uploads:/app/uploads
     expose:
-      - "3000"
+      - "${PORT:-3000}"
     depends_on: []
 
   nginx:
     image: nginx:alpine
     restart: unless-stopped
+    env_file: .env
+    environment:
+      - APP_PORT=${PORT:-3000}
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/nginx.conf:/etc/nginx/templates/default.conf.template:ro
     ports:
       - "8080:80"
     depends_on:
