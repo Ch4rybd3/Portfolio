@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin — Kanban</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="/admin/src/style.css"/>
+  <style>
+    .kanban-board {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+      align-items: flex-start;
+    }
+    .kanban-column {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--deep);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+    }
+    .col-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+    .col-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--fg-2);
+      background: none;
+      border: none;
+      color: var(--fg-2);
+      font-family: var(--font);
+      cursor: text;
+      width: 100%;
+    }
+    .col-title:focus { outline: 1px solid var(--green); border-radius: 3px; }
+    .col-count {
+      font-size: 11px;
+      color: var(--fg-4);
+      background: var(--card-3);
+      padding: 1px 7px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      margin-left: 6px;
+    }
+    .col-actions { display: flex; gap: 4px; flex-shrink: 0; margin-left: 8px; }
+    .col-actions button {
+      background: none; border: none; color: var(--fg-4);
+      cursor: pointer; padding: 3px 5px; border-radius: 4px; font-size: 12px;
+    }
+    .col-actions button:hover { background: var(--card-3); color: var(--danger); }
+
+    .col-cards { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 40px; }
+
+    .kanban-card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      cursor: grab;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .kanban-card:active { cursor: grabbing; }
+    .kanban-card:hover  { border-color: var(--line-2); }
+    .kanban-card.drag-over { border-color: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .kanban-card.dragging  { opacity: .4; }
+    .card-title {
+      font-size: 13px; font-weight: 600; color: var(--fg);
+      margin-bottom: 6px; line-height: 1.4;
+    }
+    .card-notes { font-size: 12px; color: var(--fg-4); line-height: 1.5; }
+    .card-footer { display: flex; justify-content: flex-end; gap: 4px; margin-top: 10px; }
+    .card-footer button {
+      background: none; border: none; color: var(--fg-4);
+      cursor: pointer; padding: 3px 6px; border-radius: 4px; font-size: 11px;
+    }
+    .card-footer button:hover { background: var(--card-3); color: var(--fg-2); }
+    .card-footer .del-btn:hover { color: var(--danger); }
+
+    .add-card-btn {
+      margin: 0 10px 10px;
+      width: calc(100% - 20px);
+      padding: 8px;
+      background: none;
+      border: 1px dashed var(--line-2);
+      border-radius: var(--radius);
+      color: var(--fg-4);
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color .15s, color .15s;
+    }
+    .add-card-btn:hover { border-color: var(--green); color: var(--green); }
+
+    .add-col-btn {
+      width: 280px; flex-shrink: 0;
+      padding: 14px;
+      background: none;
+      border: 1px dashed var(--line-2);
+      border-radius: var(--radius);
+      color: var(--fg-4);
+      font-family: var(--font);
+      font-size: 13px;
+      cursor: pointer;
+      align-self: flex-start;
+      transition: border-color .15s, color .15s;
+    }
+    .add-col-btn:hover { border-color: var(--green); color: var(--green); }
+
+    /* Drop zone between cards */
+    .drop-zone {
+      height: 4px;
+      border-radius: 2px;
+      transition: height .1s, background .1s;
+    }
+    .drop-zone.over { height: 32px; background: rgba(159,239,0,.1); border: 1px dashed var(--green); border-radius: var(--radius); }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">Ch4rybd3 / Admin</div>
+      <nav>
+        <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
+        <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Nouvel article</a>
+        <a href="/admin/kanban" class="active"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
+      </nav>
+      <div class="bottom">
+        <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
+          <i class="fa fa-right-from-bracket"></i> Déconnexion
+        </button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <h1>Planification</h1>
+      </div>
+      <div class="content">
+        <div class="kanban-board" id="kanbanBoard">
+          <div style="color:var(--fg-4);padding:20px"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal carte -->
+  <div class="modal-backdrop" id="cardModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Nouvelle carte</h3>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Titre</label>
+        <input type="text" id="cardTitle" placeholder="Ex: Article sur Wireshark…"/>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="cardNotes" rows="5" placeholder="Idées, ressources, TODO…"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
+        <button class="btn btn-ghost" id="modalCancel">Annuler</button>
+        <button class="btn btn-primary" id="modalSave">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/admin/src/kanban.js"></script>
+</body>
+</html>

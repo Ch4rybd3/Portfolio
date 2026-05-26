@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Article — Ch4rybd3</title>
+  <meta name="viewport" content="width=1440"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+  <link rel="stylesheet" href="/colors_and_type.css"/>
+  <link rel="stylesheet" href="/marketing.css"/>
+  <style>
+    body { background: var(--htb-space); }
+
+    .article-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 24px 80px; border-bottom: 1px solid var(--htb-line);
+    }
+    .article-nav a { display: inline-flex; align-items: center; gap: 8px; color: var(--htb-fg-3); text-decoration: none; font-size: 13px; }
+    .article-nav a:hover { color: var(--htb-green); }
+    .article-nav .date { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4); }
+
+    .article-wrap { max-width: 760px; margin: 0 auto; padding: 64px 24px 100px; }
+
+    .article-cover { width: 100%; border-radius: 10px; margin-bottom: 40px; display: none; }
+
+    .article-title {
+      font-family: var(--font-display); font-size: 42px; font-weight: 800;
+      color: var(--htb-fg); line-height: 1.1; margin-bottom: 16px;
+    }
+    .article-excerpt { font-size: 18px; color: var(--htb-fg-3); margin-bottom: 40px; line-height: 1.6; }
+    .article-meta { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4); margin-bottom: 48px; }
+    .divider { border: none; border-top: 1px solid var(--htb-line); margin: 0 0 48px; }
+
+    /* Contenu TipTap */
+    .article-content { font-size: 16px; line-height: 1.75; color: var(--htb-fg-2); }
+    .article-content h1 { font-size: 30px; font-weight: 800; color: var(--htb-fg); margin: 40px 0 16px; }
+    .article-content h2 { font-size: 24px; font-weight: 700; color: var(--htb-fg); margin: 32px 0 12px; }
+    .article-content h3 { font-size: 20px; font-weight: 600; color: var(--htb-fg); margin: 24px 0 10px; }
+    .article-content p  { margin-bottom: 16px; }
+    .article-content ul, .article-content ol { padding-left: 28px; margin-bottom: 16px; }
+    .article-content li { margin-bottom: 6px; }
+    .article-content blockquote {
+      border-left: 3px solid var(--htb-green); padding-left: 20px;
+      margin: 24px 0; color: var(--htb-fg-3); font-style: italic;
+    }
+    .article-content code {
+      background: var(--htb-card-3); padding: 2px 7px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 13px; color: var(--htb-info);
+    }
+    .article-content pre {
+      background: #0d1117; border-radius: 8px; padding: 20px 24px;
+      margin: 24px 0; overflow-x: auto; border: 1px solid var(--htb-line);
+    }
+    .article-content pre code { background: none; padding: 0; color: inherit; font-size: 14px; }
+    .article-content a { color: var(--htb-info); }
+    .article-content img { max-width: 100%; border-radius: 8px; margin: 24px 0; display: block; }
+    .article-content hr { border: none; border-top: 1px solid var(--htb-line); margin: 32px 0; }
+    .article-content table { border-collapse: collapse; width: 100%; margin: 24px 0; font-size: 14px; }
+    .article-content td, .article-content th { border: 1px solid var(--htb-line-2); padding: 10px 14px; }
+    .article-content th { background: var(--htb-card-3); font-weight: 600; color: var(--htb-fg); }
+
+    .not-found { text-align: center; padding: 100px 20px; color: var(--htb-fg-4); }
+    .not-found i { font-size: 48px; display: block; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <nav class="article-nav">
+    <a href="/blog"><i class="fa fa-arrow-left"></i> Blog</a>
+    <span class="date" id="articleDate"></span>
+  </nav>
+
+  <div class="article-wrap" id="articleWrap">
+    <div style="text-align:center;padding:80px;color:var(--htb-fg-4)"><i class="fa fa-spinner fa-spin" style="font-size:32px"></i></div>
+  </div>
+
+  <script>
+    const slug = location.pathname.split('/').pop()
+
+    fetch(`/api/articles/public/${slug}`)
+      .then(r => { if (!r.ok) throw r.status; return r.json() })
+      .then(article => {
+        document.title = `${article.title} — Ch4rybd3`
+
+        document.getElementById('articleDate').textContent = fmtDate(article.published_at)
+
+        document.getElementById('articleWrap').innerHTML = `
+          ${article.cover_image ? `<img class="article-cover" src="${article.cover_image}" alt="" id="cover"/>` : ''}
+          <h1 class="article-title">${esc(article.title)}</h1>
+          ${article.excerpt ? `<p class="article-excerpt">${esc(article.excerpt)}</p>` : ''}
+          <div class="article-meta">${fmtDate(article.published_at)}</div>
+          <hr class="divider"/>
+          <div class="article-content" id="articleContent">${article.content}</div>
+        `
+
+        if (article.cover_image) document.getElementById('cover').style.display = 'block'
+
+        // Highlight.js pour les blocs de code
+        document.querySelectorAll('pre code').forEach(block => {
+          if (window.hljs) hljs.highlightElement(block)
+        })
+      })
+      .catch(status => {
+        document.getElementById('articleWrap').innerHTML = `
+          <div class="not-found">
+            <i class="fa fa-file-circle-xmark"></i>
+            <p>${status === 404 ? 'Article introuvable.' : 'Erreur de chargement.'}</p>
+            <a href="/blog" style="color:var(--htb-green);font-size:14px;">← Retour au blog</a>
+          </div>`
+      })
+
+    function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '' }
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</body>
+</html>
