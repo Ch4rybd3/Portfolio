@@ -8,6 +8,7 @@ RUN npm run build
 
 # Stage 2 — Serveur de production
 FROM node:20-alpine AS server
+RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY server/package*.json ./
 RUN npm ci --omit=dev
