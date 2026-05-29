@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin — Éditeur</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
+  <link rel="stylesheet" href="/admin/src/style.css"/>
+  <style>
+    .editor-layout { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
+    .editor-wrap { display: flex; flex-direction: column; gap: 16px; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 4px;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 8px 10px;
+      position: sticky; top: 0; z-index: 10;
+    }
+    .toolbar button {
+      background: none; border: none; color: var(--fg-3);
+      padding: 5px 7px; border-radius: 4px; cursor: pointer;
+      font-size: 13px; transition: background .1s, color .1s;
+      font-family: var(--mono);
+    }
+    .toolbar button:hover  { background: var(--card-3); color: var(--fg); }
+    .toolbar button.active { background: rgba(159,239,0,.12); color: var(--green); }
+    .toolbar .sep { width: 1px; background: var(--line-2); margin: 2px 4px; align-self: stretch; }
+
+    /* TipTap editor area */
+    #editor {
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 24px 28px;
+      min-height: 500px; outline: none;
+      font-size: 15px; line-height: 1.7;
+    }
+    #editor:focus-within { border-color: var(--green); }
+
+    .ProseMirror { outline: none; }
+    .ProseMirror h1 { font-size: 28px; font-weight: 800; color: var(--fg); margin: 24px 0 12px; }
+    .ProseMirror h2 { font-size: 22px; font-weight: 700; color: var(--fg); margin: 20px 0 10px; }
+    .ProseMirror h3 { font-size: 18px; font-weight: 600; color: var(--fg); margin: 16px 0 8px; }
+    .ProseMirror p  { margin-bottom: 12px; color: var(--fg-2); }
+    .ProseMirror ul, .ProseMirror ol { padding-left: 24px; margin-bottom: 12px; color: var(--fg-2); }
+    .ProseMirror li { margin-bottom: 4px; }
+    .ProseMirror blockquote {
+      border-left: 3px solid var(--green); padding-left: 16px;
+      margin: 16px 0; color: var(--fg-3); font-style: italic;
+    }
+    .ProseMirror code {
+      background: var(--card-3); padding: 2px 6px; border-radius: 4px;
+      font-family: var(--mono); font-size: 13px; color: var(--info);
+    }
+    .ProseMirror pre {
+      background: #0d1117; border-radius: var(--radius); padding: 16px 20px;
+      margin: 16px 0; overflow-x: auto;
+    }
+    .ProseMirror pre code { background: none; padding: 0; color: inherit; }
+    .ProseMirror a { color: var(--info); text-decoration: underline; }
+    .ProseMirror img {
+      max-width: 100%; border-radius: var(--radius); display: block;
+      margin: 16px auto; cursor: pointer;
+    }
+    .ProseMirror img.ProseMirror-selectednode { outline: 2px solid var(--green); }
+    .ProseMirror hr { border: none; border-top: 1px solid var(--line-2); margin: 24px 0; }
+    .ProseMirror table { border-collapse: collapse; width: 100%; margin: 16px 0; }
+    .ProseMirror td, .ProseMirror th {
+      border: 1px solid var(--line-2); padding: 8px 12px; vertical-align: top;
+    }
+    .ProseMirror th { background: var(--card-3); font-weight: 600; }
+    .ProseMirror .selectedCell { background: rgba(159,239,0,.08); }
+    .ProseMirror p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder); color: var(--fg-4); pointer-events: none; float: left; height: 0;
+    }
+
+    /* Sidebar */
+    .editor-sidebar { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 0; }
+    .sidebar-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+    .sidebar-card h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--fg-3); margin-bottom: 14px; }
+
+    .status-toggle { display: flex; gap: 8px; }
+    .status-btn {
+      flex: 1; padding: 8px; border-radius: var(--radius); border: 1px solid var(--line-2);
+      font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer;
+      background: none; color: var(--fg-3); transition: all .15s; text-align: center;
+    }
+    .status-btn.active-draft     { background: rgba(163,179,188,.1); color: var(--fg-2); border-color: var(--line-2); }
+    .status-btn.active-published { background: rgba(159,239,0,.12); color: var(--green); border-color: rgba(159,239,0,.3); }
+
+    .cover-preview { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; margin-bottom: 8px; display: none; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">Ch4rybd3 / Admin</div>
+      <nav>
+        <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
+        <a href="/admin/editor" class="active"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+        <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
+      </nav>
+      <div class="bottom">
+        <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
+          <i class="fa fa-right-from-bracket"></i> Déconnexion
+        </button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <h1 id="pageTitle">Nouvel article</h1>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost" id="saveBtn"><i class="fa fa-floppy-disk"></i> Enregistrer</button>
+          <a href="/admin" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Retour</a>
+        </div>
+      </div>
+      <div class="content">
+        <div class="editor-layout">
+          <div class="editor-wrap">
+            <div class="form-group" style="margin:0">
+              <input id="titleInput" type="text" placeholder="Titre de l'article…" style="font-size:20px;font-weight:700;padding:12px 14px;"/>
+            </div>
+            <div class="toolbar" id="toolbar">
+              <button data-cmd="bold" title="Gras"><b>B</b></button>
+              <button data-cmd="italic" title="Italique"><i>I</i></button>
+              <button data-cmd="underline" title="Souligné"><u>U</u></button>
+              <button data-cmd="strike" title="Barré"><s>S</s></button>
+              <div class="sep"></div>
+              <button data-cmd="h1" title="H1">H1</button>
+              <button data-cmd="h2" title="H2">H2</button>
+              <button data-cmd="h3" title="H3">H3</button>
+              <div class="sep"></div>
+              <button data-cmd="bulletList" title="Liste à puces"><i class="fa fa-list-ul"></i></button>
+              <button data-cmd="orderedList" title="Liste numérotée"><i class="fa fa-list-ol"></i></button>
+              <div class="sep"></div>
+              <button data-cmd="blockquote" title="Citation"><i class="fa fa-quote-left"></i></button>
+              <button data-cmd="codeBlock" title="Bloc de code"><i class="fa fa-code"></i></button>
+              <button data-cmd="code" title="Code inline">`</button>
+              <div class="sep"></div>
+              <button data-cmd="link" title="Lien"><i class="fa fa-link"></i></button>
+              <button data-cmd="image" title="Insérer image"><i class="fa fa-image"></i></button>
+              <button data-cmd="table" title="Tableau"><i class="fa fa-table"></i></button>
+              <button data-cmd="hr" title="Séparateur">—</button>
+              <div class="sep"></div>
+              <button data-cmd="undo" title="Annuler"><i class="fa fa-rotate-left"></i></button>
+              <button data-cmd="redo" title="Rétablir"><i class="fa fa-rotate-right"></i></button>
+            </div>
+            <div id="editor"></div>
+            <input type="file" id="imageFileInput" accept="image/*" style="display:none"/>
+          </div>
+          <div class="editor-sidebar">
+            <div class="sidebar-card">
+              <h3>Statut</h3>
+              <div class="status-toggle">
+                <button class="status-btn active-draft" id="btnDraft">Brouillon</button>
+                <button class="status-btn" id="btnPublish">Publier</button>
+              </div>
+            </div>
+            <div class="sidebar-card">
+              <h3>Extrait</h3>
+              <textarea id="excerptInput" rows="4" placeholder="Résumé affiché dans la liste des articles…"></textarea>
+            </div>
+            <div class="sidebar-card">
+              <h3>Image de couverture</h3>
+              <img id="coverPreview" class="cover-preview"/>
+              <input type="file" id="coverFileInput" accept="image/*" style="display:none"/>
+              <button class="btn btn-ghost btn-sm" id="coverPickBtn" style="width:100%;justify-content:center;">
+                <i class="fa fa-upload"></i> Choisir une image
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/admin/src/editor.js"></script>
+</body>
+</html>

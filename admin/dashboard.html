@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin — Articles</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="/admin/src/style.css"/>
+  <style>
+    .articles-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+    .articles-grid { display: flex; flex-direction: column; gap: 10px; }
+    .article-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      align-items: center;
+      gap: 16px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      transition: border-color .15s;
+    }
+    .article-row:hover { border-color: var(--line-2); }
+    .article-title { font-weight: 600; font-size: 14px; }
+    .article-meta { font-size: 12px; color: var(--fg-4); margin-top: 3px; }
+    .article-actions { display: flex; gap: 6px; }
+    .empty-state { text-align: center; padding: 64px 20px; color: var(--fg-4); }
+    .empty-state i { font-size: 40px; margin-bottom: 12px; display: block; }
+    .filter-tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+    .filter-tab {
+      padding: 6px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--line-2); background: none; color: var(--fg-3);
+      transition: all .15s;
+    }
+    .filter-tab.active { background: var(--card-3); color: var(--fg); border-color: var(--line-2); }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="logo">Ch4rybd3 / Admin</div>
+      <nav>
+        <a href="/admin" class="active"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
+        <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Nouvel article</a>
+        <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
+        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Blog public</a>
+      </nav>
+      <div class="bottom">
+        <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
+          <i class="fa fa-right-from-bracket"></i> Déconnexion
+        </button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <h1>Articles</h1>
+        <a href="/admin/editor" class="btn btn-primary"><i class="fa fa-plus"></i> Nouvel article</a>
+      </div>
+      <div class="content">
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">Tous</button>
+          <button class="filter-tab" data-filter="published">Publiés</button>
+          <button class="filter-tab" data-filter="draft">Brouillons</button>
+        </div>
+        <div class="articles-grid" id="articlesList">
+          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i>Chargement…</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/admin/src/dashboard.js"></script>
+</body>
+</html>

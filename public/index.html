@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Ch4rybd3 — DFIR / SOC / CTI Analyst</title>
+  <meta name="viewport" content="width=1440"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="marketing.css"/>
+  <style>
+    :root {
+      --p-cyan: #5CB3FF;
+      --p-cyan-glow: rgba(92, 179, 255, 0.16);
+    }
+    body { background: #0A1018; }
+
+    /* ── Left rail ── */
+    .rail {
+      position: fixed; top: 64px; bottom: 0; left: 0; width: 56px;
+      border-right: 1px solid var(--htb-line);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 18px 0 18px;
+      font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-4);
+      letter-spacing: 0.1em;
+      background: rgba(11, 18, 31, 0.55);
+      z-index: 30;
+    }
+    .rail .vert { writing-mode: vertical-rl; transform: rotate(180deg); margin: auto 0; color: var(--htb-fg-3); letter-spacing: 0.35em; }
+    .rail .nums { display: flex; flex-direction: column; gap: 6px; }
+    .rail .nums span { display: block; }
+    .rail .sock { display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--htb-fg-3); }
+    .rail .sock a { color: var(--htb-fg-3); cursor: pointer; }
+    .rail .sock a:hover { color: var(--htb-green); }
+
+    .mk-nav { padding-left: 80px; }
+    body > section, body > footer, body > div.logo-strip, body > div.stats-band { padding-left: max(80px, 56px); }
+    body > section.hero { padding-left: 96px; }
+
+    /* ── Hero ── */
+    .hero h1 { font-size: 80px; }
+    .ident { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .ident .av {
+      width: 56px; height: 64px;
+      clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--htb-green); color: var(--htb-on-green);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-weight: 800; font-size: 22px;
+    }
+    .ident .who { display: flex; flex-direction: column; gap: 2px; }
+    .ident .nm { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--htb-fg); }
+    .ident .rl { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-3); letter-spacing: 0.08em; }
+    .ident .rl .pulse { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--htb-green); box-shadow: 0 0 6px var(--htb-green); margin-right: 8px; vertical-align: middle; animation: pulse 1.8s ease-in-out infinite; }
+
+    /* ── Now strip ── */
+    .now-strip { padding: 28px 56px 28px max(80px, 56px); border-top: 1px solid var(--htb-line); border-bottom: 1px solid var(--htb-line); background: var(--htb-deep); }
+    .now-wrap { max-width: 1280px; margin: 0 auto; display: flex; align-items: center; gap: 32px; flex-wrap: wrap; }
+    .now-tag { font-family: var(--font-mono); font-size: 10px; color: var(--htb-green); letter-spacing: 0.16em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+    .now-tag .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--htb-green); box-shadow: 0 0 6px var(--htb-green); animation: pulse 1.8s ease-in-out infinite; }
+    .now-item { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--htb-fg-2); }
+    .now-item i { color: var(--p-cyan); font-size: 11px; }
+    .now-item b { color: var(--htb-fg); font-weight: 500; }
+    .sep { color: var(--htb-fg-4); }
+
+    /* ── Expertise cards ── */
+    .exp { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .exp .card {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      padding: 28px; display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden;
+      transition: all var(--dur-med) var(--ease-out);
+    }
+    .exp .card:hover { border-color: rgba(159,239,0,0.35); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(159,239,0,0.15); }
+    .exp .num { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.16em; }
+    .exp h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--htb-fg); letter-spacing: -0.015em; margin: 0; }
+    .exp h3 .ac { color: var(--htb-green); }
+    .exp p { color: var(--htb-fg-3); font-size: 14px; line-height: 1.55; }
+    .exp .stack { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; padding-top: 14px; border-top: 1px solid var(--htb-line); }
+    .exp .stack span { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); padding: 3px 8px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill); letter-spacing: 0.04em; }
+    .exp .stack span.hl { color: var(--p-cyan); border-color: rgba(92,179,255,0.4); background: rgba(92,179,255,0.06); }
+
+    /* ── Featured project ── */
+    .projects-feature {
+      display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px;
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      overflow: hidden; margin-bottom: 18px;
+    }
+    .pf-art {
+      position: relative; min-height: 380px;
+      background-color: #0a0f18;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='46' viewBox='0 0 40 46'><polygon points='20,1.5 38,12 38,34 20,44.5 2,34 2,12' fill='none' stroke='%231F2A3D' stroke-width='1'/></svg>");
+      background-size: 40px 46px;
+      display: flex; align-items: center; justify-content: center;
+      border-right: 1px solid var(--htb-line);
+    }
+    .pf-art img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: top center;
+    }
+    .pf-body { padding: 36px 36px 36px 28px; display: flex; flex-direction: column; gap: 14px; }
+    .pf-eyebrow { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.16em; text-transform: uppercase; }
+    .pf-title { font-family: var(--font-display); font-weight: 800; font-size: 36px; line-height: 1; letter-spacing: -0.02em; color: var(--htb-fg); margin: 0; }
+    .pf-title .ac { color: var(--htb-green); }
+    .pf-desc { font-size: 15px; line-height: 1.55; color: var(--htb-fg-2); }
+    .pf-meta { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+    .pf-meta div { display: flex; flex-direction: column; gap: 4px; }
+    .pf-meta .l { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.1em; }
+    .pf-meta .v { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--htb-fg); }
+    .pf-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+    /* ── Project grid ── */
+    .project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .pcard {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-lg);
+      padding: 22px; display: flex; flex-direction: column; gap: 12px; cursor: pointer;
+      transition: all var(--dur-fast); position: relative; overflow: hidden;
+      text-decoration: none;
+    }
+    .pcard:hover { background: var(--htb-card-2); border-color: rgba(159,239,0,0.35); }
+    .pcard-top { display: flex; align-items: center; justify-content: space-between; }
+    .pcard-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--htb-green); }
+    .pcard-num { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-4); letter-spacing: 0.1em; }
+    .pcard h4 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--htb-fg); margin: 0; letter-spacing: -0.01em; }
+    .pcard p { font-size: 13px; line-height: 1.5; color: var(--htb-fg-3); }
+    .pcard .stack { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+    .pcard .stack span { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.04em; }
+    .pcard .stack span::before { content: '#'; color: var(--htb-fg-4); }
+    .pcard .arrow { position: absolute; top: 22px; right: 22px; color: var(--htb-fg-4); transition: all var(--dur-fast); }
+    .pcard:hover .arrow { color: var(--htb-green); transform: translate(2px, -2px); }
+
+    /* Side projects grid — 2 cols, slightly quieter */
+    .side-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 18px; }
+    .side-eyebrow { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.16em; text-transform: uppercase; margin: 28px 0 14px; padding-top: 28px; border-top: 1px solid var(--htb-line); }
+
+    /* ── Talk card ── */
+    .talk-card {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      display: grid; grid-template-columns: auto 1fr; gap: 0; overflow: hidden;
+    }
+    .talk-stage {
+      width: 140px; min-height: 200px;
+      background: linear-gradient(160deg, rgba(159,239,0,0.08), rgba(11,18,31,0.6));
+      border-right: 1px solid var(--htb-line);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      padding: 24px 16px;
+    }
+    .talk-stage .mic { font-size: 32px; color: var(--htb-green); }
+    .talk-stage .conf { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.14em; text-transform: uppercase; text-align: center; }
+    .talk-stage .year { font-family: var(--font-display); font-weight: 800; font-size: 28px; color: var(--htb-fg); }
+    .talk-body { padding: 28px 32px; display: flex; flex-direction: column; gap: 12px; }
+    .talk-eyebrow { font-family: var(--font-mono); font-size: 10px; color: var(--htb-green); letter-spacing: 0.16em; text-transform: uppercase; }
+    .talk-title { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--htb-fg); margin: 0; line-height: 1.25; }
+    .talk-title em { color: var(--htb-green); font-style: normal; }
+    .talk-desc { font-size: 14px; line-height: 1.6; color: var(--htb-fg-3); max-width: 680px; }
+    .talk-meta { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+    .talk-meta span { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-3); display: inline-flex; align-items: center; gap: 7px; }
+    .talk-meta i { color: var(--p-cyan); }
+
+    /* ── Timeline ── */
+    .timeline { position: relative; }
+    .timeline::before { content: ''; position: absolute; left: 12px; top: 8px; bottom: 8px; width: 1px; background: var(--htb-line); }
+    .tl-row {
+      display: grid; grid-template-columns: 32px 160px 1fr auto; gap: 22px; align-items: flex-start;
+      padding: 22px 0; border-bottom: 1px solid var(--htb-line);
+    }
+    .tl-row:last-child { border-bottom: 0; }
+    .tl-dot {
+      width: 24px; height: 28px; clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+      background: var(--htb-card); display: flex; align-items: center; justify-content: center;
+      margin-top: 4px; position: relative; z-index: 1;
+    }
+    .tl-row.active .tl-dot { background: var(--htb-green); }
+    .tl-row.active .tl-dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--htb-on-green); }
+    .tl-row:not(.active) .tl-dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--htb-fg-4); }
+    .tl-date { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-3); letter-spacing: 0.08em; padding-top: 4px; }
+    .tl-date b { color: var(--htb-fg); display: block; font-weight: 500; }
+    .tl-role h4 { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--htb-fg); margin: 0; }
+    .tl-role .where { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.06em; margin-top: 4px; }
+    .tl-role ul { margin: 8px 0 0; padding-left: 16px; }
+    .tl-role ul li { font-size: 13px; color: var(--htb-fg-3); line-height: 1.6; max-width: 560px; }
+    .tl-stack { display: flex; gap: 6px; flex-wrap: wrap; max-width: 200px; justify-content: flex-end; padding-top: 4px; }
+    .tl-stack span { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); padding: 3px 8px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill); }
+
+    /* ── Skills matrix ── */
+    .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 36px; }
+    .skill-col h5 { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--htb-line); }
+    .skill-row { display: grid; grid-template-columns: 170px 1fr 36px; gap: 12px; align-items: center; padding: 8px 0; }
+    .skill-row .nm { font-family: var(--font-display); font-weight: 500; font-size: 13px; color: var(--htb-fg); }
+    .skill-row .lvl { display: flex; gap: 3px; }
+    .skill-row .lvl span { flex: 1; height: 4px; background: var(--htb-card-3); border-radius: 1px; }
+    .skill-row .lvl span.on { background: var(--htb-green); }
+    .skill-row .yr { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); text-align: right; }
+
+    /* ── Certifications ── */
+    .certs-wrap { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--htb-line); }
+    .cert-item {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--htb-card); border: 1px solid var(--htb-line-2); border-radius: var(--r-lg);
+      padding: 12px 18px;
+      transition: border-color var(--dur-fast);
+    }
+    .cert-item:hover { border-color: rgba(159,239,0,0.35); }
+    .cert-item i { color: var(--htb-green); font-size: 14px; }
+    .cert-item .cert-info { display: flex; flex-direction: column; gap: 2px; }
+    .cert-item .cert-name { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--htb-fg); }
+    .cert-item .cert-year { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.08em; }
+    .cert-item.wip { opacity: 0.55; }
+    .cert-item.wip .cert-year { color: var(--htb-warning); }
+
+    /* ── CTA ── */
+    .cta { background: linear-gradient(135deg, rgba(92,179,255,0.06), rgba(11,18,31,0.4)), var(--htb-deep); }
+    .cta-meta { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-3); letter-spacing: 0.08em; margin-top: 14px; display: flex; gap: 18px; }
+    .cta-meta i { color: var(--p-cyan); margin-right: 6px; }
+
+    .hero-term-body .v { color: var(--p-cyan); }
+  </style>
+</head>
+<body>
+
+<!-- =================== Nav =================== -->
+<nav class="mk-nav">
+  <div class="mk-logo">
+    <svg viewBox="0 0 64 72" width="26" height="30" fill="none">
+      <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#9FEF00" stroke-width="3"/>
+      <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#9FEF00" stroke-width="4" stroke-linecap="square"/>
+    </svg>
+    <b>CH4RYBD3<span style="color:var(--htb-fg-3)">.FR</span></b>
+  </div>
+  <div class="mk-nav-mid">
+    <a>Work</a>
+    <a>Expertise</a>
+    <a>Career</a>
+    <a>About</a>
+    <a href="/blog"><i class="fa-solid fa-pen-nib" style="margin-right:5px"></i>Blog</a>
+  </div>
+  <div class="mk-nav-r">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github" style="margin-right:6px"></i>GitHub</a>
+    <button class="btn btn-primary">Contact</button>
+  </div>
+</nav>
+
+<!-- =================== Left rail =================== -->
+<aside class="rail">
+  <div class="nums">
+    <span>01</span><span>02</span><span>03</span><span>04</span><span>05</span><span>06</span>
+  </div>
+  <div class="vert">// CRAFTED 2026 · LYON / FRANCE</div>
+  <div class="sock">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener" title="GitHub"><i class="fa-brands fa-github"></i></a>
+    <a href="mailto:fsalingue@protonmail.com" title="Email"><i class="fa-solid fa-at"></i></a>
+  </div>
+</aside>
+
+<!-- =================== Hero =================== -->
+<section class="hero" data-screen-label="01 Hero">
+  <div class="hero-wrap">
+    <div>
+      <div class="ident">
+        <div class="av">FS</div>
+        <div class="who">
+          <div class="nm">Ch4rybd3 / Florian Salingue</div>
+          <div class="rl"><span class="pulse"></span>DFIR · SOC · CTI · LYON, FR</div>
+        </div>
+      </div>
+      <h1>Evidence never lies.<br/>You just have to know <span class="accent">where to look.</span></h1>
+      <p class="hero-sub">DFIR, SOC and CTI analyst based in Lyon, France. I investigate incidents from first alert to final report, build open-source forensic tools, and share knowledge with the community. Currently consultant at Amaris Consulting.</p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg"><i class="fa-solid fa-paper-plane"></i> Get in Touch</button>
+        <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><button class="btn btn-secondary btn-lg"><i class="fa-brands fa-github"></i> View Projects</button></a>
+      </div>
+    </div>
+
+    <div class="hero-term" aria-hidden="true">
+      <div class="hero-term-bar">
+        <div class="dot" style="background:#FF3E3E"></div>
+        <div class="dot" style="background:#FFAF00"></div>
+        <div class="dot" style="background:#9FEF00"></div>
+        <div class="ttl">about — zsh — 88×26</div>
+      </div>
+      <div class="hero-term-body">
+        <div><span class="p">florian@ch4rybd3</span>:<span class="pa">~</span>$ <span>whoami</span></div>
+        <div class="o">florian_salingue · dfir / soc / cti analyst · lyon, fr</div>
+        <div><span class="p">florian@ch4rybd3</span>:<span class="pa">~</span>$ <span>cat skills.json | jq</span></div>
+        <div class="o">{</div>
+        <div class="o">&nbsp;&nbsp;<span class="v">"dfir"</span>: [<span class="flag">"memory forensics"</span>, <span class="flag">"disk triage"</span>, <span class="flag">"IR"</span>],</div>
+        <div class="o">&nbsp;&nbsp;<span class="v">"soc"</span>: [<span class="flag">"threat hunting"</span>, <span class="flag">"detection eng."</span>],</div>
+        <div class="o">&nbsp;&nbsp;<span class="v">"cti"</span>: [<span class="flag">"ioc analysis"</span>, <span class="flag">"att&amp;ck mapping"</span>],</div>
+        <div class="o">&nbsp;&nbsp;<span class="v">"status"</span>: <span class="ok">"employed"</span></div>
+        <div class="o">}</div>
+        <div><span class="p">florian@ch4rybd3</span>:<span class="pa">~</span>$ <span>ls tools/</span></div>
+        <div class="o"><span class="flag">kape&nbsp;&nbsp;velociraptor&nbsp;&nbsp;volatility3&nbsp;&nbsp;dfir-iris&nbsp;&nbsp;ez-tools</span></div>
+        <div><span class="p">florian@ch4rybd3</span>:<span class="pa">~</span>$ <span class="cursor"></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== Now strip =================== -->
+<div class="now-strip">
+  <div class="now-wrap">
+    <span class="now-tag"><span class="dot"></span>// NOW</span>
+    <span class="now-item"><i class="fa-solid fa-code"></i>Building <b>Remora</b> — DFIR case management platform</span>
+    <span class="sep">·</span>
+    <span class="now-item"><i class="fa-solid fa-briefcase"></i>Consulting <b>SOC / DFIR / CTI</b> at Amaris Consulting</span>
+  </div>
+</div>
+
+<!-- =================== Expertise =================== -->
+<section class="full" data-screen-label="02 Expertise">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eye">// WHAT I DO</div>
+      <h2>Three disciplines,<br/>one chain of evidence.</h2>
+      <p>From initial alert to post-incident report — I cover the full investigative cycle.</p>
+    </div>
+    <div class="exp">
+      <article class="card">
+        <div class="num">// 01</div>
+        <h3>Digital Forensics &amp; <span class="ac">Incident Response</span></h3>
+        <p>Memory acquisition and analysis, disk triage, artifact collection and timeline reconstruction. From live acquisition through volatile memory to the final incident report, preserving chain of custody at every step.</p>
+        <div class="stack">
+          <span class="hl">Volatility3</span><span>KAPE</span><span>Velociraptor</span><span>DFIR-IRIS</span><span>EZ Tools</span><span>FTK Imager</span><span>avml</span><span>UAC</span>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">// 02</div>
+        <h3>Security <span class="ac">Operations</span></h3>
+        <p>Alert triage, threat hunting, detection rule authoring and SIEM fine-tuning. Turning raw events into actionable intelligence. Also trained SOC teams in DFIR techniques and built hands-on CTF labs and workshops.</p>
+        <div class="stack">
+          <span class="hl">SentinelOne</span><span>HarfangLab</span><span>ELK Stack</span><span>MS Sentinel</span><span>Varonis</span><span>Zscaler</span><span>Wallix</span>
+        </div>
+      </article>
+      <article class="card">
+        <div class="num">// 03</div>
+        <h3>Cyber Threat <span class="ac">Intelligence</span></h3>
+        <p>IOC collection and pivoting, threat actor tracking and profiling, MITRE ATT&amp;CK mapping, and intelligence reporting. Also conducted OSINT missions and attack surface mapping for multiple clients.</p>
+        <div class="stack">
+          <span class="hl">MITRE ATT&amp;CK</span><span>XMCO</span><span>Cybelangel</span><span>OSINT</span><span>IOC Analysis</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- =================== Projects =================== -->
+<section class="full" style="padding-top:0" data-screen-label="03 Projects">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eye">// OPEN SOURCE · IN PROGRESS</div>
+      <h2>Tools I'm <span style="color:var(--htb-green)">building.</span></h2>
+      <p>All projects are in active development. Watch the repos for updates.</p>
+    </div>
+
+    <!-- Featured: Remora -->
+    <article class="projects-feature">
+      <div class="pf-art">
+        <img src="assets/remora-preview.png" alt="Remora — DFIR Case Management Platform"/>
+      </div>
+      <div class="pf-body">
+        <span class="pf-eyebrow">// FEATURED PROJECT · DFIR</span>
+        <h3 class="pf-title">Re<span class="ac">mora</span></h3>
+        <p class="pf-desc">A DFIR case management platform with deep artifact integration. Manage cases, take structured notes, follow playbooks, process artifacts, maintain chain of custody, and generate reports automatically — all in one place.</p>
+        <div class="pf-meta">
+          <div><span class="l">TYPE</span><span class="v">OSS · DFIR Platform</span></div>
+          <div><span class="l">STACK</span><span class="v"><!-- TODO: stack -->[TBD]</span></div>
+          <div><span class="l">STATUS</span><span class="v">In progress</span></div>
+        </div>
+        <div class="pf-actions">
+          <a href="https://github.com/Ch4rybd3/Remora" target="_blank" rel="noopener"><button class="btn btn-primary"><i class="fa-brands fa-github"></i> View on GitHub</button></a>
+        </div>
+      </div>
+    </article>
+
+    <!-- Grid: Marianas, Kaluga, Abzu -->
+    <div class="project-grid">
+      <a class="pcard" href="https://github.com/Ch4rybd3/Marianas" target="_blank" rel="noopener">
+        <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        <div class="pcard-top"><span class="pcard-tag">// MALDEV</span><span class="pcard-num">02</span></div>
+        <h4>Marianas</h4>
+        <p>Malware development repository for education, CTFs, crisis simulations and workshops. Ransomwares, C2 frameworks, payload generators and more — all for controlled, ethical use.</p>
+        <div class="stack"><span>maldev</span><span>c2</span><span>ransomware</span><span>ctf</span><span>education</span></div>
+      </a>
+      <a class="pcard" href="https://github.com/Ch4rybd3/Kaluga" target="_blank" rel="noopener">
+        <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        <div class="pcard-top"><span class="pcard-tag">// DFIR TOOLING</span><span class="pcard-num">03</span></div>
+        <h4>Kaluga</h4>
+        <p>A DFIR-tailored container environment inspired by Exegol. Spins up isolated containers on the fly for each incident response, keeping your ecosystem clean and reproducible across engagements.</p>
+        <div class="stack"><span>containers</span><span>dfir</span><span>isolation</span><span>ir-workflow</span></div>
+      </a>
+      <a class="pcard" href="https://github.com/Ch4rybd3/Abzu" target="_blank" rel="noopener">
+        <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        <div class="pcard-top"><span class="pcard-tag">// KNOWLEDGE BASE</span><span class="pcard-num">04</span></div>
+        <h4>Abzu</h4>
+        <p>A public Obsidian vault documenting everything I learn across my cybersecurity journey. Clone the repo, point Obsidian to it, and explore. Contributions and feedback welcome.</p>
+        <div class="stack"><span>obsidian</span><span>knowledge</span><span>dfir</span><span>oss</span></div>
+      </a>
+    </div>
+
+    <!-- Side / hobby projects -->
+    <p class="side-eyebrow">// SIDE PROJECTS &amp; EXPERIMENTS</p>
+    <div class="side-grid">
+      <a class="pcard" href="https://github.com/Ch4rybd3/Retroarch-GitHub_Sync" target="_blank" rel="noopener">
+        <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        <div class="pcard-top"><span class="pcard-tag">// PERSONAL</span></div>
+        <h4>Retroarch-GitHub_Sync</h4>
+        <p>A GitHub-synced save-state system for retro gaming across multiple devices — no Syncthing, no cloud subscriptions. Mainly built for Pokémon runs across machines.</p>
+        <div class="stack"><span>github</span><span>retroarch</span><span>sync</span></div>
+      </a>
+      <a class="pcard" href="https://github.com/Ch4rybd3/PokeMMO-NoMoreLostShinies" target="_blank" rel="noopener">
+        <i class="fa-solid fa-arrow-up-right-from-square arrow"></i>
+        <div class="pcard-top"><span class="pcard-tag">// PERSONAL</span></div>
+        <h4>PokeMMO-NoMoreLostShinies</h4>
+        <p>A Python companion for shiny hunting in PokeMMO. Because rare shinies shouldn't die to recoil damage while you look away — this tool watches so you don't have to.</p>
+        <div class="stack"><span>python</span><span>pokemmo</span><span>automation</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- =================== Talk =================== -->
+<section class="full" style="padding-top:0" data-screen-label="04 Talk">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eye">// PUBLIC TALKS</div>
+      <h2>On stage.</h2>
+    </div>
+    <div class="talk-card">
+      <div class="talk-stage">
+        <i class="fa-solid fa-microphone talk-mic" style="font-size:32px;color:var(--htb-green)"></i>
+        <div class="conf">WAQ<br/>Québec</div>
+        <div class="year">2023</div>
+      </div>
+      <div class="talk-body">
+        <span class="talk-eyebrow">// CONFERENCE TALK · WEB À QUÉBEC 2023</span>
+        <h3 class="talk-title">"Phishing and Social Engineering —<br/><em>Ever been in a hacker's mind?"</em></h3>
+        <p class="talk-desc">
+          A walk through the mind of an attacker — from target selection to payload delivery. Rather than a classic awareness lecture, I placed the audience directly inside the attacker's perspective, using reverse psychology to make the threat viscerally real. The talk covered phishing mechanics, social engineering techniques, and the human factors that make them work. Strong audience feedback and great discussions followed.
+        </p>
+        <div class="talk-meta">
+          <span><i class="fa-solid fa-location-dot"></i>Québec City, Canada</span>
+          <span><i class="fa-solid fa-calendar"></i>WAQ 2023</span>
+          <span><i class="fa-solid fa-users"></i>Phishing · Social Engineering · Awareness</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== Stats =================== -->
+<div class="stats-band">
+  <div class="stats-grid">
+    <div><div class="stat-v">6+</div><div class="stat-l">Years in IT &amp; Security</div></div>
+    <div><div class="stat-v">4</div><div class="stat-l">OSS Projects in Dev</div></div>
+    <div><div class="stat-v">2</div><div class="stat-l">Countries Worked In</div></div>
+    <div><div class="stat-v">3</div><div class="stat-l">Certifications</div></div>
+  </div>
+</div>
+
+<!-- =================== Career =================== -->
+<section class="full" data-screen-label="05 Career">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eye">// CAREER · 2018 → NOW</div>
+      <h2>The path so far.</h2>
+    </div>
+    <div class="timeline">
+
+      <!-- Amaris -->
+      <div class="tl-row active">
+        <div class="tl-dot"></div>
+        <div class="tl-date"><b>2025 — now</b>Lyon, FR</div>
+        <div class="tl-role">
+          <h4>SOC / DFIR / CTI Consultant</h4>
+          <div class="where">AMARIS CONSULTING</div>
+          <ul>
+            <li><b>SOC Operations (RUN):</b> Threat hunting and alert triage — SentinelOne, Varonis, Microsoft Defender for Office, XMCO (CTI). Maintenance of Wallix bastions, Zscaler proxy and ELK data lake.</li>
+            <li><b>SOC Engineering (BUILD):</b> DFIR-IRIS deployment, DFIR tooling and process setup, SentinelOne workflow automation via Python &amp; API, detection rule authoring, out-of-band forensic workstation setup.</li>
+            <li><b>DFIR Training:</b> Technical DFIR training for the SOC team, workshops for international teams, CTF &amp; challenge design, malware development for simulations, playbook and knowledge base documentation.</li>
+          </ul>
+        </div>
+        <div class="tl-stack"><span>sentinelone</span><span>dfir-iris</span><span>volatility3</span><span>elk</span><span>python</span></div>
+      </div>
+
+      <!-- Formind -->
+      <div class="tl-row">
+        <div class="tl-dot"></div>
+        <div class="tl-date"><b>2023 — 2024</b>Montréal, CA<br/><span style="opacity:0.6">1 year</span></div>
+        <div class="tl-role">
+          <h4>Cybersecurity Consultant</h4>
+          <div class="where">FORMIND CANADA · MSSP</div>
+          <ul>
+            <li>SOC operations on Canadian timezone covering Azure, AWS, HarfangLab, ELK, ESET, Carbon Black.</li>
+            <li>Detection rule creation, fine-tuning and whitelisting. SOC as Code GitHub issue handling.</li>
+            <li>OSINT missions and attack surface mapping. Incident response. Service Delivery Management for multiple clients.</li>
+            <li>Threat actor tracking and pentesting + reporting. Built a data breach detection branch to proactively notify unreported victims.</li>
+          </ul>
+        </div>
+        <div class="tl-stack"><span>harfanglab</span><span>azure</span><span>aws</span><span>elk</span><span>carbon black</span></div>
+      </div>
+
+      <!-- Zenika -->
+      <div class="tl-row">
+        <div class="tl-dot"></div>
+        <div class="tl-date"><b>2023</b>Montréal, CA<br/><span style="opacity:0.6">6 months</span></div>
+        <div class="tl-role">
+          <h4>Cybersecurity Consultant</h4>
+          <div class="where">ZENIKA CANADA</div>
+          <ul>
+            <li>Internal offer development and pre-sales. Active participation in cybersecurity and GenAI communities.</li>
+            <li>Achieved CompTIA Security+ and CBBH certifications. GCP cloud training.</li>
+            <li>Prepared and delivered WAQ 2023 talk on phishing and social engineering.</li>
+            <li>Self-directed study of physical pentest, red team exercises and common web attack patterns (XSS, SQLi, Burp Suite, Metasploit, Aircrack-ng).</li>
+          </ul>
+        </div>
+        <div class="tl-stack"><span>sec+</span><span>cbbh</span><span>gcp</span><span>pentest</span></div>
+      </div>
+
+      <!-- Cyberprotect -->
+      <div class="tl-row">
+        <div class="tl-dot"></div>
+        <div class="tl-date"><b>2020 — 2022</b>Bron, FR<br/><span style="opacity:0.6">2 years</span></div>
+        <div class="tl-role">
+          <h4>Cybersecurity / SOC Analyst</h4>
+          <div class="where">CYBERPROTECT</div>
+          <ul>
+            <li>SOC analysis for diverse client environments via SIEM and EDR. Firewall, IDS and security device management.</li>
+            <li>Process documentation and knowledge base development. Key account analyst for several major clients.</li>
+            <li>Vulnerability scanning, penetration test participation, dynamic malware analysis, L1/L2 support.</li>
+            <li>ITIL4 Foundation certification. NSE4 training (Fortinet).</li>
+          </ul>
+        </div>
+        <div class="tl-stack"><span>fortinet</span><span>palo alto</span><span>elk</span><span>mcafee</span></div>
+      </div>
+
+      <!-- Byblos -->
+      <div class="tl-row">
+        <div class="tl-dot"></div>
+        <div class="tl-date"><b>2019 — 2020</b>Lissieu, FR<br/><span style="opacity:0.6">Work-study</span></div>
+        <div class="tl-role">
+          <h4>Project Lead — Cybersecurity</h4>
+          <div class="where">BYBLOS GROUP</div>
+          <ul>
+            <li>Built a USB-based compliance audit tool enabling security guards to assess workstations during physical rounds.</li>
+            <li>PowerShell scripting for data collection and compliance assessment. Based on ISO 27002 and 42 ANSSI best practices.</li>
+          </ul>
+        </div>
+        <div class="tl-stack"><span>powershell</span><span>iso27002</span><span>python</span></div>
+      </div>
+
+      <!-- Gibaud -->
+      <div class="tl-row">
+        <div class="tl-dot"></div>
+        <div class="tl-date"><b>2018 — 2019</b>Saint-Étienne, FR<br/><span style="opacity:0.6">Work-study</span></div>
+        <div class="tl-role">
+          <h4>SysAdmin</h4>
+          <div class="where">GIBAUD — ÖSSUR GROUP</div>
+          <ul>
+            <li>L1 helpdesk, Active Directory management (accounts, GPOs), weekly English-language meetings with international HQ.</li>
+            <li>Malicious email analysis. Led Windows 10 fleet deployment project. Hardware replacement.</li>
+          </ul>
+        </div>
+        <div class="tl-stack"><span>active directory</span><span>cisco</span><span>windows</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- =================== Skills =================== -->
+<section class="full" style="padding-top:0" data-screen-label="06 Skills">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eye">// THE TOOLBOX</div>
+      <h2>What I reach for.</h2>
+    </div>
+    <div class="skills-grid">
+      <div class="skill-col">
+        <h5>// DFIR</h5>
+        <div class="skill-row"><span class="nm">Volatility3</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">KAPE / EZ Tools</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">Velociraptor</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">DFIR-IRIS</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">FTK Imager / AXIOM</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">Timeline Explorer</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">avml / dwarf2json</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">UAC</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
+      </div>
+      <div class="skill-col">
+        <h5>// SOC, CTI &amp; DEV</h5>
+        <div class="skill-row"><span class="nm">SentinelOne</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">ELK Stack</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">HarfangLab</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">Microsoft Sentinel</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">MITRE ATT&amp;CK</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">Python</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">Rust</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-row"><span class="nm">PowerShell</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+      </div>
+    </div>
+
+    <!-- Certifications -->
+    <div class="certs-wrap">
+      <div class="cert-item">
+        <i class="fa-solid fa-certificate"></i>
+        <div class="cert-info">
+          <span class="cert-name">CompTIA Security+</span>
+          <span class="cert-year">2023</span>
+        </div>
+      </div>
+      <div class="cert-item">
+        <i class="fa-solid fa-certificate"></i>
+        <div class="cert-info">
+          <span class="cert-name">ITIL4 Foundation</span>
+          <span class="cert-year">2021</span>
+        </div>
+      </div>
+      <div class="cert-item">
+        <i class="fa-solid fa-certificate"></i>
+        <div class="cert-info">
+          <span class="cert-name">HarfangLab Incident Response</span>
+          <span class="cert-year">2024</span>
+        </div>
+      </div>
+      <div class="cert-item wip">
+        <i class="fa-solid fa-hourglass-half"></i>
+        <div class="cert-info">
+          <span class="cert-name">Varonis Certification</span>
+          <span class="cert-year">In progress</span>
+        </div>
+      </div>
+      <div class="cert-item wip">
+        <i class="fa-solid fa-hourglass-half"></i>
+        <div class="cert-info">
+          <span class="cert-name">CDSA — Certified Defensive Security Analyst</span>
+          <span class="cert-year">In progress · HackTheBox</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== CTA =================== -->
+<section data-screen-label="07 CTA">
+  <div class="cta">
+    <div class="cta-copy">
+      <h2>Want to discuss a case or <span>collaborate?</span></h2>
+      <p>Always happy to exchange with fellow analysts, researchers, practitioners and recruiters obviously.</p>
+      <div class="cta-meta">
+        <span><i class="fa-solid fa-envelope"></i>fsalingue@protonmail.com</span>
+        <span><i class="fa-brands fa-github"></i>github.com/Ch4rybd3</span>
+      </div>
+    </div>
+    <div class="cta-actions">
+      <a href="mailto:fsalingue@protonmail.com"><button class="btn btn-primary btn-lg"><i class="fa-solid fa-paper-plane"></i> Send a Message</button></a>
+      <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><button class="btn btn-secondary btn-lg"><i class="fa-brands fa-github"></i> GitHub</button></a>
+    </div>
+  </div>
+</section>
+
+<!-- =================== Footer =================== -->
+<footer class="foot" data-screen-label="08 Footer">
+  <div class="foot-wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="mk-logo">
+          <svg viewBox="0 0 64 72" width="22" height="26" fill="none">
+            <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#9FEF00" stroke-width="3"/>
+            <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#9FEF00" stroke-width="4" stroke-linecap="square"/>
+          </svg>
+          <b>CH4RYBD3.FR</b>
+        </div>
+        <p>Florian Salingue · DFIR / SOC / CTI Analyst · Lyon, France.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Work</h5>
+        <ul>
+          <li><a href="https://github.com/Ch4rybd3/Remora" target="_blank" rel="noopener">Remora</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Marianas" target="_blank" rel="noopener">Marianas</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Kaluga" target="_blank" rel="noopener">Kaluga</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Abzu" target="_blank" rel="noopener">Abzu</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Expertise</h5>
+        <ul>
+          <li><a>DFIR</a></li>
+          <li><a>SOC</a></li>
+          <li><a>CTI</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Talks</h5>
+        <ul>
+          <li><a>WAQ 2023 — Phishing &amp; Social Engineering</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="mailto:fsalingue@protonmail.com">Email</a></li>
+          <li><a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <div>© 2026 ch4rybd3.fr · no cookies, no trackers · built in Lyon</div>
+      <div class="socials">
+        <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i></a>
+        <a href="mailto:fsalingue@protonmail.com"><i class="fa-solid fa-at"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

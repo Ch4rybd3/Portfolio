@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin — Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="/admin/src/style.css"/>
+  <style>
+    body { display: flex; align-items: center; justify-content: center; }
+    .login-box { width: 100%; max-width: 360px; }
+    .login-box .brand {
+      text-align: center; margin-bottom: 32px;
+      font-size: 13px; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--green);
+    }
+    .login-box .brand span { display: block; font-size: 22px; font-weight: 800; color: var(--fg); margin-bottom: 4px; }
+    .error-msg { color: var(--danger); font-size: 13px; margin-bottom: 12px; min-height: 18px; }
+    .btn-login { width: 100%; justify-content: center; padding: 11px; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <div class="login-box card">
+    <div class="brand">
+      <span>Ch4rybd3</span>
+      Admin Panel
+    </div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="username">Identifiant</label>
+        <input id="username" type="text" autocomplete="username" required autofocus/>
+      </div>
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input id="password" type="password" autocomplete="current-password" required/>
+      </div>
+      <p class="error-msg" id="errorMsg"></p>
+      <button type="submit" class="btn btn-primary btn-login">Connexion</button>
+    </form>
+  </div>
+  <script type="module" src="/admin/src/login.js"></script>
+</body>
+</html>
