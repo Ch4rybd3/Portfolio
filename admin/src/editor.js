@@ -175,6 +175,41 @@ document.getElementById('coverFileInput').addEventListener('change', async (e) =
   e.target.value = ''
 })
 
+// Tags management
+let currentTags = []
+
+window.handleTagKey = function(e) {
+  if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTagFromInput() }
+}
+
+window.addTagFromInput = function() {
+  const input = document.getElementById('tagInput')
+  const raw = input.value.trim().replace(/,$/, '').toLowerCase()
+  if (!raw) return
+  raw.split(',').map(t => t.trim().toLowerCase()).filter(Boolean).forEach(addTag)
+  input.value = ''
+}
+
+function addTag(tag) {
+  if (!tag || currentTags.includes(tag)) return
+  currentTags.push(tag)
+  renderTags()
+}
+
+function removeTag(tag) {
+  currentTags = currentTags.filter(t => t !== tag)
+  renderTags()
+}
+
+function renderTags() {
+  const display = document.getElementById('tagsDisplay')
+  display.innerHTML = currentTags.map(t => `
+    <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(45,212,191,.1);border:1px solid rgba(45,212,191,.3);border-radius:999px;padding:2px 8px 2px 10px;font-size:11px;color:#2DD4BF;font-family:var(--mono);">
+      ${t}
+      <button onclick="removeTag('${t}')" style="background:none;border:none;color:inherit;cursor:pointer;padding:0;line-height:1;opacity:.7;" type="button">×</button>
+    </span>`).join('')
+}
+
 // Sauvegarde
 document.getElementById('saveBtn').addEventListener('click', save)
 document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); save() } })
@@ -192,6 +227,7 @@ async function save() {
     excerpt: document.getElementById('excerptInput').value.trim(),
     cover_image: document.getElementById('coverPreview').dataset.url || null,
     status: publishStatus,
+    tags: currentTags,
   }
 
   try {
@@ -222,6 +258,8 @@ if (articleId) {
       p.style.display = 'block'
       p.dataset.url = a.cover_image
     }
+    try { currentTags = JSON.parse(a.tags || '[]') } catch { currentTags = [] }
+    renderTags()
   }).catch(() => toast('Erreur de chargement', 'error'))
 }
 

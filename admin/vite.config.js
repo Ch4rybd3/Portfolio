@@ -11,6 +11,8 @@ export default defineConfig({
         dashboard: resolve(__dirname, 'dashboard.html'),
         editor:    resolve(__dirname, 'editor.html'),
         kanban:    resolve(__dirname, 'kanban.html'),
+        docs:      resolve(__dirname, 'docs.html'),
+        security:  resolve(__dirname, 'security.html'),
       }
     }
   }

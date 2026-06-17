@@ -67,7 +67,7 @@
       padding: 28px; display: flex; flex-direction: column; gap: 14px; position: relative; overflow: hidden;
       transition: all var(--dur-med) var(--ease-out);
     }
-    .exp .card:hover { border-color: rgba(159,239,0,0.35); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(159,239,0,0.15); }
+    .exp .card:hover { border-color: rgba(45,212,191,0.35); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(45,212,191,0.15); }
     .exp .num { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.16em; }
     .exp h3 { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--htb-fg); letter-spacing: -0.015em; margin: 0; }
     .exp h3 .ac { color: var(--htb-green); }
@@ -114,7 +114,7 @@
       transition: all var(--dur-fast); position: relative; overflow: hidden;
       text-decoration: none;
     }
-    .pcard:hover { background: var(--htb-card-2); border-color: rgba(159,239,0,0.35); }
+    .pcard:hover { background: var(--htb-card-2); border-color: rgba(45,212,191,0.35); }
     .pcard-top { display: flex; align-items: center; justify-content: space-between; }
     .pcard-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--htb-green); }
     .pcard-num { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-4); letter-spacing: 0.1em; }
@@ -137,7 +137,7 @@
     }
     .talk-stage {
       width: 140px; min-height: 200px;
-      background: linear-gradient(160deg, rgba(159,239,0,0.08), rgba(11,18,31,0.6));
+      background: linear-gradient(160deg, rgba(45,212,191,0.08), rgba(11,18,31,0.6));
       border-right: 1px solid var(--htb-line);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
       padding: 24px 16px;
@@ -179,15 +179,14 @@
     .tl-stack { display: flex; gap: 6px; flex-wrap: wrap; max-width: 200px; justify-content: flex-end; padding-top: 4px; }
     .tl-stack span { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); padding: 3px 8px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill); }
 
-    /* ── Skills matrix ── */
-    .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 36px; }
-    .skill-col h5 { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 14px; padding-bottom: 10px; border-bottom: 1px solid var(--htb-line); }
-    .skill-row { display: grid; grid-template-columns: 170px 1fr 36px; gap: 12px; align-items: center; padding: 8px 0; }
-    .skill-row .nm { font-family: var(--font-display); font-weight: 500; font-size: 13px; color: var(--htb-fg); }
-    .skill-row .lvl { display: flex; gap: 3px; }
-    .skill-row .lvl span { flex: 1; height: 4px; background: var(--htb-card-3); border-radius: 1px; }
-    .skill-row .lvl span.on { background: var(--htb-green); }
-    .skill-row .yr { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); text-align: right; }
+    /* ── Skills ── */
+    .skills-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .skill-col { background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl); padding: 26px 28px; }
+    .skill-col h5 { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.14em; text-transform: uppercase; margin: 0 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--htb-line); }
+    .skill-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+    .skill-chip { font-family: var(--font-mono); font-size: 12px; color: var(--htb-fg-2); padding: 5px 12px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill); letter-spacing: 0.03em; transition: border-color .15s, color .15s; }
+    .skill-chip:hover { color: var(--htb-fg); border-color: var(--htb-line); }
+    .skill-chip.hl { color: var(--p-cyan); border-color: rgba(92,179,255,.35); background: rgba(92,179,255,.05); }
 
     /* ── Certifications ── */
     .certs-wrap { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--htb-line); }
@@ -197,7 +196,7 @@
       padding: 12px 18px;
       transition: border-color var(--dur-fast);
     }
-    .cert-item:hover { border-color: rgba(159,239,0,0.35); }
+    .cert-item:hover { border-color: rgba(45,212,191,0.35); }
     .cert-item i { color: var(--htb-green); font-size: 14px; }
     .cert-item .cert-info { display: flex; flex-direction: column; gap: 2px; }
     .cert-item .cert-name { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--htb-fg); }
@@ -219,17 +218,16 @@
 <nav class="mk-nav">
   <div class="mk-logo">
     <svg viewBox="0 0 64 72" width="26" height="30" fill="none">
-      <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#9FEF00" stroke-width="3"/>
-      <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#9FEF00" stroke-width="4" stroke-linecap="square"/>
+      <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+      <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
     </svg>
     <b>CH4RYBD3<span style="color:var(--htb-fg-3)">.FR</span></b>
   </div>
   <div class="mk-nav-mid">
-    <a>Work</a>
-    <a>Expertise</a>
-    <a>Career</a>
-    <a>About</a>
-    <a href="/blog"><i class="fa-solid fa-pen-nib" style="margin-right:5px"></i>Blog</a>
+    <a href="/" style="color:var(--htb-fg)">Portfolio</a>
+    <a href="/projects">Projects</a>
+    <a href="/blog">Blog</a>
+    <a href="/docs">Docs</a>
   </div>
   <div class="mk-nav-r">
     <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github" style="margin-right:6px"></i>GitHub</a>
@@ -272,7 +270,7 @@
       <div class="hero-term-bar">
         <div class="dot" style="background:#FF3E3E"></div>
         <div class="dot" style="background:#FFAF00"></div>
-        <div class="dot" style="background:#9FEF00"></div>
+        <div class="dot" style="background:#2DD4BF"></div>
         <div class="ttl">about — zsh — 88×26</div>
       </div>
       <div class="hero-term-body">
@@ -295,7 +293,7 @@
 
 <!-- =================== Now strip =================== -->
 <div class="now-strip">
-  <div class="now-wrap">
+  <div class="now-wrap" id="now-wrap">
     <span class="now-tag"><span class="dot"></span>// NOW</span>
     <span class="now-item"><i class="fa-solid fa-code"></i>Building <b>Remora</b> — DFIR case management platform</span>
     <span class="sep">·</span>
@@ -446,7 +444,7 @@
 
 <!-- =================== Stats =================== -->
 <div class="stats-band">
-  <div class="stats-grid">
+  <div class="stats-grid" id="stats-grid">
     <div><div class="stat-v">6+</div><div class="stat-l">Years in IT &amp; Security</div></div>
     <div><div class="stat-v">4</div><div class="stat-l">OSS Projects in Dev</div></div>
     <div><div class="stat-v">2</div><div class="stat-l">Countries Worked In</div></div>
@@ -461,7 +459,7 @@
       <div class="eye">// CAREER · 2018 → NOW</div>
       <h2>The path so far.</h2>
     </div>
-    <div class="timeline">
+    <div class="timeline" id="career-timeline">
 
       <!-- Amaris -->
       <div class="tl-row active">
@@ -571,33 +569,72 @@
       <div class="eye">// THE TOOLBOX</div>
       <h2>What I reach for.</h2>
     </div>
-    <div class="skills-grid">
+    <div class="skills-grid" id="skills-grid">
       <div class="skill-col">
         <h5>// DFIR</h5>
-        <div class="skill-row"><span class="nm">Volatility3</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">KAPE / EZ Tools</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">Velociraptor</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">DFIR-IRIS</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">FTK Imager / AXIOM</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">Timeline Explorer</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">avml / dwarf2json</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">UAC</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
+        <div class="skill-chips">
+          <span class="skill-chip hl">Volatility3</span>
+          <span class="skill-chip hl">KAPE</span>
+          <span class="skill-chip hl">EZ Tools</span>
+          <span class="skill-chip">Velociraptor</span>
+          <span class="skill-chip">DFIR-IRIS</span>
+          <span class="skill-chip">FTK Imager</span>
+          <span class="skill-chip">AXIOM</span>
+          <span class="skill-chip">Timeline Explorer</span>
+          <span class="skill-chip">avml</span>
+          <span class="skill-chip">dwarf2json</span>
+          <span class="skill-chip">UAC</span>
+          <span class="skill-chip">Autopsy</span>
+        </div>
       </div>
       <div class="skill-col">
-        <h5>// SOC, CTI &amp; DEV</h5>
-        <div class="skill-row"><span class="nm">SentinelOne</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">ELK Stack</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">HarfangLab</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">Microsoft Sentinel</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">MITRE ATT&amp;CK</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">Python</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">Rust</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div><span class="yr">—</span></div>
-        <div class="skill-row"><span class="nm">PowerShell</span><div class="lvl"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div><span class="yr">—</span></div>
+        <h5>// SOC &amp; Detection</h5>
+        <div class="skill-chips">
+          <span class="skill-chip hl">SentinelOne</span>
+          <span class="skill-chip hl">HarfangLab</span>
+          <span class="skill-chip hl">ELK Stack</span>
+          <span class="skill-chip">Microsoft Sentinel</span>
+          <span class="skill-chip">Varonis</span>
+          <span class="skill-chip">Zscaler</span>
+          <span class="skill-chip">Wallix</span>
+          <span class="skill-chip">McAfee</span>
+          <span class="skill-chip">Carbon Black</span>
+          <span class="skill-chip">MITRE ATT&amp;CK</span>
+        </div>
+      </div>
+      <div class="skill-col">
+        <h5>// CTI &amp; OSINT</h5>
+        <div class="skill-chips">
+          <span class="skill-chip hl">MITRE ATT&amp;CK</span>
+          <span class="skill-chip">XMCO</span>
+          <span class="skill-chip">Cybelangel</span>
+          <span class="skill-chip">OSINT</span>
+          <span class="skill-chip">IOC Analysis</span>
+          <span class="skill-chip">Threat Actor Tracking</span>
+          <span class="skill-chip">Attack Surface Mapping</span>
+          <span class="skill-chip">Dark Web Monitoring</span>
+          <span class="skill-chip">Maltego</span>
+        </div>
+      </div>
+      <div class="skill-col">
+        <h5>// Development &amp; Scripting</h5>
+        <div class="skill-chips">
+          <span class="skill-chip hl">Python</span>
+          <span class="skill-chip hl">PowerShell</span>
+          <span class="skill-chip">Rust</span>
+          <span class="skill-chip">Bash</span>
+          <span class="skill-chip">Docker</span>
+          <span class="skill-chip">Git</span>
+          <span class="skill-chip">REST APIs</span>
+          <span class="skill-chip">SQLite</span>
+          <span class="skill-chip">Linux</span>
+          <span class="skill-chip">Windows</span>
+        </div>
       </div>
     </div>
 
     <!-- Certifications -->
-    <div class="certs-wrap">
+    <div class="certs-wrap" id="certs-wrap">
       <div class="cert-item">
         <i class="fa-solid fa-certificate"></i>
         <div class="cert-info">
@@ -662,15 +699,24 @@
       <div class="foot-brand">
         <div class="mk-logo">
           <svg viewBox="0 0 64 72" width="22" height="26" fill="none">
-            <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#9FEF00" stroke-width="3"/>
-            <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#9FEF00" stroke-width="4" stroke-linecap="square"/>
+            <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+            <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
           </svg>
           <b>CH4RYBD3.FR</b>
         </div>
         <p>Florian Salingue · DFIR / SOC / CTI Analyst · Lyon, France.</p>
       </div>
       <div class="foot-col">
-        <h5>Work</h5>
+        <h5>Navigate</h5>
+        <ul>
+          <li><a href="/">Portfolio</a></li>
+          <li><a href="/projects">Projects</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/docs">Docs</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Projects</h5>
         <ul>
           <li><a href="https://github.com/Ch4rybd3/Remora" target="_blank" rel="noopener">Remora</a></li>
           <li><a href="https://github.com/Ch4rybd3/Marianas" target="_blank" rel="noopener">Marianas</a></li>
@@ -687,15 +733,8 @@
         </ul>
       </div>
       <div class="foot-col">
-        <h5>Talks</h5>
-        <ul>
-          <li><a>WAQ 2023 — Phishing &amp; Social Engineering</a></li>
-        </ul>
-      </div>
-      <div class="foot-col">
         <h5>Contact</h5>
         <ul>
-          <li><a href="/blog">Blog</a></li>
           <li><a href="mailto:fsalingue@protonmail.com">Email</a></li>
           <li><a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener">GitHub</a></li>
         </ul>
@@ -711,5 +750,87 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+(async () => {
+  const api = key => fetch(`/api/config/${key}`).then(r => r.ok ? r.json() : null).catch(() => null)
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  const mdInline = s => { try { return marked.parseInline(String(s||'')) } catch { return esc(s) } }
+  const mdBlock  = s => { try { return marked.parse(String(s||'')) } catch { return esc(s) } }
+
+  const [now, stats, skills, certs, career] = await Promise.all([
+    api('portfolio.now'), api('portfolio.stats'), api('portfolio.skills'),
+    api('portfolio.certifications'), api('portfolio.career')
+  ])
+
+  /* ── Now strip ── */
+  if (Array.isArray(now) && now.length) {
+    const wrap = document.getElementById('now-wrap')
+    if (wrap) wrap.innerHTML =
+      `<span class="now-tag"><span class="dot"></span>// NOW</span>` +
+      now.map((item, i) =>
+        `${i > 0 ? '<span class="sep">·</span>' : ''}
+         <span class="now-item"><i class="${esc(item.icon)}"></i>${item.text || ''}</span>`
+      ).join('')
+  }
+
+  /* ── Stats band ── */
+  if (Array.isArray(stats) && stats.length) {
+    const grid = document.getElementById('stats-grid')
+    if (grid) grid.innerHTML = stats.map(s =>
+      `<div><div class="stat-v">${esc(s.value)}</div><div class="stat-l">${esc(s.label)}</div></div>`
+    ).join('')
+  }
+
+  /* ── Skills ── */
+  if (Array.isArray(skills) && skills.length) {
+    const grid = document.getElementById('skills-grid')
+    if (grid) grid.innerHTML = skills.map(cat =>
+      `<div class="skill-col">
+        <h5>// ${esc(cat.title || cat.category)}</h5>
+        <div class="skill-chips">
+          ${(cat.tools || []).map(t =>
+            `<span class="skill-chip${t.hl ? ' hl' : ''}">${esc(t.name)}</span>`
+          ).join('')}
+        </div>
+      </div>`
+    ).join('')
+  }
+
+  /* ── Certifications ── */
+  if (Array.isArray(certs) && certs.length) {
+    const wrap = document.getElementById('certs-wrap')
+    if (wrap) wrap.innerHTML = certs.map(c =>
+      `<div class="cert-item${c.wip ? ' wip' : ''}">
+        <i class="fa-solid fa-${c.wip ? 'hourglass-half' : 'certificate'}"></i>
+        <div class="cert-info">
+          <span class="cert-name">${esc(c.name)}</span>
+          <span class="cert-year">${esc(c.year)}</span>
+        </div>
+      </div>`
+    ).join('')
+  }
+
+  /* ── Career timeline ── */
+  if (Array.isArray(career) && career.length) {
+    const tl = document.getElementById('career-timeline')
+    if (tl) tl.innerHTML = career.map(e =>
+      `<div class="tl-row${e.active ? ' active' : ''}">
+        <div class="tl-dot"></div>
+        <div class="tl-date">
+          <b>${esc(e.dateRange)}</b>${esc(e.location)}
+          ${e.duration ? `<br/><span style="opacity:0.6">${esc(e.duration)}</span>` : ''}
+        </div>
+        <div class="tl-role">
+          <h4>${esc(e.role)}</h4>
+          <div class="where">${esc(e.company)}</div>
+          <ul>${(e.bullets || []).map(b => `<li>${mdInline(b)}</li>`).join('')}</ul>
+        </div>
+        <div class="tl-stack">${(e.stack || []).map(s => `<span>${esc(s)}</span>`).join('')}</div>
+      </div>`
+    ).join('')
+  }
+})()
+</script>
 </body>
 </html>

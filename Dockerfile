@@ -15,5 +15,7 @@ RUN cd server && npm ci --omit=dev
 COPY server/ ./server/
 COPY public/ ./public/
 COPY --from=admin-builder /admin/dist ./admin/dist
+COPY admin/config.html ./admin/config.html
+RUN mkdir -p /app/doc-uploads
 EXPOSE 3000
 CMD ["node", "server/src/index.js"]

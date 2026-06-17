@@ -6,6 +6,8 @@ services:
     volumes:
       - ./data:/app/data
       - ./uploads:/app/uploads
+      - ./doc-uploads:/app/doc-uploads
+      - ./public:/app/public:ro
     expose:
       - "${PORT:-3000}"
     depends_on: []

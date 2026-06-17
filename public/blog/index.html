@@ -8,78 +8,349 @@
   <link rel="stylesheet" href="/colors_and_type.css"/>
   <link rel="stylesheet" href="/marketing.css"/>
   <style>
-    body { background: var(--htb-space); }
-    .blog-header { padding: 80px 80px 48px; border-bottom: 1px solid var(--htb-line); }
-    .blog-header .eyebrow { font-family: var(--font-mono); font-size: var(--fs-eyebrow); color: var(--htb-green); text-transform: uppercase; letter-spacing: .15em; margin-bottom: 12px; }
-    .blog-header h1 { font-family: var(--font-display); font-size: var(--fs-h1); font-weight: 800; color: var(--htb-fg); }
-    .blog-header p  { color: var(--htb-fg-3); margin-top: 10px; font-size: var(--fs-body); }
+    :root { --p-cyan: #5CB3FF; --p-cyan-glow: rgba(92,179,255,0.16); }
+    body { background: #0A1018; }
 
-    .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; padding: 48px 80px; }
+    /* ── Rail ── */
+    .rail {
+      position: fixed; top: 64px; bottom: 0; left: 0; width: 56px;
+      border-right: 1px solid var(--htb-line);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 18px 0;
+      font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-4);
+      letter-spacing: 0.1em;
+      background: rgba(11,18,31,0.55);
+      z-index: 30;
+    }
+    .rail .vert { writing-mode: vertical-rl; transform: rotate(180deg); margin: auto 0; color: var(--htb-fg-3); letter-spacing: 0.35em; }
+    .rail .nums { display: flex; flex-direction: column; gap: 6px; }
+    .rail .nums span { display: block; }
+    .rail .sock { display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--htb-fg-3); }
+    .rail .sock a { color: var(--htb-fg-3); }
+    .rail .sock a:hover { color: var(--htb-green); }
 
-    .article-card {
-      background: var(--htb-card);
-      border: 1px solid var(--htb-line);
-      border-radius: 10px;
+    /* ── Layout offsets for rail ── */
+    .mk-nav { padding-left: 80px; }
+    .blog-hero, .tag-filter, .blog-content, .foot { padding-left: 80px; }
+
+    /* ── Blog hero (compact) ── */
+    .blog-hero {
+      position: relative;
+      padding: 60px 56px 52px 96px;
+      background-color: var(--htb-space);
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'><polygon points='28,2 54,17 54,47 28,62 2,47 2,17' fill='none' stroke='%231F2A3D' stroke-width='1'/></svg>");
+      background-size: 56px 64px;
+      border-bottom: 1px solid var(--htb-line);
       overflow: hidden;
-      text-decoration: none;
-      transition: border-color .2s, transform .2s;
+    }
+    .blog-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 15% 55%, rgba(45,212,191,0.13), transparent 35%),
+        radial-gradient(circle at 88% 25%, rgba(95,60,220,0.09), transparent 38%),
+        linear-gradient(180deg, transparent 60%, var(--htb-space) 100%);
+      pointer-events: none;
+    }
+    @keyframes pulse { 50% { opacity: 0.3; } }
+    .blog-hero-wrap { position: relative; max-width: 1280px; display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+    .blog-hero-eyebrow { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .blog-hero-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--htb-green); box-shadow: 0 0 6px var(--htb-green); animation: pulse 1.8s ease-in-out infinite; }
+    .blog-hero-left h1 { font-family: var(--font-display); font-size: 52px; font-weight: 800; color: var(--htb-fg); line-height: 1; letter-spacing: -0.025em; margin: 0 0 18px; }
+    .blog-hero-left h1 .accent { color: var(--htb-green); }
+    .blog-hero-left p { color: var(--htb-fg-2); font-size: 15px; line-height: 1.6; max-width: 500px; margin-bottom: 24px; }
+    .hero-cats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .hero-cats .cat {
+      font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3);
+      padding: 4px 12px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill);
+      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    .hero-cats .cat:hover, .hero-cats .cat.active { color: var(--htb-green); border-color: rgba(45,212,191,0.4); background: rgba(45,212,191,0.07); }
+
+    /* Hero right — stats */
+    .blog-hero-stats { display: flex; flex-direction: column; gap: 14px; }
+    .blog-stat {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-lg);
+      padding: 18px 22px; display: flex; align-items: center; gap: 16px;
+    }
+    .blog-stat-icon { width: 38px; height: 43px; clip-path: polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); background: rgba(45,212,191,0.08); border: 1px solid rgba(45,212,191,0.2); display: flex; align-items: center; justify-content: center; color: var(--htb-green); font-size: 14px; flex-shrink: 0; }
+    .blog-stat-text .v { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--htb-fg); line-height: 1; }
+    .blog-stat-text .l { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 3px; }
+
+    /* ── Tag filter bar ── */
+    .tag-filter {
+      padding: 14px 56px 14px 80px;
+      border-bottom: 1px solid var(--htb-line);
+      background: var(--htb-deep);
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .filter-label { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.14em; text-transform: uppercase; margin-right: 4px; }
+    .tag-chip {
+      font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3);
+      padding: 5px 12px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill);
+      cursor: pointer; transition: all 0.15s; letter-spacing: 0.06em; background: transparent;
+    }
+    .tag-chip:hover { color: var(--htb-fg); border-color: var(--htb-line); }
+    .tag-chip.active { color: var(--htb-green); border-color: rgba(45,212,191,0.4); background: rgba(45,212,191,0.07); }
+
+    /* ── Article grid ── */
+    .blog-content { padding: 40px 56px 80px 80px; }
+    .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; max-width: 1280px; }
+
+    /* ── Article card ── */
+    .article-card {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      overflow: hidden; text-decoration: none;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
       display: flex; flex-direction: column;
     }
-    .article-card:hover { border-color: var(--htb-line-2); transform: translateY(-2px); }
-    .article-card .cover { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: var(--htb-card-3); }
+    .article-card:hover { border-color: rgba(45,212,191,0.35); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(45,212,191,0.12); }
+    .article-card .cover { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
     .article-card .cover-placeholder {
       width: 100%; aspect-ratio: 16/9;
-      background: var(--htb-card-3); display: flex; align-items: center; justify-content: center;
-      color: var(--htb-fg-4); font-size: 32px;
+      background: var(--htb-card-3);
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='46' viewBox='0 0 40 46'><polygon points='20,1.5 38,12 38,34 20,44.5 2,34 2,12' fill='none' stroke='%231F2A3D' stroke-width='1'/></svg>");
+      display: flex; align-items: center; justify-content: center;
+      color: var(--htb-fg-4); font-size: 28px;
     }
-    .article-card .body { padding: 20px 22px; flex: 1; display: flex; flex-direction: column; }
-    .article-card .tag { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--htb-green); margin-bottom: 8px; }
-    .article-card h2 { font-size: 17px; font-weight: 700; color: var(--htb-fg); line-height: 1.3; margin-bottom: 8px; }
+    .article-card .body { padding: 20px 22px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
+    .card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .card-tag { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--htb-green); padding: 2px 8px; border: 1px solid rgba(45,212,191,0.25); border-radius: var(--r-pill); }
+    .card-tag.no-tag { color: var(--htb-fg-3); border-color: var(--htb-line-2); }
+    .article-card h2 { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--htb-fg); line-height: 1.3; margin: 0; }
     .article-card .excerpt { font-size: 13px; color: var(--htb-fg-3); line-height: 1.6; flex: 1; }
-    .article-card .meta { font-size: 11px; color: var(--htb-fg-4); margin-top: 16px; font-family: var(--font-mono); }
+    .card-meta { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4); margin-top: 10px; display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--htb-line); }
+    .card-read-more { color: var(--htb-green); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; display: flex; align-items: center; gap: 5px; transition: gap 0.15s; }
+    .article-card:hover .card-read-more { gap: 8px; }
 
-    .empty-state { padding: 80px; text-align: center; color: var(--htb-fg-4); grid-column: 1/-1; }
-    .empty-state i { font-size: 40px; display: block; margin-bottom: 12px; }
-
-    .back-link { display: inline-flex; align-items: center; gap: 8px; color: var(--htb-fg-3); text-decoration: none; font-size: 13px; padding: 80px 80px 0; }
-    .back-link:hover { color: var(--htb-green); }
+    .empty-state { padding: 80px 20px; text-align: center; color: var(--htb-fg-4); grid-column: 1/-1; }
+    .empty-state i { font-size: 36px; display: block; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
   </style>
 </head>
 <body>
-  <a href="/" class="back-link"><i class="fa fa-arrow-left"></i> Portfolio</a>
-  <div class="blog-header">
-    <div class="eyebrow">// writings</div>
-    <h1>Blog</h1>
-    <p>Articles sur la cybersécurité, le DFIR, la CTI et la vie de SOC analyst.</p>
+
+<!-- =================== Nav =================== -->
+<nav class="mk-nav">
+  <div class="mk-logo">
+    <svg viewBox="0 0 64 72" width="26" height="30" fill="none">
+      <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+      <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
+    </svg>
+    <b>CH4RYBD3<span style="color:var(--htb-fg-3)">.FR</span></b>
   </div>
+  <div class="mk-nav-mid">
+    <a href="/">Portfolio</a>
+    <a href="/projects">Projects</a>
+    <a href="/blog" style="color:var(--htb-fg)">Blog</a>
+    <a href="/docs">Docs</a>
+  </div>
+  <div class="mk-nav-r">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github" style="margin-right:6px"></i>GitHub</a>
+    <a href="mailto:fsalingue@protonmail.com"><button class="btn btn-primary">Contact</button></a>
+  </div>
+</nav>
+
+<!-- =================== Rail =================== -->
+<aside class="rail">
+  <div class="nums">
+    <span>01</span><span>02</span><span>03</span>
+  </div>
+  <div class="vert">// BLOG · WRITINGS · LYON</div>
+  <div class="sock">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener" title="GitHub"><i class="fa-brands fa-github"></i></a>
+    <a href="mailto:fsalingue@protonmail.com" title="Email"><i class="fa-solid fa-at"></i></a>
+  </div>
+</aside>
+
+<!-- =================== Blog hero =================== -->
+<section class="blog-hero">
+  <div class="blog-hero-wrap">
+    <div class="blog-hero-left">
+      <div class="blog-hero-eyebrow"><span class="dot"></span>// BLOG · WRITINGS</div>
+      <h1>Thoughts on <span class="accent">DFIR</span>,<br/>CTI, SOC &amp; the craft.</h1>
+      <p>Articles on incident response, threat intelligence, security operations, red team, CTF writeups, and tech experiments — written from the field.</p>
+      <div class="hero-cats" id="heroCats">
+        <span class="cat active" data-tag="all">All</span>
+        <span class="cat" data-tag="dfir">DFIR</span>
+        <span class="cat" data-tag="cti">CTI</span>
+        <span class="cat" data-tag="soc">SOC</span>
+        <span class="cat" data-tag="redteam">Red Team</span>
+        <span class="cat" data-tag="ctf">CTF</span>
+        <span class="cat" data-tag="tech">Tech</span>
+      </div>
+    </div>
+    <div class="blog-hero-stats">
+      <div class="blog-stat">
+        <div class="blog-stat-icon"><i class="fa-solid fa-pen-nib"></i></div>
+        <div class="blog-stat-text">
+          <div class="v" id="statArticles">—</div>
+          <div class="l">Published Articles</div>
+        </div>
+      </div>
+      <div class="blog-stat">
+        <div class="blog-stat-icon"><i class="fa-solid fa-tags"></i></div>
+        <div class="blog-stat-text">
+          <div class="v" id="statTags">—</div>
+          <div class="l">Topics Covered</div>
+        </div>
+      </div>
+      <div class="blog-stat">
+        <div class="blog-stat-icon"><i class="fa-solid fa-location-dot"></i></div>
+        <div class="blog-stat-text">
+          <div class="v">Lyon, FR</div>
+          <div class="l">Base of Operations</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =================== Tag filter =================== -->
+<div class="tag-filter" id="tagFilter" style="display:none"></div>
+
+<!-- =================== Articles =================== -->
+<div class="blog-content">
   <div class="blog-grid" id="blogGrid">
-    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>
+    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Chargement…</p></div>
   </div>
-  <script>
-    fetch('/api/articles').then(r => r.json()).then(articles => {
-      const grid = document.getElementById('blogGrid')
-      if (!articles.length) {
-        grid.innerHTML = '<div class="empty-state"><i class="fa fa-pen-nib"></i>Aucun article pour le moment.</div>'
-        return
-      }
-      grid.innerHTML = articles.map(a => `
-        <a href="/blog/${a.slug}" class="article-card">
-          ${a.cover_image
-            ? `<img class="cover" src="${a.cover_image}" alt="${esc(a.title)}" loading="lazy"/>`
-            : `<div class="cover-placeholder"><i class="fa fa-file-lines"></i></div>`}
-          <div class="body">
-            <div class="tag">Article</div>
-            <h2>${esc(a.title)}</h2>
-            ${a.excerpt ? `<p class="excerpt">${esc(a.excerpt)}</p>` : ''}
-            <div class="meta">${fmtDate(a.published_at)}</div>
-          </div>
-        </a>
-      `).join('')
-    }).catch(() => {
-      document.getElementById('blogGrid').innerHTML = '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement</div>'
+</div>
+
+<!-- =================== Footer =================== -->
+<footer class="foot">
+  <div class="foot-wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="mk-logo">
+          <svg viewBox="0 0 64 72" width="22" height="26" fill="none">
+            <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+            <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
+          </svg>
+          <b>CH4RYBD3.FR</b>
+        </div>
+        <p>Florian Salingue · DFIR / SOC / CTI Analyst · Lyon, France.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Navigate</h5>
+        <ul>
+          <li><a href="/">Portfolio</a></li>
+          <li><a href="/projects">Projects</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/docs">Docs</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Projects</h5>
+        <ul>
+          <li><a href="https://github.com/Ch4rybd3/Remora" target="_blank" rel="noopener">Remora</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Marianas" target="_blank" rel="noopener">Marianas</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Kaluga" target="_blank" rel="noopener">Kaluga</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Abzu" target="_blank" rel="noopener">Abzu</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Expertise</h5>
+        <ul>
+          <li><a>DFIR</a></li>
+          <li><a>SOC</a></li>
+          <li><a>CTI</a></li>
+          <li><a>Red Team</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:fsalingue@protonmail.com">Email</a></li>
+          <li><a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <div>© 2026 ch4rybd3.fr · no cookies, no trackers · built in Lyon</div>
+      <div class="socials">
+        <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i></a>
+        <a href="mailto:fsalingue@protonmail.com"><i class="fa-solid fa-at"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  let allArticles = []
+  let activeTag = 'all'
+
+  fetch('/api/articles').then(r => r.json()).then(articles => {
+    allArticles = articles
+    updateStats(articles)
+    buildTagFilter(articles)
+    renderGrid(articles)
+  }).catch(() => {
+    document.getElementById('blogGrid').innerHTML = '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i><p>Erreur de chargement.</p></div>'
+  })
+
+  function updateStats(articles) {
+    document.getElementById('statArticles').textContent = articles.length || '0'
+    const tags = new Set(articles.flatMap(a => parseTags(a.tags)))
+    document.getElementById('statTags').textContent = tags.size || '0'
+  }
+
+  function buildTagFilter(articles) {
+    const tags = [...new Set(articles.flatMap(a => parseTags(a.tags)))]
+    if (!tags.length) return
+    const el = document.getElementById('tagFilter')
+    el.style.display = 'flex'
+    el.innerHTML = `<span class="filter-label">// Filter</span>
+      <span class="tag-chip active" data-tag="all">Tous</span>
+      ${tags.map(t => `<span class="tag-chip" data-tag="${esc(t)}">${esc(t)}</span>`).join('')}`
+    el.querySelectorAll('.tag-chip').forEach(chip => {
+      chip.addEventListener('click', () => setTag(chip.dataset.tag))
     })
-    function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-    function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '' }
-  </script>
+  }
+
+  function setTag(tag) {
+    activeTag = tag
+    document.querySelectorAll('#tagFilter .tag-chip').forEach(c => c.classList.toggle('active', c.dataset.tag === tag))
+    document.querySelectorAll('#heroCats .cat').forEach(c => c.classList.toggle('active', c.dataset.tag === tag))
+    renderGrid(tag === 'all' ? allArticles : allArticles.filter(a => parseTags(a.tags).includes(tag)))
+  }
+
+  document.querySelectorAll('#heroCats .cat').forEach(cat => {
+    cat.addEventListener('click', () => setTag(cat.dataset.tag))
+  })
+
+  function renderGrid(articles) {
+    const grid = document.getElementById('blogGrid')
+    if (!articles.length) {
+      grid.innerHTML = '<div class="empty-state"><i class="fa fa-pen-nib"></i><p>Aucun article pour le moment.</p></div>'
+      return
+    }
+    grid.innerHTML = articles.map(a => {
+      const tags = parseTags(a.tags)
+      const tagsHtml = tags.length
+        ? tags.map(t => `<span class="card-tag">${esc(t)}</span>`).join('')
+        : '<span class="card-tag no-tag">Article</span>'
+      return `<a href="/blog/${a.slug}" class="article-card">
+        ${a.cover_image
+          ? `<img class="cover" src="${esc(a.cover_image)}" alt="${esc(a.title)}" loading="lazy"/>`
+          : `<div class="cover-placeholder"><i class="fa fa-file-lines"></i></div>`}
+        <div class="body">
+          <div class="card-tags">${tagsHtml}</div>
+          <h2>${esc(a.title)}</h2>
+          ${a.excerpt ? `<p class="excerpt">${esc(a.excerpt)}</p>` : ''}
+          <div class="card-meta">
+            <span>${fmtDate(a.published_at)}</span>
+            <span class="card-read-more">Lire <i class="fa fa-arrow-right"></i></span>
+          </div>
+        </div>
+      </a>`
+    }).join('')
+  }
+
+  function parseTags(raw) {
+    if (!raw) return []
+    try { return JSON.parse(raw) } catch { return [] }
+  }
+  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '' }
+</script>
 </body>
 </html>

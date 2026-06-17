@@ -1,0 +1,1216 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin — Site Config</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0B121F; --deep: #111927; --card: #141D2B; --card-2: #1A2332; --card-3: #243044;
+      --line: #1F2A3D; --line-2: #2A3A55;
+      --fg: #FFFFFF; --fg-2: #C5D1DB; --fg-3: #A3B3BC; --fg-4: #6E7B96;
+      --green: #2DD4BF; --green-dim: #22B5A2; --info: #5CB3FF; --warning: #FFAF00; --danger: #FF3E3E;
+      --on-green: #0B121F;
+      --font: system-ui, sans-serif; --mono: 'JetBrains Mono', 'Courier New', monospace;
+      --radius: 8px;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--fg); min-height: 100vh; font-size: 15px; line-height: 1.55; }
+
+    /* ── Layout ── */
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; flex-shrink: 0; background: var(--deep); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: 24px 0; }
+    .sidebar .logo { padding: 0 20px 24px; border-bottom: 1px solid var(--line); margin-bottom: 12px; font-weight: 700; font-size: 13px; letter-spacing: .08em; color: var(--green); text-transform: uppercase; }
+    .sidebar nav a { display: flex; align-items: center; gap: 10px; padding: 10px 20px; color: var(--fg-3); text-decoration: none; font-size: 14px; font-weight: 500; border-left: 2px solid transparent; transition: color .15s, background .15s, border-color .15s; }
+    .sidebar nav a:hover { color: var(--fg); background: var(--card); }
+    .sidebar nav a.active { color: var(--green); border-left-color: var(--green); background: rgba(45,212,191,.06); }
+    .sidebar .bottom { margin-top: auto; padding: 16px 20px 0; border-top: 1px solid var(--line); }
+    .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--line); background: var(--deep); }
+    .topbar h1 { font-size: 18px; font-weight: 700; }
+    .content { padding: 28px 32px; flex: 1; overflow-y: auto; }
+
+    /* ── Buttons ── */
+    .btn { font-family: var(--font); font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: var(--radius); border: 1px solid transparent; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; line-height: 1; transition: all .15s; text-decoration: none; }
+    .btn-primary { background: var(--green); color: var(--on-green); }
+    .btn-primary:hover { background: var(--green-dim); }
+    .btn-secondary { background: transparent; color: var(--green); border-color: var(--green); }
+    .btn-secondary:hover { background: rgba(45,212,191,.08); }
+    .btn-ghost { background: var(--card-2); color: var(--fg); border-color: var(--line-2); }
+    .btn-ghost:hover { background: var(--card-3); }
+    .btn-danger { background: rgba(255,62,62,.12); color: var(--danger); border-color: rgba(255,62,62,.3); }
+    .btn-danger:hover { background: rgba(255,62,62,.2); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon { background: none; border: none; color: var(--fg-4); cursor: pointer; padding: 4px 6px; border-radius: 4px; font-size: 13px; transition: color .15s; }
+    .btn-icon:hover { color: var(--danger); }
+
+    /* ── Forms ── */
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; font-weight: 600; color: var(--fg-3); text-transform: uppercase; letter-spacing: .06em; }
+    .label-hint { font-weight: 400; text-transform: none; letter-spacing: 0; color: var(--fg-4); margin-left: 6px; }
+    .form-group input, .form-group textarea, .form-group select { background: var(--card-3); border: 1px solid var(--line-2); border-radius: var(--radius); color: var(--fg); font-family: var(--font); font-size: 14px; padding: 9px 12px; width: 100%; outline: none; transition: border-color .15s; resize: vertical; }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--green); }
+    .form-group textarea { min-height: 80px; }
+    .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+    /* ── Page tabs ── */
+    .page-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 28px; }
+    .tab-btn { font-family: var(--font); font-size: 14px; font-weight: 600; color: var(--fg-3); background: none; border: none; padding: 12px 24px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s; }
+    .tab-btn:hover { color: var(--fg); }
+    .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── Config section card ── */
+    .cfg-section { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 16px; overflow: hidden; }
+    .cfg-section-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; cursor: pointer; user-select: none; }
+    .cfg-section-head:hover { background: var(--card-2); }
+    .cfg-section-label { font-family: var(--mono); font-size: 11px; color: var(--green); letter-spacing: .14em; text-transform: uppercase; margin-bottom: 3px; }
+    .cfg-section-title { font-size: 15px; font-weight: 700; color: var(--fg); }
+    .cfg-section-head-r { display: flex; align-items: center; gap: 10px; }
+    .cfg-chevron { color: var(--fg-4); font-size: 12px; transition: transform .2s; }
+    .cfg-section.open .cfg-chevron { transform: rotate(180deg); }
+    .cfg-section-body { display: none; padding: 20px; border-top: 1px solid var(--line); }
+    .cfg-section.open .cfg-section-body { display: block; }
+    .cfg-section-body > * + * { margin-top: 14px; }
+
+    /* ── List editor ── */
+    .list-editor { display: flex; flex-direction: column; gap: 8px; }
+    .list-item { background: var(--card-2); border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; transition: border-color .15s, opacity .15s; }
+    .list-item-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; gap: 8px; }
+    .list-item-head:hover { background: var(--card-3); }
+    .list-item-summary { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+    .list-item-title { font-size: 14px; font-weight: 600; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 380px; }
+    .list-item-sub { font-size: 12px; color: var(--fg-4); white-space: nowrap; }
+    .list-item-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .list-item-body { display: none; padding: 16px; border-top: 1px solid var(--line); }
+    .list-item.open .list-item-body { display: flex; flex-direction: column; gap: 12px; }
+    .item-chevron { color: var(--fg-4); font-size: 11px; transition: transform .2s; }
+    .list-item.open .item-chevron { transform: rotate(180deg); }
+
+    /* ── Drag & drop ── */
+    .drag-handle { cursor: grab; color: var(--fg-4); padding: 4px 8px 4px 2px; font-size: 13px; flex-shrink: 0; transition: color .15s; }
+    .drag-handle:hover { color: var(--fg-2); }
+    .drag-handle:active { cursor: grabbing; }
+    .list-item.is-dragging { opacity: 0.35; border-style: dashed !important; }
+    .list-item.drop-target { border-color: var(--green) !important; background: rgba(45,212,191,.05); }
+    .chip.drop-target { border-color: var(--green) !important; background: rgba(45,212,191,.15) !important; outline: 2px solid rgba(45,212,191,.3); }
+
+    /* ── Badge ── */
+    .badge { font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; }
+    .badge-active { background: rgba(45,212,191,.12); color: var(--green); border: 1px solid rgba(45,212,191,.3); }
+    .badge-wip    { background: rgba(255,175,0,.1);  color: var(--warning); border: 1px solid rgba(255,175,0,.3); }
+    .badge-done   { background: rgba(92,179,255,.1); color: var(--info);    border: 1px solid rgba(92,179,255,.3); }
+
+    /* ── Tag chips input ── */
+    .chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; background: var(--card-3); border: 1px solid var(--line-2); border-radius: var(--radius); min-height: 42px; align-items: flex-start; cursor: text; transition: border-color .15s; }
+    .chips-wrap:focus-within { border-color: var(--green); }
+    .chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(45,212,191,.1); border: 1px solid rgba(45,212,191,.3); border-radius: 999px; padding: 2px 8px 2px 10px; font-family: var(--mono); font-size: 11px; color: var(--green); cursor: default; transition: border-color .15s, background .15s; user-select: none; }
+    .chip.hl-chip { background: rgba(92,179,255,.1); border-color: rgba(92,179,255,.3); color: var(--info); }
+    .chip-del { background: none; border: none; color: inherit; cursor: pointer; opacity: .7; padding: 0; line-height: 1; font-size: 14px; }
+    .chip-del:hover { opacity: 1; }
+    .chip-input { background: none; border: none; color: var(--fg); font-family: var(--font); font-size: 13px; outline: none; min-width: 120px; flex: 1; padding: 2px 4px; }
+    .chip-drag-hint { font-family: var(--mono); font-size: 10px; color: var(--fg-4); padding: 2px 6px; align-self: center; }
+
+    /* ── Milestone editor ── */
+    .milestone-row { display: flex; align-items: center; gap: 8px; }
+    .milestone-row input[type=checkbox] { accent-color: var(--green); width: 16px; height: 16px; flex-shrink: 0; }
+    .milestone-row input[type=text] { flex: 1; background: var(--card-3); border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg); font-family: var(--font); font-size: 13px; padding: 6px 10px; outline: none; }
+    .milestone-row input[type=text]:focus { border-color: var(--green); }
+
+    /* ── Markdown editor ── */
+    .md-editor { border: 1px solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+    .md-editor:focus-within { border-color: var(--green); }
+    .md-toolbar { display: flex; gap: 3px; align-items: center; padding: 6px 8px; background: var(--card-3); border-bottom: 1px solid var(--line-2); flex-wrap: wrap; }
+    .md-btn { background: var(--card-2); border: 1px solid var(--line-2); color: var(--fg-3); padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: var(--mono); line-height: 1.6; transition: color .1s, border-color .1s; }
+    .md-btn:hover { color: var(--fg); border-color: var(--line); }
+    .md-btn.active { color: var(--green); border-color: rgba(45,212,191,.4); background: rgba(45,212,191,.06); }
+    .md-sep-v { width: 1px; height: 16px; background: var(--line-2); margin: 0 2px; flex-shrink: 0; }
+    .md-editor textarea { width: 100%; border: none; background: var(--card-3); color: var(--fg); font-family: var(--mono); font-size: 13px; padding: 10px 12px; outline: none; resize: vertical; display: block; line-height: 1.65; }
+    .md-preview { padding: 12px 16px; background: var(--card-2); font-size: 14px; line-height: 1.65; color: var(--fg-2); min-height: 60px; }
+    .md-preview p { margin-bottom: .55em; }
+    .md-preview p:last-child { margin-bottom: 0; }
+    .md-preview strong { color: var(--fg); }
+    .md-preview code { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 11px; color: var(--green); }
+    .md-preview ul, .md-preview ol { padding-left: 18px; margin: .4em 0; }
+    .md-preview li { margin: .25em 0; }
+    .md-preview h1,.md-preview h2,.md-preview h3 { color: var(--fg); margin: .5em 0 .25em; }
+    .md-preview a { color: var(--info); }
+    .md-preview blockquote { border-left: 3px solid var(--line-2); padding-left: 12px; color: var(--fg-3); margin: .4em 0; }
+
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 24px; right: 24px; background: var(--card-2); border: 1px solid var(--line-2); border-radius: var(--radius); padding: 12px 20px; font-size: 14px; color: var(--fg); box-shadow: 0 8px 24px rgba(0,0,0,.4); transform: translateY(80px); opacity: 0; transition: all .25s; z-index: 9999; pointer-events: none; }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: rgba(45,212,191,.4); color: var(--green); }
+    #toast.error   { border-color: rgba(255,62,62,.4);  color: var(--danger); }
+
+    /* ── Select ── */
+    select { appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0l5 6 5-6z' fill='%236E7B96'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px !important; }
+
+    /* ── Note ── */
+    .note { background: rgba(92,179,255,.06); border: 1px solid rgba(92,179,255,.2); border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: var(--fg-3); display: flex; gap: 8px; align-items: flex-start; }
+    .note i { color: var(--info); margin-top: 2px; }
+
+    /* ── Checkbox row ── */
+    .check-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg-2); cursor: pointer; }
+    .check-row input[type=checkbox] { accent-color: var(--green); width: 15px; height: 15px; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="logo">Ch4rybd3 / Admin</div>
+    <nav>
+      <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
+      <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+      <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
+      <a href="/admin/config" class="active"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
+      <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Docs</a>
+      <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
+    </nav>
+    <div class="bottom">
+      <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
+        <i class="fa fa-right-from-bracket"></i> Déconnexion
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <h1><i class="fa fa-sliders" style="color:var(--green);margin-right:10px"></i>Site Configuration</h1>
+      <div id="lastSaved" style="font-size:12px;color:var(--fg-4)"></div>
+    </div>
+    <div class="content">
+      <div class="note" style="margin-bottom:20px">
+        <i class="fa fa-circle-info"></i>
+        <span>Modifications sauvegardées par section. Les pages publiques reflètent les données en temps réel via l'API. <strong style="color:var(--green)">Glisser ⠿ pour réordonner.</strong> Cliquer une compétence pour la highlight — les highlights remontent automatiquement.</span>
+      </div>
+
+      <div class="page-tabs">
+        <button class="tab-btn active" onclick="switchTab('portfolio', this)">Portfolio</button>
+        <button class="tab-btn" onclick="switchTab('projects', this)">Projects</button>
+      </div>
+
+      <!-- ════════ PORTFOLIO TAB ════════ -->
+      <div id="tab-portfolio" class="tab-content active">
+
+        <div class="cfg-section open" id="sec-now">
+          <div class="cfg-section-head" onclick="toggleSection('sec-now')">
+            <div><div class="cfg-section-label">// Now Strip</div><div class="cfg-section-title">Activité actuelle</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('portfolio.now',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div class="note"><i class="fa fa-circle-info"></i> Icône = classe FontAwesome (ex : fa-solid fa-code). Texte = markdown supporté (<strong>**gras**</strong>, *italique*).</div>
+            <div id="now-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addNowItem()"><i class="fa fa-plus"></i> Ajouter un item</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-stats">
+          <div class="cfg-section-head" onclick="toggleSection('sec-stats')">
+            <div><div class="cfg-section-label">// Stats Band</div><div class="cfg-section-title">Chiffres clés</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('portfolio.stats',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addStat()"><i class="fa fa-plus"></i> Ajouter</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-skills">
+          <div class="cfg-section-head" onclick="toggleSection('sec-skills')">
+            <div><div class="cfg-section-label">// Skills & Tools</div><div class="cfg-section-title">Compétences par catégorie</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('portfolio.skills',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div class="note"><i class="fa fa-circle-info"></i> <strong>Clic</strong> sur un outil = toggle highlight (bleu) → remonte automatiquement. <strong>Glisser</strong> pour réordonner manuellement.</div>
+            <div id="skills-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addSkillCat()"><i class="fa fa-plus"></i> Ajouter une catégorie</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-certs">
+          <div class="cfg-section-head" onclick="toggleSection('sec-certs')">
+            <div><div class="cfg-section-label">// Certifications</div><div class="cfg-section-title">Certifications &amp; formations</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('portfolio.certifications',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="certs-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addCert()"><i class="fa fa-plus"></i> Ajouter une certification</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-career">
+          <div class="cfg-section-head" onclick="toggleSection('sec-career')">
+            <div><div class="cfg-section-label">// Career</div><div class="cfg-section-title">Expériences professionnelles</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('portfolio.career',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="career-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addCareer()"><i class="fa fa-plus"></i> Ajouter une expérience</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════ PROJECTS TAB ════════ -->
+      <div id="tab-projects" class="tab-content">
+
+        <div class="cfg-section open" id="sec-oss">
+          <div class="cfg-section-head" onclick="toggleSection('sec-oss')">
+            <div><div class="cfg-section-label">// OSS Projects</div><div class="cfg-section-title">Projets open source</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('projects.oss',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="oss-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addOss()"><i class="fa fa-plus"></i> Ajouter un projet</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-side">
+          <div class="cfg-section-head" onclick="toggleSection('sec-side')">
+            <div><div class="cfg-section-label">// Side Projects</div><div class="cfg-section-title">Projets personnels</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('projects.side',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="side-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addSide()"><i class="fa fa-plus"></i> Ajouter un projet</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-talks">
+          <div class="cfg-section-head" onclick="toggleSection('sec-talks')">
+            <div><div class="cfg-section-label">// Talks & Conferences</div><div class="cfg-section-title">Conférences &amp; talks publics</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('projects.talks',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="talks-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addTalk()"><i class="fa fa-plus"></i> Ajouter un talk</button>
+          </div>
+        </div>
+
+        <div class="cfg-section open" id="sec-community">
+          <div class="cfg-section-head" onclick="toggleSection('sec-community')">
+            <div><div class="cfg-section-label">// Community</div><div class="cfg-section-title">Contributions communautaires</div></div>
+            <div class="cfg-section-head-r">
+              <button class="btn btn-primary btn-sm" onclick="saveSection('projects.community',event)"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+              <i class="fa fa-chevron-down cfg-chevron"></i>
+            </div>
+          </div>
+          <div class="cfg-section-body">
+            <div id="community-list" class="list-editor"></div>
+            <button class="btn btn-ghost btn-sm" onclick="addCommunity()"><i class="fa fa-plus"></i> Ajouter une contribution</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+const state = {
+  'portfolio.now': [],
+  'portfolio.stats': [],
+  'portfolio.skills': [],
+  'portfolio.certifications': [],
+  'portfolio.career': [],
+  'projects.oss': [],
+  'projects.side': [],
+  'projects.talks': [],
+  'projects.community': []
+}
+
+/* ════════════════════════════════════════════════
+   BASE HELPERS
+════════════════════════════════════════════════ */
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') }
+function toast(msg, type='success') {
+  const el = document.getElementById('toast')
+  el.textContent = msg; el.className = `show ${type}`
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 3000)
+}
+function toggleSection(id) { document.getElementById(id).classList.toggle('open') }
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+  document.getElementById(`tab-${tab}`).classList.add('active')
+  btn.classList.add('active')
+}
+function toggleItem(el) {
+  const item = el.closest('.list-item')
+  if (item) item.classList.toggle('open')
+}
+
+/* ════════════════════════════════════════════════
+   DRAG & DROP — LIST ITEMS
+════════════════════════════════════════════════ */
+function initDragDrop(containerId, arr, renderFn) {
+  const container = document.getElementById(containerId)
+  if (!container) return
+  let dragIdx = null
+
+  container.querySelectorAll('.list-item').forEach((item, i) => {
+    const handle = item.querySelector('.drag-handle')
+    if (!handle) return
+
+    handle.addEventListener('mousedown', () => { item.draggable = true }, { capture: true })
+    document.addEventListener('mouseup', () => { item.draggable = false }, { once: true })
+
+    item.addEventListener('dragstart', e => {
+      dragIdx = i
+      e.dataTransfer.effectAllowed = 'move'
+      requestAnimationFrame(() => item.classList.add('is-dragging'))
+    })
+    item.addEventListener('dragend', () => {
+      item.classList.remove('is-dragging')
+      container.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'))
+      item.draggable = false
+      dragIdx = null
+    })
+    item.addEventListener('dragover', e => {
+      e.preventDefault()
+      e.dataTransfer.dropEffect = 'move'
+      container.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'))
+      if (dragIdx !== null && dragIdx !== i) item.classList.add('drop-target')
+    })
+    item.addEventListener('dragleave', e => {
+      if (!item.contains(e.relatedTarget)) item.classList.remove('drop-target')
+    })
+    item.addEventListener('drop', e => {
+      e.preventDefault()
+      item.classList.remove('drop-target')
+      if (dragIdx !== null && dragIdx !== i) {
+        const [moved] = arr.splice(dragIdx, 1)
+        arr.splice(i, 0, moved)
+        renderFn()
+      }
+    })
+  })
+}
+
+/* ════════════════════════════════════════════════
+   CHIPS INPUT (with drag & hl-sort)
+════════════════════════════════════════════════ */
+function makeChipsInput(tools, onChange, opts = {}) {
+  const wrap = document.createElement('div')
+  wrap.className = 'chips-wrap'
+  let items = (tools || []).map(t => typeof t === 'string' ? { name: t, hl: false } : { ...t })
+  let dragIdx = null
+
+  function render() {
+    wrap.innerHTML = ''
+    items.forEach((item, i) => {
+      const chip = document.createElement('span')
+      chip.className = 'chip' + (item.hl ? ' hl-chip' : '')
+      chip.draggable = true
+      chip.innerHTML = `${esc(item.name)}<button class="chip-del" title="Supprimer" type="button">×</button>`
+
+      // Delete
+      chip.querySelector('.chip-del').addEventListener('click', e => {
+        e.stopPropagation()
+        items.splice(i, 1)
+        render(); onChange([...items])
+      })
+
+      // Toggle highlight → sort hl first
+      if (opts.toggleHl) {
+        chip.title = 'Clic = toggle highlight · Glisser = réordonner'
+        chip.style.cursor = 'pointer'
+        chip.addEventListener('click', e => {
+          if (e.target.classList.contains('chip-del')) return
+          items[i] = { ...items[i], hl: !items[i].hl }
+          // Stable sort: hl items first, keep relative order within each group
+          const hl = items.filter(x => x.hl)
+          const nm = items.filter(x => !x.hl)
+          items = [...hl, ...nm]
+          render(); onChange([...items])
+        })
+      }
+
+      // Drag & drop chips
+      chip.addEventListener('dragstart', e => {
+        dragIdx = i
+        e.dataTransfer.effectAllowed = 'move'
+        e.stopPropagation() // don't bubble to list-item
+        requestAnimationFrame(() => { if (chip.isConnected) chip.style.opacity = '.35' })
+      })
+      chip.addEventListener('dragend', e => {
+        e.stopPropagation()
+        if (chip.isConnected) chip.style.opacity = ''
+        wrap.querySelectorAll('.chip.drop-target').forEach(c => c.classList.remove('drop-target'))
+        dragIdx = null
+      })
+      chip.addEventListener('dragover', e => {
+        e.preventDefault(); e.stopPropagation()
+        if (dragIdx !== null && dragIdx !== i) {
+          wrap.querySelectorAll('.chip.drop-target').forEach(c => c.classList.remove('drop-target'))
+          chip.classList.add('drop-target')
+        }
+      })
+      chip.addEventListener('dragleave', e => {
+        e.stopPropagation()
+        chip.classList.remove('drop-target')
+      })
+      chip.addEventListener('drop', e => {
+        e.preventDefault(); e.stopPropagation()
+        chip.classList.remove('drop-target')
+        if (dragIdx !== null && dragIdx !== i) {
+          const [moved] = items.splice(dragIdx, 1)
+          items.splice(i, 0, moved)
+          render(); onChange([...items])
+        }
+      })
+
+      wrap.appendChild(chip)
+    })
+
+    const inp = document.createElement('input')
+    inp.className = 'chip-input'
+    inp.placeholder = opts.placeholder || 'Ajouter… (Entrée)'
+    inp.addEventListener('keydown', e => {
+      if ((e.key === 'Enter' || e.key === ',') && inp.value.trim()) {
+        e.preventDefault()
+        inp.value.split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+          if (!items.find(x => x.name === name)) items.push({ name, hl: false })
+        })
+        inp.value = ''; render(); onChange([...items])
+      } else if (e.key === 'Backspace' && !inp.value && items.length) {
+        items.pop(); render(); onChange([...items])
+      }
+    })
+    wrap.appendChild(inp)
+  }
+
+  render()
+  return wrap
+}
+
+/* ════════════════════════════════════════════════
+   MARKDOWN EDITOR
+════════════════════════════════════════════════ */
+function makeMarkdownEditor(value, onChange, opts = {}) {
+  const rows = opts.rows || 5
+  const wrap = document.createElement('div')
+  wrap.className = 'md-editor'
+
+  // Toolbar
+  const toolbar = document.createElement('div')
+  toolbar.className = 'md-toolbar'
+
+  const ta = document.createElement('textarea')
+  ta.value = value || ''
+  ta.rows = rows
+  ta.style.cssText = 'min-height:' + (rows * 22 + 20) + 'px'
+  ta.addEventListener('input', () => onChange(ta.value))
+
+  const preview = document.createElement('div')
+  preview.className = 'md-preview'
+  preview.style.display = 'none'
+
+  // Format helpers
+  function wrap_sel(before, after) {
+    const s = ta.selectionStart, e = ta.selectionEnd
+    const sel = ta.value.slice(s, e) || 'texte'
+    ta.value = ta.value.slice(0, s) + before + sel + after + ta.value.slice(e)
+    ta.focus(); ta.setSelectionRange(s + before.length, s + before.length + sel.length)
+    onChange(ta.value)
+  }
+  function insert_line(prefix) {
+    const pos = ta.selectionStart
+    const before = ta.value.slice(0, pos)
+    const after = ta.value.slice(pos)
+    const nl = before.length && !before.endsWith('\n') ? '\n' : ''
+    ta.value = before + nl + prefix + after
+    const newPos = before.length + nl.length + prefix.length
+    ta.focus(); ta.setSelectionRange(newPos, newPos)
+    onChange(ta.value)
+  }
+
+  const BTNS = [
+    { html: '<b>B</b>',   title: 'Gras (**)',      fn: () => wrap_sel('**','**') },
+    { html: '<i>I</i>',   title: 'Italique (*)',    fn: () => wrap_sel('*','*') },
+    { html: '<code>`c`</code>', title: 'Code inline', fn: () => wrap_sel('`','`') },
+    null,
+    { html: 'H2',         title: 'Titre H2',        fn: () => insert_line('## ') },
+    { html: 'H3',         title: 'Titre H3',        fn: () => insert_line('### ') },
+    null,
+    { html: '• Liste',    title: 'Liste à puces',   fn: () => insert_line('- ') },
+    { html: '1. Liste',   title: 'Liste numérotée', fn: () => insert_line('1. ') },
+    { html: '&gt; Quote', title: 'Citation',        fn: () => insert_line('> ') },
+  ]
+
+  BTNS.forEach(b => {
+    if (!b) { const s = document.createElement('div'); s.className = 'md-sep-v'; toolbar.appendChild(s); return }
+    const btn = document.createElement('button')
+    btn.type = 'button'; btn.className = 'md-btn'; btn.innerHTML = b.html; btn.title = b.title
+    btn.addEventListener('click', () => { b.fn(); ta.dispatchEvent(new Event('input')) })
+    toolbar.appendChild(btn)
+  })
+
+  // Spacer
+  const sp = document.createElement('div'); sp.style.flex = '1'; toolbar.appendChild(sp)
+
+  // Preview toggle
+  const previewBtn = document.createElement('button')
+  previewBtn.type = 'button'; previewBtn.className = 'md-btn'; previewBtn.title = 'Aperçu rendu'
+  previewBtn.innerHTML = '<i class="fa fa-eye"></i> Aperçu'
+  let showing = false
+  previewBtn.addEventListener('click', () => {
+    showing = !showing
+    previewBtn.classList.toggle('active', showing)
+    if (showing) {
+      preview.innerHTML = typeof marked !== 'undefined' ? marked.parse(ta.value || '') : esc(ta.value)
+      preview.style.display = 'block'; ta.style.display = 'none'
+    } else {
+      preview.style.display = 'none'; ta.style.display = ''
+    }
+  })
+  toolbar.appendChild(previewBtn)
+
+  wrap.appendChild(toolbar)
+  wrap.appendChild(ta)
+  wrap.appendChild(preview)
+  return wrap
+}
+
+/* ════════════════════════════════════════════════
+   API
+════════════════════════════════════════════════ */
+async function apiGet(key) {
+  const r = await fetch(`/api/config/${key}`, { credentials: 'include' })
+  if (r.status === 401) { location.href = '/admin/login'; return [] }
+  if (!r.ok) return []
+  return r.json()
+}
+async function apiPut(key, data) {
+  const r = await fetch(`/api/config/${key}`, {
+    method: 'PUT', credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  if (r.status === 401) { location.href = '/admin/login'; return }
+  if (!r.ok) throw new Error('Erreur serveur')
+}
+async function saveSection(key, event) {
+  if (event) event.stopPropagation()
+  try {
+    await apiPut(key, state[key])
+    toast(`✓ ${key} sauvegardé`)
+    document.getElementById('lastSaved').textContent = 'Dernière save : ' + new Date().toLocaleTimeString('fr-FR')
+  } catch(e) { toast('Erreur : ' + e.message, 'error') }
+}
+
+/* ════════════════════════════════════════════════
+   NOW STRIP
+════════════════════════════════════════════════ */
+function renderNow() {
+  const list = document.getElementById('now-list')
+  list.innerHTML = ''
+  state['portfolio.now'].forEach((item, i) => {
+    const row = document.createElement('div')
+    row.className = 'list-item'
+    row.innerHTML = `
+      <div class="list-item-head" onclick="toggleItem(this)">
+        <i class="fa fa-grip-lines drag-handle" onclick="event.stopPropagation()"></i>
+        <div class="list-item-summary">
+          <i class="${esc(item.icon||'fa-solid fa-circle')}" style="color:var(--green);width:16px"></i>
+          <span class="list-item-title">${esc(item.text||'Nouvel item')}</span>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn-icon" onclick="state['portfolio.now'].splice(${i},1);renderNow();event.stopPropagation()" title="Supprimer"><i class="fa fa-trash"></i></button>
+          <i class="fa fa-chevron-down item-chevron"></i>
+        </div>
+      </div>
+      <div class="list-item-body">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Icône <span class="label-hint">(classe FA)</span></label>
+            <input value="${esc(item.icon)}" oninput="state['portfolio.now'][${i}].icon=this.value" placeholder="fa-solid fa-code"/>
+          </div>
+          <div class="form-group">
+            <label>Texte <span class="label-hint">(markdown : **gras**)</span></label>
+            <input value="${esc(item.text)}" oninput="state['portfolio.now'][${i}].text=this.value"/>
+          </div>
+        </div>
+      </div>
+    `
+    list.appendChild(row)
+  })
+  initDragDrop('now-list', state['portfolio.now'], renderNow)
+}
+function addNowItem() {
+  state['portfolio.now'].push({ icon: 'fa-solid fa-code', text: '' })
+  renderNow()
+  document.querySelector('#now-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   STATS
+════════════════════════════════════════════════ */
+function renderStats() {
+  const grid = document.getElementById('stats-grid')
+  grid.innerHTML = ''
+  state['portfolio.stats'].forEach((s, i) => {
+    const card = document.createElement('div')
+    card.style.cssText = 'background:var(--card-2);border:1px solid var(--line-2);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px;position:relative;'
+    card.innerHTML = `
+      <div class="form-group"><label>Valeur</label><input value="${esc(s.value)}" oninput="state['portfolio.stats'][${i}].value=this.value" placeholder="6+"/></div>
+      <div class="form-group"><label>Libellé</label><input value="${esc(s.label)}" oninput="state['portfolio.stats'][${i}].label=this.value" placeholder="Years in IT"/></div>
+      <button class="btn btn-danger btn-sm" onclick="state['portfolio.stats'].splice(${i},1);renderStats()"><i class="fa fa-trash"></i> Supprimer</button>
+    `
+    grid.appendChild(card)
+  })
+}
+function addStat() {
+  state['portfolio.stats'].push({ value: '', label: '' }); renderStats()
+}
+
+/* ════════════════════════════════════════════════
+   SKILLS
+════════════════════════════════════════════════ */
+function renderSkills() {
+  const list = document.getElementById('skills-list')
+  list.innerHTML = ''
+  state['portfolio.skills'].forEach((cat, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item open'
+
+    const head = document.createElement('div')
+    head.className = 'list-item-head'
+    head.addEventListener('click', () => item.classList.toggle('open'))
+    head.innerHTML = `
+      <i class="fa fa-grip-lines drag-handle"></i>
+      <div class="list-item-summary">
+        <span class="list-item-title">${esc(cat.title||'Catégorie')}</span>
+        <span class="list-item-sub">${(cat.tools||[]).length} outil(s) · ${(cat.tools||[]).filter(t=>t.hl).length} hl</span>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <i class="fa fa-chevron-down item-chevron"></i>
+      </div>
+    `
+    head.querySelector('.btn-icon').addEventListener('click', e => {
+      e.stopPropagation()
+      state['portfolio.skills'].splice(i, 1); renderSkills()
+    })
+    head.querySelector('.drag-handle').addEventListener('click', e => e.stopPropagation())
+
+    const body = document.createElement('div')
+    body.className = 'list-item-body'
+
+    const titleGroup = document.createElement('div')
+    titleGroup.className = 'form-group'
+    titleGroup.innerHTML = `<label>Titre de la catégorie</label><input value="${esc(cat.title||'')}" />`
+    titleGroup.querySelector('input').addEventListener('input', e => {
+      state['portfolio.skills'][i].title = e.target.value
+      head.querySelector('.list-item-title').textContent = e.target.value || 'Catégorie'
+    })
+
+    const lbl = document.createElement('div')
+    lbl.className = 'form-group'
+    lbl.innerHTML = `<label>Outils <span class="label-hint">Clic = highlight · Glisser = réordonner · Entrée = ajouter</span></label>`
+
+    const chips = makeChipsInput(
+      cat.tools || [],
+      tools => {
+        state['portfolio.skills'][i].tools = tools
+        head.querySelector('.list-item-sub').textContent = `${tools.length} outil(s) · ${tools.filter(t=>t.hl).length} hl`
+      },
+      { toggleHl: true, placeholder: 'Ajouter un outil…' }
+    )
+
+    body.appendChild(titleGroup)
+    body.appendChild(lbl)
+    body.appendChild(chips)
+    item.appendChild(head)
+    item.appendChild(body)
+    list.appendChild(item)
+  })
+  initDragDrop('skills-list', state['portfolio.skills'], renderSkills)
+}
+function addSkillCat() {
+  state['portfolio.skills'].push({ title: 'Nouvelle catégorie', tools: [] })
+  renderSkills()
+  document.querySelector('#skills-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   CERTIFICATIONS
+════════════════════════════════════════════════ */
+function renderCerts() {
+  const list = document.getElementById('certs-list')
+  list.innerHTML = ''
+  state['portfolio.certifications'].forEach((c, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item'
+    item.innerHTML = `
+      <div class="list-item-head" onclick="toggleItem(this)">
+        <i class="fa fa-grip-lines drag-handle" onclick="event.stopPropagation()"></i>
+        <div class="list-item-summary">
+          <span class="badge ${c.wip ? 'badge-wip' : 'badge-done'}">${c.wip ? 'En cours' : 'Obtenu'}</span>
+          <span class="list-item-title">${esc(c.name)}</span>
+          <span class="list-item-sub">${esc(c.year)}</span>
+        </div>
+        <div class="list-item-actions">
+          <button class="btn-icon" onclick="state['portfolio.certifications'].splice(${i},1);renderCerts();event.stopPropagation()"><i class="fa fa-trash"></i></button>
+          <i class="fa fa-chevron-down item-chevron"></i>
+        </div>
+      </div>
+      <div class="list-item-body">
+        <div class="form-row-2">
+          <div class="form-group"><label>Nom</label><input value="${esc(c.name)}" oninput="state['portfolio.certifications'][${i}].name=this.value"/></div>
+          <div class="form-group"><label>Année / Statut</label><input value="${esc(c.year)}" placeholder="2024 ou 'In progress'" oninput="state['portfolio.certifications'][${i}].year=this.value"/></div>
+        </div>
+        <label class="check-row"><input type="checkbox" ${c.wip?'checked':''} onchange="state['portfolio.certifications'][${i}].wip=this.checked;renderCerts()"/> En cours (badge hourglass)</label>
+      </div>
+    `
+    list.appendChild(item)
+  })
+  initDragDrop('certs-list', state['portfolio.certifications'], renderCerts)
+}
+function addCert() {
+  state['portfolio.certifications'].push({ name: '', year: '', wip: false })
+  renderCerts()
+  document.querySelector('#certs-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   CAREER
+════════════════════════════════════════════════ */
+function renderCareer() {
+  const list = document.getElementById('career-list')
+  list.innerHTML = ''
+  state['portfolio.career'].forEach((e, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item'
+
+    const head = document.createElement('div')
+    head.className = 'list-item-head'
+    head.addEventListener('click', () => item.classList.toggle('open'))
+    head.innerHTML = `
+      <i class="fa fa-grip-lines drag-handle"></i>
+      <div class="list-item-summary">
+        ${e.active ? `<span class="badge badge-active">Actuel</span>` : ''}
+        <span class="list-item-title">${esc(e.role||'Nouveau poste')}</span>
+        <span class="list-item-sub">${esc(e.company||'')}${e.dateRange?' · '+e.dateRange:''}</span>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <i class="fa fa-chevron-down item-chevron"></i>
+      </div>
+    `
+    head.querySelector('.btn-icon').addEventListener('click', ev => {
+      ev.stopPropagation(); state['portfolio.career'].splice(i, 1); renderCareer()
+    })
+    head.querySelector('.drag-handle').addEventListener('click', ev => ev.stopPropagation())
+
+    const body = document.createElement('div')
+    body.className = 'list-item-body'
+    body.innerHTML = `
+      <div class="form-row-2">
+        <div class="form-group"><label>Poste / Titre</label><input value="${esc(e.role||'')}" oninput="state['portfolio.career'][${i}].role=this.value"/></div>
+        <div class="form-group"><label>Entreprise</label><input value="${esc(e.company||'')}" oninput="state['portfolio.career'][${i}].company=this.value"/></div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label>Période</label><input value="${esc(e.dateRange||'')}" placeholder="2025 — now" oninput="state['portfolio.career'][${i}].dateRange=this.value"/></div>
+        <div class="form-group"><label>Lieu</label><input value="${esc(e.location||'')}" placeholder="Lyon, FR" oninput="state['portfolio.career'][${i}].location=this.value"/></div>
+        <div class="form-group"><label>Durée <span class="label-hint">(optionnel)</span></label><input value="${esc(e.duration||'')}" placeholder="2 ans" oninput="state['portfolio.career'][${i}].duration=this.value"/></div>
+      </div>
+      <div class="form-group">
+        <label>Bullets <span class="label-hint">une ligne = un bullet · markdown supporté (**gras**, *italique*)</span></label>
+      </div>
+    `
+    const bulletsEditor = makeMarkdownEditor(
+      (e.bullets||[]).join('\n'),
+      val => { state['portfolio.career'][i].bullets = val.split('\n') },
+      { rows: 6 }
+    )
+    body.appendChild(bulletsEditor)
+
+    const stackLbl = document.createElement('div')
+    stackLbl.className = 'form-group'
+    stackLbl.innerHTML = `<label>Stack <span class="label-hint">(Entrée pour ajouter)</span></label>`
+    body.appendChild(stackLbl)
+
+    const stackChips = makeChipsInput(
+      (e.stack||[]).map(s => ({ name: s, hl: false })),
+      tools => { state['portfolio.career'][i].stack = tools.map(t => t.name) },
+      { placeholder: 'Ajouter un outil…' }
+    )
+    body.appendChild(stackChips)
+
+    const activeCheck = document.createElement('label')
+    activeCheck.className = 'check-row'
+    activeCheck.innerHTML = `<input type="checkbox" ${e.active?'checked':''}/> Poste actuel (point vert sur la timeline)`
+    activeCheck.querySelector('input').addEventListener('change', ev => {
+      state['portfolio.career'][i].active = ev.target.checked; renderCareer()
+    })
+    body.appendChild(activeCheck)
+
+    item.appendChild(head)
+    item.appendChild(body)
+    list.appendChild(item)
+  })
+  initDragDrop('career-list', state['portfolio.career'], renderCareer)
+}
+function addCareer() {
+  state['portfolio.career'].unshift({ active: false, dateRange: '', location: '', role: '', company: '', duration: '', bullets: [], stack: [] })
+  renderCareer()
+  document.querySelector('#career-list .list-item')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   OSS PROJECTS
+════════════════════════════════════════════════ */
+function renderOss() {
+  const list = document.getElementById('oss-list')
+  list.innerHTML = ''
+  state['projects.oss'].forEach((p, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item'
+
+    const head = document.createElement('div')
+    head.className = 'list-item-head'
+    head.addEventListener('click', () => item.classList.toggle('open'))
+    head.innerHTML = `
+      <i class="fa fa-grip-lines drag-handle"></i>
+      <div class="list-item-summary">
+        ${p.featured ? `<span class="badge badge-active">Featured</span>` : ''}
+        <span class="list-item-title">${esc(p.name||'Nouveau projet')}</span>
+        <span class="list-item-sub">${esc(p.category||'')} · ${esc(p.status||'')}</span>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <i class="fa fa-chevron-down item-chevron"></i>
+      </div>
+    `
+    head.querySelector('.btn-icon').addEventListener('click', ev => {
+      ev.stopPropagation(); state['projects.oss'].splice(i, 1); renderOss()
+    })
+    head.querySelector('.drag-handle').addEventListener('click', ev => ev.stopPropagation())
+
+    const body = document.createElement('div')
+    body.className = 'list-item-body'
+
+    const statusSel = `<select onchange="state['projects.oss'][${i}].status=this.value">
+      ${['active','wip','maintained','archived'].map(s => `<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}
+    </select>`
+
+    body.innerHTML = `
+      <div class="form-row-3">
+        <div class="form-group"><label>Nom</label><input value="${esc(p.name||'')}" oninput="state['projects.oss'][${i}].name=this.value"/></div>
+        <div class="form-group"><label>Catégorie</label><input value="${esc(p.category||'')}" placeholder="DFIR PLATFORM" oninput="state['projects.oss'][${i}].category=this.value"/></div>
+        <div class="form-group"><label>Statut</label>${statusSel}</div>
+      </div>
+      <div class="form-group"><label>GitHub URL</label><input value="${esc(p.github||'')}" oninput="state['projects.oss'][${i}].github=this.value" placeholder="https://github.com/…"/></div>
+      <div class="form-group"><label>Description <span class="label-hint">markdown supporté</span></label></div>
+    `
+    body.appendChild(makeMarkdownEditor(p.description||'', val => { state['projects.oss'][i].description = val }, { rows: 5 }))
+
+    const annLbl = document.createElement('div'); annLbl.className = 'form-group'
+    annLbl.innerHTML = `<label>Annotation / Note perso <span class="label-hint">markdown inline</span></label>`
+    body.appendChild(annLbl)
+    body.appendChild(makeMarkdownEditor(p.annotation||'', val => { state['projects.oss'][i].annotation = val }, { rows: 2 }))
+
+    const stackLbl = document.createElement('div'); stackLbl.className = 'form-group'
+    stackLbl.innerHTML = `<label>Stack <span class="label-hint">Clic = toggle highlight · Glisser = réordonner</span></label>`
+    body.appendChild(stackLbl)
+    body.appendChild(makeChipsInput(p.stack||[], tools => { state['projects.oss'][i].stack = tools }, { toggleHl: true }))
+
+    // Milestones
+    const msWrap = document.createElement('div')
+    msWrap.innerHTML = `<div class="form-group"><label>Milestones / Roadmap</label></div>`
+    const msList = document.createElement('div')
+    msList.id = `ms-oss-${i}`
+    msList.style.cssText = 'display:flex;flex-direction:column;gap:6px;'
+    ;(p.milestones||[]).forEach((m, mi) => {
+      const row = document.createElement('div')
+      row.className = 'milestone-row'
+      row.innerHTML = `
+        <input type="checkbox" ${m.done?'checked':''} onchange="state['projects.oss'][${i}].milestones[${mi}].done=this.checked"/>
+        <input type="text" value="${esc(m.text)}" oninput="state['projects.oss'][${i}].milestones[${mi}].text=this.value" placeholder="Étape…"/>
+        <button class="btn-icon" onclick="state['projects.oss'][${i}].milestones.splice(${mi},1);renderOss()" title="Supprimer"><i class="fa fa-times"></i></button>
+      `
+      msList.appendChild(row)
+    })
+    msWrap.appendChild(msList)
+    const addMs = document.createElement('button')
+    addMs.type = 'button'; addMs.className = 'btn btn-ghost btn-sm'; addMs.innerHTML = '<i class="fa fa-plus"></i> Étape'
+    addMs.addEventListener('click', () => {
+      state['projects.oss'][i].milestones = state['projects.oss'][i].milestones || []
+      state['projects.oss'][i].milestones.push({ text: '', done: false }); renderOss()
+    })
+    msWrap.appendChild(addMs)
+    body.appendChild(msWrap)
+
+    const featCheck = document.createElement('label')
+    featCheck.className = 'check-row'
+    featCheck.innerHTML = `<input type="checkbox" ${p.featured?'checked':''}/> Projet featured (grande carte en haut)`
+    featCheck.querySelector('input').addEventListener('change', ev => { state['projects.oss'][i].featured = ev.target.checked })
+    body.appendChild(featCheck)
+
+    item.appendChild(head)
+    item.appendChild(body)
+    list.appendChild(item)
+  })
+  initDragDrop('oss-list', state['projects.oss'], renderOss)
+}
+function addOss() {
+  state['projects.oss'].push({ featured: false, category: '', status: 'wip', name: '', description: '', annotation: '', stack: [], milestones: [], github: '' })
+  renderOss()
+  document.querySelector('#oss-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   SIDE PROJECTS
+════════════════════════════════════════════════ */
+function renderSide() {
+  const list = document.getElementById('side-list')
+  list.innerHTML = ''
+  state['projects.side'].forEach((p, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item'
+
+    const head = document.createElement('div')
+    head.className = 'list-item-head'
+    head.addEventListener('click', () => item.classList.toggle('open'))
+    head.innerHTML = `
+      <i class="fa fa-grip-lines drag-handle"></i>
+      <div class="list-item-summary">
+        <span class="list-item-title">${esc(p.name||'Nouveau projet')}</span>
+        <span class="list-item-sub">${esc(p.category||'')}</span>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <i class="fa fa-chevron-down item-chevron"></i>
+      </div>
+    `
+    head.querySelector('.btn-icon').addEventListener('click', ev => {
+      ev.stopPropagation(); state['projects.side'].splice(i, 1); renderSide()
+    })
+    head.querySelector('.drag-handle').addEventListener('click', ev => ev.stopPropagation())
+
+    const body = document.createElement('div')
+    body.className = 'list-item-body'
+    const statusSel = `<select onchange="state['projects.side'][${i}].status=this.value">
+      ${['active','wip','maintained','archived'].map(s => `<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}
+    </select>`
+    body.innerHTML = `
+      <div class="form-row-3">
+        <div class="form-group"><label>Nom</label><input value="${esc(p.name||'')}" oninput="state['projects.side'][${i}].name=this.value"/></div>
+        <div class="form-group"><label>Catégorie</label><input value="${esc(p.category||'')}" oninput="state['projects.side'][${i}].category=this.value"/></div>
+        <div class="form-group"><label>Statut</label>${statusSel}</div>
+      </div>
+      <div class="form-group"><label>GitHub URL</label><input value="${esc(p.github||'')}" oninput="state['projects.side'][${i}].github=this.value"/></div>
+      <div class="form-group"><label>Description <span class="label-hint">markdown</span></label></div>
+    `
+    body.appendChild(makeMarkdownEditor(p.description||'', val => { state['projects.side'][i].description = val }, { rows: 4 }))
+    const annLbl = document.createElement('div'); annLbl.className = 'form-group'
+    annLbl.innerHTML = `<label>Annotation <span class="label-hint">markdown inline</span></label>`
+    body.appendChild(annLbl)
+    body.appendChild(makeMarkdownEditor(p.annotation||'', val => { state['projects.side'][i].annotation = val }, { rows: 2 }))
+    const stackLbl = document.createElement('div'); stackLbl.className = 'form-group'
+    stackLbl.innerHTML = `<label>Stack <span class="label-hint">(Entrée pour ajouter)</span></label>`
+    body.appendChild(stackLbl)
+    body.appendChild(makeChipsInput(
+      (p.stack||[]).map(s => ({ name: s, hl: false })),
+      tools => { state['projects.side'][i].stack = tools.map(t => t.name) }
+    ))
+
+    item.appendChild(head); item.appendChild(body); list.appendChild(item)
+  })
+  initDragDrop('side-list', state['projects.side'], renderSide)
+}
+function addSide() {
+  state['projects.side'].push({ category: '', status: 'maintained', name: '', description: '', annotation: '', stack: [], github: '' })
+  renderSide()
+  document.querySelector('#side-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   TALKS
+════════════════════════════════════════════════ */
+function renderTalks() {
+  const list = document.getElementById('talks-list')
+  list.innerHTML = ''
+  state['projects.talks'].forEach((t, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item'
+
+    const head = document.createElement('div')
+    head.className = 'list-item-head'
+    head.addEventListener('click', () => item.classList.toggle('open'))
+    head.innerHTML = `
+      <i class="fa fa-grip-lines drag-handle"></i>
+      <div class="list-item-summary">
+        <span class="badge badge-done">${esc(t.year||'')}</span>
+        <span class="list-item-title">${esc(t.title||'Nouveau talk')}</span>
+        <span class="list-item-sub">${esc(t.location||'')}</span>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <i class="fa fa-chevron-down item-chevron"></i>
+      </div>
+    `
+    head.querySelector('.btn-icon').addEventListener('click', ev => {
+      ev.stopPropagation(); state['projects.talks'].splice(i, 1); renderTalks()
+    })
+    head.querySelector('.drag-handle').addEventListener('click', ev => ev.stopPropagation())
+
+    const body = document.createElement('div')
+    body.className = 'list-item-body'
+    body.innerHTML = `
+      <div class="form-row-3">
+        <div class="form-group"><label>Conf / Event</label><input value="${esc(t.conf||'')}" oninput="state['projects.talks'][${i}].conf=this.value"/></div>
+        <div class="form-group"><label>Année</label><input value="${esc(t.year||'')}" oninput="state['projects.talks'][${i}].year=this.value"/></div>
+        <div class="form-group"><label>Statut</label>
+          <select onchange="state['projects.talks'][${i}].status=this.value">
+            ${['delivered','upcoming','cancelled'].map(s => `<option value="${s}" ${t.status===s?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Eyebrow</label><input value="${esc(t.eyebrow||'')}" oninput="state['projects.talks'][${i}].eyebrow=this.value"/></div>
+      <div class="form-group"><label>Titre du talk</label><input value="${esc(t.title||'')}" oninput="state['projects.talks'][${i}].title=this.value"/></div>
+      <div class="form-group"><label>Abstract <span class="label-hint">markdown · plusieurs paragraphes OK</span></label></div>
+    `
+    body.appendChild(makeMarkdownEditor(t.abstract||'', val => { state['projects.talks'][i].abstract = val }, { rows: 6 }))
+
+    const annLbl = document.createElement('div'); annLbl.className = 'form-group'
+    annLbl.innerHTML = `<label>Annotation perso</label>`
+    body.appendChild(annLbl)
+    body.appendChild(makeMarkdownEditor(t.annotation||'', val => { state['projects.talks'][i].annotation = val }, { rows: 2 }))
+
+    const metaDiv = document.createElement('div')
+    metaDiv.innerHTML = `
+      <div class="form-row-2">
+        <div class="form-group"><label>Lieu</label><input value="${esc(t.location||'')}" oninput="state['projects.talks'][${i}].location=this.value"/></div>
+        <div class="form-group"><label>Date affichée</label><input value="${esc(t.date||'')}" placeholder="WAQ 2023 · April 2023" oninput="state['projects.talks'][${i}].date=this.value"/></div>
+      </div>
+      <div class="form-row-2">
+        <div class="form-group"><label>Audience</label><input value="${esc(t.attendees||'')}" placeholder="~150 attendees" oninput="state['projects.talks'][${i}].attendees=this.value"/></div>
+        <div class="form-group"><label>Langue</label><input value="${esc(t.language||'')}" oninput="state['projects.talks'][${i}].language=this.value"/></div>
+      </div>
+      <div class="form-group"><label>Topics <span class="label-hint">(Entrée pour ajouter)</span></label></div>
+    `
+    body.appendChild(metaDiv)
+    body.appendChild(makeChipsInput(
+      (t.topics||[]).map(s => ({ name: s, hl: false })),
+      tools => { state['projects.talks'][i].topics = tools.map(x => x.name) },
+      { placeholder: 'Ajouter un topic…' }
+    ))
+
+    item.appendChild(head); item.appendChild(body); list.appendChild(item)
+  })
+  initDragDrop('talks-list', state['projects.talks'], renderTalks)
+}
+function addTalk() {
+  state['projects.talks'].push({ conf: '', year: String(new Date().getFullYear()), status: 'upcoming', eyebrow: '', title: '', abstract: '', annotation: '', topics: [], location: '', date: '', attendees: '', language: 'French' })
+  renderTalks()
+  document.querySelector('#talks-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   COMMUNITY
+════════════════════════════════════════════════ */
+function renderCommunity() {
+  const list = document.getElementById('community-list')
+  list.innerHTML = ''
+  state['projects.community'].forEach((c, i) => {
+    const item = document.createElement('div')
+    item.className = 'list-item'
+
+    const head = document.createElement('div')
+    head.className = 'list-item-head'
+    head.addEventListener('click', () => item.classList.toggle('open'))
+    head.innerHTML = `
+      <i class="fa fa-grip-lines drag-handle"></i>
+      <div class="list-item-summary">
+        <i class="${esc(c.icon||'fa-solid fa-star')}" style="color:var(--green);width:16px;flex-shrink:0"></i>
+        <span class="list-item-title">${esc(c.title||'Nouvelle contribution')}</span>
+        <span class="list-item-sub">${esc(c.category||'')}</span>
+      </div>
+      <div class="list-item-actions">
+        <button class="btn-icon" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <i class="fa fa-chevron-down item-chevron"></i>
+      </div>
+    `
+    head.querySelector('.btn-icon').addEventListener('click', ev => {
+      ev.stopPropagation(); state['projects.community'].splice(i, 1); renderCommunity()
+    })
+    head.querySelector('.drag-handle').addEventListener('click', ev => ev.stopPropagation())
+
+    const body = document.createElement('div')
+    body.className = 'list-item-body'
+    body.innerHTML = `
+      <div class="form-row-2">
+        <div class="form-group"><label>Titre</label><input value="${esc(c.title||'')}" oninput="state['projects.community'][${i}].title=this.value"/></div>
+        <div class="form-group"><label>Catégorie</label><input value="${esc(c.category||'')}" oninput="state['projects.community'][${i}].category=this.value"/></div>
+      </div>
+      <div class="form-group"><label>Icône FA <span class="label-hint">(ex: fa-solid fa-flag)</span></label><input value="${esc(c.icon||'')}" oninput="state['projects.community'][${i}].icon=this.value"/></div>
+      <div class="form-group"><label>Description</label><textarea rows="3" oninput="state['projects.community'][${i}].description=this.value">${esc(c.description||'')}</textarea></div>
+      <div class="form-group"><label>Items <span class="label-hint">(une ligne = un item)</span></label><textarea rows="5" oninput="state['projects.community'][${i}].items=this.value.split('\\n').filter(Boolean)">${esc((c.items||[]).join('\n'))}</textarea></div>
+      <div class="form-group"><label>Méta <span class="label-hint">(entreprise, date, lieu…)</span></label><input value="${esc(c.meta||'')}" oninput="state['projects.community'][${i}].meta=this.value"/></div>
+    `
+    item.appendChild(head); item.appendChild(body); list.appendChild(item)
+  })
+  initDragDrop('community-list', state['projects.community'], renderCommunity)
+}
+function addCommunity() {
+  state['projects.community'].push({ icon: 'fa-solid fa-star', category: '', title: '', description: '', items: [], meta: '' })
+  renderCommunity()
+  document.querySelector('#community-list .list-item:last-child')?.classList.add('open')
+}
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+async function init() {
+  await Promise.all(Object.keys(state).map(async key => {
+    try { const d = await apiGet(key); if (Array.isArray(d)) state[key] = d } catch {}
+  }))
+  renderNow(); renderStats(); renderSkills(); renderCerts(); renderCareer()
+  renderOss(); renderSide(); renderTalks(); renderCommunity()
+}
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+  location.href = '/admin/login'
+})
+
+init()
+</script>
+</body>
+</html>

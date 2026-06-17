@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <title>Admin — Docs Editor</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="./src/style.css"/>
+  <style>
+    /* ── Layout override for docs (full-screen, no scroll) ── */
+    html, body { height: 100%; overflow: hidden; }
+    .app { display: flex; height: 100vh; }
+
+    /* Admin sidebar (reuses existing sidebar styles) */
+    .sidebar { width: 200px; }
+
+    /* File tree panel */
+    .file-tree-panel {
+      width: 240px; flex-shrink: 0;
+      background: #0D1524; border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .ft-head {
+      padding: 12px 14px 10px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 8px; flex-shrink: 0;
+    }
+    .ft-head-title { font-family: var(--mono); font-size: 10px; color: var(--green); letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+    .ft-actions { display: flex; gap: 4px; }
+    .ft-scroll { flex: 1; overflow-y: auto; padding: 6px 0 12px; }
+    .ft-scroll::-webkit-scrollbar { width: 4px; }
+    .ft-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
+
+    /* Tree items */
+    .ft-ul { list-style: none; padding: 0; margin: 0; }
+    .ft-ul .ft-ul { padding-left: 12px; }
+
+    .ft-folder-head {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 14px 4px 10px; cursor: pointer;
+      font-family: var(--mono); font-size: 10px; font-weight: 600;
+      color: var(--fg-3); letter-spacing: .06em; text-transform: uppercase;
+      user-select: none; transition: all .15s;
+    }
+    .ft-folder-head:hover { color: var(--fg); background: rgba(255,255,255,.03); }
+    .ft-folder-head .fa-chevron-right { font-size: 8px; color: var(--fg-4); transition: transform .2s; }
+    .folder-actions { display: none; align-items: center; gap: 2px; margin-left: auto; flex-shrink: 0; }
+    .ft-folder-head:hover .folder-actions { display: inline-flex; }
+    .ft-folder-head .add-btn { color: var(--fg-4); font-size: 11px; padding: 2px 5px; border-radius: 3px; cursor: pointer; line-height: 1.4; }
+    .ft-folder-head .add-btn:hover { color: var(--green); background: rgba(45,212,191,.08); }
+    /* Inline folder creation input in tree */
+    .ft-folder-inline { padding: 3px 10px 3px 24px; }
+    .ft-folder-inline .new-note-input { width: 100%; font-size: 11px; }
+    .ft-folder.open > .ft-folder-head .fa-chevron-right { transform: rotate(90deg); }
+    .ft-folder > .ft-ul { display: none; }
+    .ft-folder.open > .ft-ul { display: block; }
+
+    .ft-note {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 14px 4px 18px; cursor: pointer;
+      font-size: 12px; color: var(--fg-3);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: all .15s; border-left: 2px solid transparent; margin-left: 2px;
+    }
+    .ft-note .fa-file-lines { font-size: 10px; color: var(--fg-4); flex-shrink: 0; }
+    .ft-note span { overflow: hidden; text-overflow: ellipsis; flex: 1; }
+    .ft-note .del-btn { display: none; flex-shrink: 0; color: var(--fg-4); font-size: 10px; padding: 1px 3px; border-radius: 3px; cursor: pointer; }
+    .ft-note:hover { color: var(--fg); background: rgba(255,255,255,.03); }
+    .ft-note:hover .del-btn { display: inline; }
+    .ft-note .del-btn:hover { color: var(--danger); }
+    .ft-note.active { color: var(--green); border-left-color: var(--green); background: rgba(45,212,191,.04); }
+    .ft-note.draft::after { content: ' ·'; color: var(--warning); }
+
+    .new-note-bar {
+      display: none; gap: 6px; padding: 8px 10px;
+      background: var(--card); border-top: 1px solid var(--line); flex-shrink: 0;
+    }
+    .new-note-bar.show { display: flex; }
+    .new-note-input {
+      flex: 1; background: var(--card-3); border: 1px solid var(--line-2);
+      border-radius: 4px; color: var(--fg); font-family: var(--mono);
+      font-size: 11px; padding: 5px 8px; outline: none;
+    }
+    .new-note-input:focus { border-color: var(--green); }
+    .new-note-input::placeholder { color: var(--fg-4); }
+
+    /* ── Editor area ── */
+    .editor-area {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+      overflow: hidden; background: var(--bg);
+    }
+    .editor-topbar {
+      padding: 9px 20px; border-bottom: 1px solid var(--line);
+      background: var(--deep); display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+    .path-label { font-family: var(--mono); font-size: 10px; color: var(--fg-4); letter-spacing: .08em; white-space: nowrap; }
+    #notePath {
+      font-family: var(--mono); font-size: 12px; background: var(--card-3);
+      border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg-3);
+      padding: 4px 8px; outline: none; width: 200px; transition: border-color .15s;
+    }
+    #notePath:focus { border-color: var(--green); color: var(--fg); }
+    #noteTitle {
+      flex: 1; font-size: 16px; font-weight: 700;
+      background: transparent; border: none; color: var(--fg); outline: none;
+    }
+    #noteTitle::placeholder { color: var(--fg-4); font-weight: 400; }
+
+    /* TipTap toolbar */
+    .tiptap-toolbar {
+      display: flex; align-items: center; gap: 2px; padding: 5px 12px;
+      background: var(--card-3); border-bottom: 1px solid var(--line); flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .tiptap-toolbar button {
+      background: none; border: 1px solid transparent; color: var(--fg-3);
+      padding: 3px 7px; border-radius: 4px; cursor: pointer;
+      font-size: 12px; font-family: var(--mono); line-height: 1.5; transition: all .1s;
+    }
+    .tiptap-toolbar button:hover { color: var(--fg); background: var(--card-2); }
+    .tiptap-toolbar button.active { color: var(--green); border-color: rgba(45,212,191,.3); background: rgba(45,212,191,.06); }
+    .tiptap-toolbar .sep { width: 1px; height: 16px; background: var(--line-2); margin: 0 3px; flex-shrink: 0; }
+    .tiptap-toolbar .hint { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--fg-4); }
+
+    /* TipTap editor content area */
+    .editor-scroll {
+      flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+    }
+    .editor-scroll::-webkit-scrollbar { width: 8px; }
+    .editor-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+    #docsEditor { flex: 1; }
+
+    /* ProseMirror styles */
+    .ProseMirror {
+      outline: none; min-height: 100%;
+      padding: 40px 60px 80px; max-width: 860px; margin: 0 auto;
+      font-size: 15px; line-height: 1.78; color: var(--fg-2);
+      caret-color: var(--green);
+    }
+    .ProseMirror p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder); color: var(--fg-4);
+      pointer-events: none; position: absolute; font-style: italic;
+    }
+    .ProseMirror p { margin-bottom: .65em; }
+    .ProseMirror h1 { font-family: var(--font-display); font-size: 2.1em; font-weight: 800; color: var(--fg); letter-spacing: -.02em; margin-top: .2em; margin-bottom: .4em; line-height: 1.15; }
+    .ProseMirror h2 { font-family: var(--font-display); font-size: 1.45em; font-weight: 700; color: var(--fg); margin-top: 1.8em; padding-bottom: .35em; border-bottom: 1px solid var(--line); margin-bottom: .5em; }
+    .ProseMirror h3 { font-family: var(--font-display); font-size: 1.2em; font-weight: 700; color: var(--fg); margin-top: 1.5em; }
+    .ProseMirror h4 { font-size: 1em; font-weight: 700; color: var(--fg-2); margin-top: 1.2em; }
+    .ProseMirror strong { color: var(--fg); font-weight: 700; }
+    .ProseMirror em { color: var(--fg-2); }
+    .ProseMirror s { opacity: .6; }
+    .ProseMirror a { color: var(--info); border-bottom: 1px solid rgba(92,179,255,.3); text-decoration: none; }
+    .ProseMirror a:hover { border-bottom-color: var(--info); }
+    .ProseMirror ul, .ProseMirror ol { padding-left: 1.5em; margin: .5em 0; }
+    .ProseMirror li { margin: .25em 0; }
+    .ProseMirror li p { margin: 0; }
+    .ProseMirror blockquote {
+      border-left: 3px solid var(--line-2); padding-left: 16px;
+      color: var(--fg-3); margin: 1em 0; border-radius: 0 4px 4px 0;
+    }
+    .ProseMirror code {
+      background: rgba(45,212,191,.06); border: 1px solid rgba(45,212,191,.15);
+      padding: 1px 6px; border-radius: 4px;
+      font-family: var(--mono); font-size: .84em; color: var(--green);
+    }
+    .ProseMirror pre {
+      background: var(--card-2); border: 1px solid var(--line);
+      border-radius: 10px; padding: 16px 18px; overflow-x: auto; margin: 1em 0;
+    }
+    .ProseMirror pre code {
+      background: none; border: none; padding: 0; color: inherit; font-size: .85em;
+    }
+    .ProseMirror hr { border: none; border-top: 1px solid var(--line); margin: 2em 0; }
+    .ProseMirror table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    .ProseMirror th { background: var(--card-2); padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid var(--line); }
+    .ProseMirror td { padding: 8px 12px; border: 1px solid var(--line); }
+    .ProseMirror .selectedCell::after { background: rgba(45,212,191,.1); }
+
+    /* WikiLink decoration */
+    .wiki-link-deco {
+      color: var(--green); cursor: pointer;
+      border-bottom: 1px solid rgba(45,212,191,.35);
+      transition: border-color .15s; border-radius: 2px;
+    }
+    .wiki-link-deco:hover { border-bottom-color: var(--green); background: rgba(45,212,191,.06); }
+    .wiki-link-deco.missing {
+      color: var(--fg-3); cursor: default;
+      border-bottom: 1px dashed rgba(110,123,150,.4);
+    }
+    .wiki-link-deco.missing:hover { background: none; border-bottom-color: rgba(110,123,150,.4); }
+
+    /* WikiLink autocomplete dropdown */
+    .wiki-suggest {
+      position: fixed; z-index: 9000;
+      background: var(--card-2); border: 1px solid var(--line-2);
+      border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.55);
+      min-width: 220px; max-width: 320px; max-height: 280px;
+      overflow-y: auto; padding: 4px;
+      font-size: 12px;
+    }
+    .wiki-suggest::-webkit-scrollbar { width: 4px; }
+    .wiki-suggest::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
+    .wiki-suggest-item {
+      display: flex; align-items: center; gap: 7px;
+      padding: 6px 10px; border-radius: 5px; cursor: pointer;
+      color: var(--fg-2); transition: all .1s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .wiki-suggest-item .fa { color: var(--fg-4); font-size: 10px; flex-shrink: 0; }
+    .wiki-suggest-item:hover,
+    .wiki-suggest-item.active {
+      background: rgba(45,212,191,.08); color: var(--fg);
+    }
+    .wiki-suggest-item.active .fa { color: var(--green); }
+
+    /* Resizable image */
+    .resizable-img-wrap {
+      display: inline-block; position: relative;
+      line-height: 0; cursor: default; user-select: none;
+    }
+    .resizable-img-wrap img {
+      display: block; max-width: 100%; border-radius: 6px;
+      border: 2px solid transparent; transition: border-color .15s;
+    }
+    .resizable-img-wrap.selected img { border-color: var(--green); }
+    .resize-handle {
+      position: absolute; width: 10px; height: 10px;
+      background: var(--green); border: 2px solid var(--on-green);
+      border-radius: 2px; display: none; z-index: 10;
+    }
+    .resizable-img-wrap.selected .resize-handle { display: block; }
+    .resize-handle.nw { top: -5px; left: -5px; cursor: nw-resize; }
+    .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
+    .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+    .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+    /* ── Properties panel ── */
+    .props-panel {
+      width: 230px; flex-shrink: 0;
+      background: var(--deep); border-left: 1px solid var(--line);
+      display: flex; flex-direction: column; overflow-y: auto; padding: 14px;
+    }
+    .props-panel::-webkit-scrollbar { width: 4px; }
+    .props-panel::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
+    .props-group { margin-bottom: 16px; }
+    .props-group-label { font-family: var(--mono); font-size: 10px; color: var(--fg-4); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 7px; }
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+    .toggle-label { font-size: 13px; color: var(--fg-2); }
+    .toggle { position: relative; width: 36px; height: 20px; }
+    .toggle input { display: none; }
+    .toggle-track { position: absolute; inset: 0; background: var(--card-3); border: 1px solid var(--line-2); border-radius: 10px; cursor: pointer; transition: all .2s; }
+    .toggle input:checked + .toggle-track { background: rgba(45,212,191,.2); border-color: var(--green); }
+    .toggle-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: var(--fg-4); border-radius: 50%; transition: all .2s; }
+    .toggle input:checked + .toggle-track::after { transform: translateX(16px); background: var(--green); }
+    /* Key/value properties */
+    .prop-row { display: flex; align-items: center; gap: 5px; margin-bottom: 5px; }
+    .prop-key-label { font-family: var(--mono); font-size: 10px; color: var(--fg-4); background: var(--card-2); border: 1px solid var(--line-2); border-radius: 4px; padding: 3px 6px; white-space: nowrap; max-width: 70px; overflow: hidden; text-overflow: ellipsis; cursor: default; flex-shrink: 0; }
+    .prop-colon { color: var(--fg-4); font-size: 11px; flex-shrink: 0; }
+    .prop-val-edit { flex: 1; min-width: 0; background: var(--card-3); border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg); font-size: 11px; padding: 3px 6px; outline: none; transition: border-color .15s; }
+    .prop-val-edit:focus { border-color: var(--green); }
+    .prop-del { background: none; border: none; color: var(--fg-4); cursor: pointer; padding: 2px 4px; font-size: 12px; line-height: 1; flex-shrink: 0; transition: color .15s; }
+    .prop-del:hover { color: var(--danger); }
+    .prop-add-row { display: flex; align-items: center; gap: 4px; margin-top: 6px; }
+    .prop-key-input, .prop-val-input { background: var(--card-3); border: 1px solid var(--line-2); border-radius: 4px; color: var(--fg); font-family: var(--mono); font-size: 11px; padding: 4px 6px; outline: none; transition: border-color .15s; }
+    .prop-key-input:focus, .prop-val-input:focus { border-color: var(--green); }
+    .prop-key-input { width: 72px; flex-shrink: 0; }
+    .prop-val-input { flex: 1; min-width: 0; }
+    .prop-key-input::placeholder, .prop-val-input::placeholder { color: var(--fg-4); }
+    .prop-sep { color: var(--fg-4); font-size: 11px; flex-shrink: 0; }
+
+    /* ── Template modal ── */
+    .tpl-open-btn {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      width: 100%; padding: 8px 12px; border-radius: var(--radius);
+      background: var(--card-3); border: 1px solid var(--line-2);
+      color: var(--fg-3); font-size: 12px; cursor: pointer; transition: all .15s;
+    }
+    .tpl-open-btn:hover { border-color: rgba(45,212,191,.35); color: var(--fg); background: rgba(45,212,191,.05); }
+    .tpl-open-btn .fa { color: var(--fg-4); font-size: 11px; }
+    .tpl-open-btn:hover .fa { color: var(--green); }
+
+    .tpl-modal-overlay {
+      position: fixed; inset: 0; z-index: 5000;
+      background: rgba(5,10,18,.82); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center;
+    }
+    .tpl-modal-overlay.open { display: flex; }
+
+    .tpl-modal {
+      width: min(1100px, 92vw); height: min(720px, 88vh);
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; box-shadow: 0 24px 64px rgba(0,0,0,.7);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* Modal header */
+    .tpl-modal-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; border-bottom: 1px solid var(--line);
+      flex-shrink: 0; background: var(--deep);
+    }
+    .tpl-modal-header-title {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      color: var(--green); text-transform: uppercase; letter-spacing: .12em; flex: 1;
+    }
+    .tpl-modal-close {
+      background: none; border: none; color: var(--fg-4); cursor: pointer;
+      font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px; transition: color .15s;
+    }
+    .tpl-modal-close:hover { color: var(--fg); }
+
+    /* Modal body — two panes */
+    .tpl-modal-body { display: flex; flex: 1; min-height: 0; }
+
+    /* Left: list */
+    .tpl-modal-list-panel {
+      width: 220px; flex-shrink: 0;
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      background: #0D1524;
+    }
+    .tpl-modal-list-head {
+      padding: 10px 12px; border-bottom: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .tpl-modal-list-label { font-family: var(--mono); font-size: 10px; color: var(--fg-4); text-transform: uppercase; letter-spacing: .1em; }
+    .tpl-modal-list-scroll { flex: 1; overflow-y: auto; padding: 6px; }
+    .tpl-modal-list-scroll::-webkit-scrollbar { width: 4px; }
+    .tpl-modal-list-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 2px; }
+    .tpl-list-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 9px; border-radius: 6px; cursor: pointer;
+      font-size: 12px; color: var(--fg-3); transition: all .12s;
+      border: 1px solid transparent;
+    }
+    .tpl-list-item .fa { font-size: 10px; color: var(--fg-4); flex-shrink: 0; }
+    .tpl-list-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tpl-list-item:hover { color: var(--fg); background: rgba(255,255,255,.04); }
+    .tpl-list-item.active { color: var(--green); background: rgba(45,212,191,.06); border-color: rgba(45,212,191,.2); }
+    .tpl-list-item.active .fa { color: var(--green); }
+    .tpl-list-empty { font-size: 11px; color: var(--fg-4); font-style: italic; padding: 10px 8px; }
+
+    /* Right: editor pane */
+    .tpl-modal-editor-pane {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+    }
+    .tpl-modal-topbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-bottom: 1px solid var(--line);
+      background: var(--deep); flex-shrink: 0;
+    }
+    #tplModalName {
+      flex: 1; font-size: 14px; font-weight: 600;
+      background: transparent; border: none; color: var(--fg);
+      outline: none; padding: 2px 0;
+    }
+    #tplModalName::placeholder { color: var(--fg-4); font-weight: 400; }
+    .tpl-modal-toolbar {
+      display: flex; align-items: center; gap: 2px; padding: 5px 12px;
+      background: var(--card-3); border-bottom: 1px solid var(--line);
+      flex-shrink: 0; flex-wrap: wrap;
+    }
+    .tpl-modal-toolbar button {
+      background: none; border: 1px solid transparent; color: var(--fg-3);
+      padding: 3px 7px; border-radius: 4px; cursor: pointer;
+      font-size: 12px; font-family: var(--mono); line-height: 1.5; transition: all .1s;
+    }
+    .tpl-modal-toolbar button:hover { color: var(--fg); background: var(--card-2); }
+    .tpl-modal-toolbar button.active { color: var(--green); border-color: rgba(45,212,191,.3); background: rgba(45,212,191,.06); }
+    .tpl-modal-toolbar .sep { width: 1px; height: 16px; background: var(--line-2); margin: 0 3px; }
+    .tpl-editor-scroll { flex: 1; overflow-y: auto; }
+    .tpl-editor-scroll::-webkit-scrollbar { width: 6px; }
+    .tpl-editor-scroll::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 3px; }
+    #tplEditorEl { min-height: 100%; }
+    .tpl-modal-footer {
+      display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+      padding: 10px 16px; border-top: 1px solid var(--line);
+      background: var(--deep); flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Admin sidebar -->
+  <aside class="sidebar">
+    <div class="logo">Ch4rybd3 / Admin</div>
+    <nav>
+      <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
+      <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+      <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
+      <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
+      <a href="/admin/docs" class="active"><i class="fa fa-book fa-fw"></i> Docs</a>
+        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
+        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
+    </nav>
+    <div class="bottom">
+      <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
+        <i class="fa fa-right-from-bracket"></i> Déconnexion
+      </button>
+    </div>
+  </aside>
+
+  <!-- File tree -->
+  <div class="file-tree-panel">
+    <div class="ft-head">
+      <span class="ft-head-title">Notes</span>
+      <div class="ft-actions">
+        <button class="btn btn-ghost btn-sm" id="btnNewNote" title="Nouvelle note"><i class="fa fa-file-circle-plus"></i></button>
+        <a href="/docs" target="_blank" class="btn btn-ghost btn-sm" title="Voir le site public"><i class="fa fa-arrow-up-right-from-square"></i></a>
+      </div>
+    </div>
+    <div class="ft-scroll" id="fileTree"></div>
+    <div class="new-note-bar" id="newNoteBar">
+      <input class="new-note-input" id="newNotePath" placeholder="dossier/nom-note" autocomplete="off"/>
+      <button class="btn btn-primary btn-sm" id="btnCreate"><i class="fa fa-check"></i></button>
+      <button class="btn btn-ghost btn-sm" id="btnCancelNew"><i class="fa fa-times"></i></button>
+    </div>
+  </div>
+
+  <!-- Editor area -->
+  <div class="editor-area">
+    <div class="editor-topbar">
+      <span class="path-label">PATH</span>
+      <input id="notePath" placeholder="dossier/slug" autocomplete="off"/>
+      <input id="noteTitle" placeholder="Titre de la note…"/>
+      <button class="btn btn-primary btn-sm" id="saveBtn"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+      <a id="previewLink" href="#" target="_blank" class="btn btn-ghost btn-sm" title="Voir sur le site"><i class="fa fa-external-link-alt"></i></a>
+    </div>
+    <div class="tiptap-toolbar" id="toolbar">
+      <button data-cmd="bold" title="Gras"><b>B</b></button>
+      <button data-cmd="italic" title="Italique"><i>I</i></button>
+      <button data-cmd="strike" title="Barré"><s>S</s></button>
+      <button data-cmd="code" title="Code inline"><code>`c`</code></button>
+      <div class="sep"></div>
+      <button data-cmd="h1">H1</button>
+      <button data-cmd="h2">H2</button>
+      <button data-cmd="h3">H3</button>
+      <div class="sep"></div>
+      <button data-cmd="bulletList" title="Liste à puces"><i class="fa fa-list-ul"></i></button>
+      <button data-cmd="orderedList" title="Liste numérotée"><i class="fa fa-list-ol"></i></button>
+      <div class="sep"></div>
+      <button data-cmd="blockquote" title="Citation"><i class="fa fa-quote-left"></i></button>
+      <button data-cmd="codeBlock" title="Bloc de code"><i class="fa fa-code"></i></button>
+      <button data-cmd="hr" title="Séparateur">—</button>
+      <div class="sep"></div>
+      <button data-cmd="link" title="Lien"><i class="fa fa-link"></i></button>
+      <button data-cmd="image" title="Image"><i class="fa fa-image"></i></button>
+      <button data-cmd="wikilink" title="WikiLink">[[…]]</button>
+      <div class="sep"></div>
+      <button data-cmd="undo" title="Annuler"><i class="fa fa-rotate-left"></i></button>
+      <button data-cmd="redo" title="Rétablir"><i class="fa fa-rotate-right"></i></button>
+      <span class="hint">Coller ou déposer une image pour l'insérer · Ctrl+S pour sauvegarder</span>
+    </div>
+    <div class="editor-scroll">
+      <div id="docsEditor"></div>
+    </div>
+    <input type="file" id="imageFileInput" accept="image/*" style="display:none"/>
+  </div>
+
+  <!-- Properties panel -->
+  <div class="props-panel">
+    <div class="props-group">
+      <div class="props-group-label">Propriétés</div>
+      <div id="propsRows"></div>
+      <div class="prop-add-row">
+        <input class="prop-key-input" id="propKeyInput" placeholder="clé" autocomplete="off"/>
+        <span class="prop-sep">:</span>
+        <input class="prop-val-input" id="propValInput" placeholder="valeur" autocomplete="off" list="propValSuggestions"/>
+        <datalist id="propValSuggestions"></datalist>
+        <button class="btn btn-ghost btn-sm" id="propAddBtn" title="Ajouter la propriété"><i class="fa fa-plus"></i></button>
+      </div>
+    </div>
+    <div class="props-group">
+      <div class="props-group-label">Statut</div>
+      <div class="toggle-row">
+        <span class="toggle-label">Publié</span>
+        <label class="toggle">
+          <input type="checkbox" id="publishedToggle" checked/>
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+    </div>
+    <div class="props-group" style="border-top:1px solid var(--line);padding-top:14px">
+      <button class="btn btn-primary btn-sm" id="saveBtnProps" style="width:100%;justify-content:center;margin-bottom:8px"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+      <button class="btn btn-danger btn-sm" id="deleteBtn" style="width:100%;justify-content:center"><i class="fa fa-trash"></i> Supprimer</button>
+    </div>
+    <div id="propsMeta" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--fg-4);line-height:1.7"></div>
+
+    <!-- Templates button -->
+    <div class="props-group" style="border-top:1px solid var(--line);padding-top:14px;margin-top:6px">
+      <button class="tpl-open-btn" id="openTplModal">
+        <i class="fa fa-puzzle-piece"></i> Gérer les templates
+      </button>
+    </div>
+  </div>
+
+</div>
+
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+     TEMPLATES MODAL
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<div class="tpl-modal-overlay" id="tplModalOverlay">
+  <div class="tpl-modal">
+    <!-- Header -->
+    <div class="tpl-modal-header">
+      <span class="tpl-modal-header-title"><i class="fa fa-puzzle-piece"></i> &nbsp;Templates</span>
+      <button class="btn btn-ghost btn-sm" id="tplFromNoteBtn" title="Créer un template depuis la note active" style="font-size:11px">
+        <i class="fa fa-arrow-up-from-bracket"></i> Depuis la note
+      </button>
+      <button class="tpl-modal-close" id="tplModalClose" title="Fermer">×</button>
+    </div>
+
+    <div class="tpl-modal-body">
+      <!-- Left: list -->
+      <div class="tpl-modal-list-panel">
+        <div class="tpl-modal-list-head">
+          <span class="tpl-modal-list-label">Mes templates</span>
+          <button class="btn btn-ghost btn-sm" id="tplNewBtn" title="Nouveau template"><i class="fa fa-plus"></i></button>
+        </div>
+        <div class="tpl-modal-list-scroll" id="tplModalList"></div>
+      </div>
+
+      <!-- Right: editor -->
+      <div class="tpl-modal-editor-pane">
+        <div class="tpl-modal-topbar">
+          <input id="tplModalName" placeholder="Nom du template…" autocomplete="off"/>
+        </div>
+        <div class="tpl-modal-toolbar" id="tplToolbar">
+          <button data-tcmd="bold"><b>B</b></button>
+          <button data-tcmd="italic"><i>I</i></button>
+          <button data-tcmd="strike"><s>S</s></button>
+          <button data-tcmd="code"><code>`c`</code></button>
+          <div class="sep"></div>
+          <button data-tcmd="h1">H1</button>
+          <button data-tcmd="h2">H2</button>
+          <button data-tcmd="h3">H3</button>
+          <div class="sep"></div>
+          <button data-tcmd="bulletList"><i class="fa fa-list-ul"></i></button>
+          <button data-tcmd="orderedList"><i class="fa fa-list-ol"></i></button>
+          <div class="sep"></div>
+          <button data-tcmd="blockquote"><i class="fa fa-quote-left"></i></button>
+          <button data-tcmd="codeBlock"><i class="fa fa-code"></i></button>
+          <button data-tcmd="hr">—</button>
+          <div class="sep"></div>
+          <button data-tcmd="undo"><i class="fa fa-rotate-left"></i></button>
+          <button data-tcmd="redo"><i class="fa fa-rotate-right"></i></button>
+        </div>
+        <div class="tpl-editor-scroll">
+          <div id="tplEditorEl"></div>
+        </div>
+        <div class="tpl-modal-footer">
+          <button class="btn btn-danger btn-sm" id="tplModalDelete" style="margin-right:auto"><i class="fa fa-trash"></i> Supprimer</button>
+          <button class="btn btn-ghost btn-sm" id="tplModalApply"><i class="fa fa-arrow-down-to-line"></i> Appliquer à la note</button>
+          <button class="btn btn-primary btn-sm" id="tplModalSave"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="./src/docs.js"></script>
+</body>
+</html>
+

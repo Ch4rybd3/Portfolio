@@ -13,8 +13,8 @@
   --fg-2:     #C5D1DB;
   --fg-3:     #A3B3BC;
   --fg-4:     #6E7B96;
-  --green:    #9FEF00;
-  --green-dim:#7BC400;
+  --green:    #2DD4BF;
+  --green-dim:#22B5A2;
   --info:     #5CB3FF;
   --warning:  #FFAF00;
   --danger:   #FF3E3E;
@@ -72,7 +72,7 @@ body {
   transition: color .15s, border-color .15s, background .15s;
 }
 .sidebar nav a:hover { color: var(--fg); background: var(--card); }
-.sidebar nav a.active { color: var(--green); border-left-color: var(--green); background: rgba(159,239,0,.06); }
+.sidebar nav a.active { color: var(--green); border-left-color: var(--green); background: rgba(45,212,191,.06); }
 
 .sidebar .bottom {
   margin-top: auto;
@@ -156,7 +156,7 @@ textarea { resize: vertical; min-height: 80px; }
   text-transform: uppercase;
 }
 .badge-draft     { background: rgba(163,179,188,.12); color: var(--fg-3); }
-.badge-published { background: rgba(159,239,0,.12);   color: var(--green); }
+.badge-published { background: rgba(45,212,191,.12);   color: var(--green); }
 
 /* ── Toast ── */
 #toast {
@@ -174,7 +174,7 @@ textarea { resize: vertical; min-height: 80px; }
   max-width: 340px;
 }
 #toast.show { opacity: 1; }
-#toast.success { background: rgba(159,239,0,.15); border: 1px solid rgba(159,239,0,.35); color: var(--green); }
+#toast.success { background: rgba(45,212,191,.15); border: 1px solid rgba(45,212,191,.35); color: var(--green); }
 #toast.error   { background: rgba(255,62,62,.15);  border: 1px solid rgba(255,62,62,.35);  color: var(--danger); }
 
 /* ── Modal ── */

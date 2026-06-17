@@ -15,11 +15,16 @@ const storage = multer.diskStorage({
   }
 })
 
+const ALLOWED_IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.avif'])
+
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
-    if (!file.mimetype.startsWith('image/')) return cb(new Error('Images uniquement'))
+    const ext = path.extname(file.originalname).toLowerCase()
+    if (!file.mimetype.startsWith('image/') || !ALLOWED_IMAGE_EXTS.has(ext)) {
+      return cb(new Error('Images uniquement (jpg, png, gif, webp, avif)'))
+    }
     cb(null, true)
   }
 })

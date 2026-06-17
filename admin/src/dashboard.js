@@ -74,4 +74,82 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 function formatDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }) : '—' }
 
+/* ════════════════════════════════════════════════
+   CHANGE PASSWORD MODAL
+════════════════════════════════════════════════ */
+const RULES = [
+  { id: 'rule-len',     test: p => p.length >= 8,           label: '8 caractères minimum' },
+  { id: 'rule-upper',   test: p => /[A-Z]/.test(p),         label: 'Une majuscule' },
+  { id: 'rule-lower',   test: p => /[a-z]/.test(p),         label: 'Une minuscule' },
+  { id: 'rule-digit',   test: p => /[0-9]/.test(p),         label: 'Un chiffre' },
+  { id: 'rule-special', test: p => /[^A-Za-z0-9]/.test(p),  label: 'Un caractère spécial' },
+]
+
+function policyValid(pwd) { return RULES.every(r => r.test(pwd)) }
+
+function updatePolicyUI(pwd) {
+  RULES.forEach(r => {
+    const el = document.getElementById(r.id)
+    const ok = r.test(pwd)
+    el.classList.toggle('ok', ok)
+    el.querySelector('.fa').className = `fa ${ok ? 'fa-circle-check' : 'fa-circle'}`
+  })
+}
+
+function openPwdModal() {
+  document.getElementById('currentPwd').value = ''
+  document.getElementById('newPwd').value = ''
+  document.getElementById('confirmPwd').value = ''
+  document.getElementById('pwdError').textContent = ''
+  updatePolicyUI('')
+  document.getElementById('pwdModalOverlay').classList.add('open')
+  document.getElementById('currentPwd').focus()
+}
+function closePwdModal() {
+  document.getElementById('pwdModalOverlay').classList.remove('open')
+}
+
+document.getElementById('changePwdBtn').addEventListener('click', openPwdModal)
+document.getElementById('pwdModalClose').addEventListener('click', closePwdModal)
+document.getElementById('pwdCancelBtn').addEventListener('click', closePwdModal)
+document.getElementById('pwdModalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('pwdModalOverlay')) closePwdModal()
+})
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('pwdModalOverlay').classList.contains('open')) closePwdModal()
+})
+
+document.getElementById('newPwd').addEventListener('input', function () {
+  updatePolicyUI(this.value)
+  document.getElementById('pwdError').textContent = ''
+})
+
+document.getElementById('pwdSubmitBtn').addEventListener('click', async () => {
+  const current = document.getElementById('currentPwd').value
+  const newPwd  = document.getElementById('newPwd').value
+  const confirm = document.getElementById('confirmPwd').value
+  const errEl   = document.getElementById('pwdError')
+
+  errEl.textContent = ''
+
+  if (!current)            { errEl.textContent = 'Saisissez votre mot de passe actuel.'; return }
+  if (!policyValid(newPwd)){ errEl.textContent = 'Le nouveau mot de passe ne respecte pas la politique.'; return }
+  if (newPwd !== confirm)  { errEl.textContent = 'Les deux mots de passe ne correspondent pas.'; return }
+
+  const btn = document.getElementById('pwdSubmitBtn')
+  btn.disabled = true
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ currentPassword: current, newPassword: newPwd })
+    })
+    const data = await res.json()
+    if (!res.ok) { errEl.textContent = data.error; return }
+    closePwdModal()
+    toast('Mot de passe mis à jour ✓')
+  } catch { errEl.textContent = 'Erreur réseau.' }
+  finally { btn.disabled = false }
+})
+
 load()

@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Docs — Ch4rybd3</title>
+  <meta name="viewport" content="width=1200"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
+  <link rel="stylesheet" href="/colors_and_type.css"/>
+  <link rel="stylesheet" href="/marketing.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+  <style>
+    :root { --p-cyan: #5CB3FF; --docs-sidebar: 268px; }
+    body { background: #0A1018; overflow-x: hidden; }
+
+    /* ── Nav offset for docs ── */
+    .mk-nav { padding-left: 24px; }
+
+    /* ══════════════════════════════════════════════
+       DOCS LAYOUT
+    ══════════════════════════════════════════════ */
+    .docs-layout {
+      display: flex;
+      min-height: calc(100vh - 64px);
+      padding-top: 64px;
+    }
+
+    /* ── Left sidebar ── */
+    .docs-sidebar {
+      position: fixed;
+      top: 64px; left: 0; bottom: 0;
+      width: var(--docs-sidebar);
+      background: #0D1524;
+      border-right: 1px solid var(--htb-line);
+      display: flex; flex-direction: column;
+      z-index: 20;
+      overflow: hidden;
+    }
+    .docs-sidebar-head {
+      padding: 16px 16px 12px;
+      border-bottom: 1px solid var(--htb-line);
+      flex-shrink: 0;
+    }
+    .docs-sidebar-brand {
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-display); font-weight: 700; font-size: 13px;
+      color: var(--htb-green); text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: 10px;
+    }
+    .docs-search-wrap {
+      position: relative;
+    }
+    .docs-search {
+      width: 100%; background: var(--htb-card-3); border: 1px solid var(--htb-line-2);
+      border-radius: 6px; color: var(--htb-fg); font-size: 13px;
+      padding: 7px 10px 7px 30px; outline: none; font-family: var(--font-mono);
+      transition: border-color .15s;
+    }
+    .docs-search:focus { border-color: var(--htb-green); }
+    .docs-search-icon {
+      position: absolute; left: 9px; top: 50%; transform: translateY(-50%);
+      color: var(--htb-fg-4); font-size: 12px; pointer-events: none;
+    }
+    .docs-search::placeholder { color: var(--htb-fg-4); }
+
+    /* Tree */
+    .docs-tree { flex: 1; overflow-y: auto; padding: 8px 0 24px; }
+    .docs-tree::-webkit-scrollbar { width: 4px; }
+    .docs-tree::-webkit-scrollbar-track { background: transparent; }
+    .docs-tree::-webkit-scrollbar-thumb { background: var(--htb-line-2); border-radius: 2px; }
+
+    .tree-ul { list-style: none; padding: 0; margin: 0; }
+    .tree-ul .tree-ul { padding-left: 14px; }
+
+    .tree-folder-head {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 16px 5px 12px; cursor: pointer;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      color: var(--htb-fg-3); letter-spacing: .05em; text-transform: uppercase;
+      user-select: none; transition: color .15s, background .15s;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tree-folder-head:hover { color: var(--htb-fg); background: rgba(255,255,255,.03); }
+    .tree-folder-head .fa-chevron-right { font-size: 9px; color: var(--htb-fg-4); transition: transform .2s; flex-shrink: 0; }
+    .tree-folder-head .fa-folder, .tree-folder-head .fa-folder-open { font-size: 12px; color: var(--htb-fg-4); flex-shrink: 0; }
+    .tree-folder.open > .tree-folder-head .fa-chevron-right { transform: rotate(90deg); }
+    .tree-folder > .tree-ul { display: none; }
+    .tree-folder.open > .tree-ul { display: block; }
+
+    .tree-note {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 16px 5px 20px; cursor: pointer;
+      font-size: 13px; color: var(--htb-fg-3);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: color .15s, background .15s; border-left: 2px solid transparent;
+      margin-left: 2px;
+    }
+    .tree-note .fa-file-lines { font-size: 11px; color: var(--htb-fg-4); flex-shrink: 0; }
+    .tree-note:hover { color: var(--htb-fg); background: rgba(255,255,255,.03); }
+    .tree-note.active { color: var(--htb-green); border-left-color: var(--htb-green); background: rgba(45,212,191,.04); }
+
+    .tree-empty { padding: 16px 16px; font-size: 12px; color: var(--htb-fg-4); font-family: var(--font-mono); }
+
+    /* ── Main content ── */
+    .docs-main {
+      margin-left: var(--docs-sidebar);
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Breadcrumb */
+    .docs-breadcrumb {
+      padding: 12px 48px;
+      border-bottom: 1px solid var(--htb-line);
+      font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4);
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(11,18,31,.6); backdrop-filter: blur(8px);
+      position: sticky; top: 64px; z-index: 10;
+    }
+    .docs-breadcrumb a { color: var(--htb-fg-3); text-decoration: none; cursor: pointer; }
+    .docs-breadcrumb a:hover { color: var(--htb-green); }
+    .docs-breadcrumb-sep { color: var(--htb-fg-4); }
+
+    /* Article container */
+    .docs-article {
+      max-width: 860px;
+      padding: 48px 48px 96px;
+      width: 100%;
+    }
+    .docs-article-inner { margin: 0 auto; }
+
+    /* Note header */
+    .note-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+    .note-tag {
+      font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em;
+      padding: 2px 10px; border-radius: 999px;
+      background: rgba(45,212,191,.08); border: 1px solid rgba(45,212,191,.25); color: var(--htb-green);
+    }
+    .note-meta { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4); margin-bottom: 32px; }
+
+    /* Welcome / empty state */
+    .docs-welcome {
+      max-width: 600px; padding: 80px 48px; color: var(--htb-fg-3);
+    }
+    .docs-welcome h2 { font-family: var(--font-display); font-size: 32px; color: var(--htb-fg); margin-bottom: 12px; }
+    .docs-welcome p { font-size: 15px; line-height: 1.65; }
+
+    /* ══════════════════════════════════════════════
+       MARKDOWN BODY STYLES
+    ══════════════════════════════════════════════ */
+    .docs-body { font-size: 15px; line-height: 1.75; color: var(--htb-fg-2); }
+    .docs-body > * + * { margin-top: .75em; }
+
+    .docs-body h1 { font-family: var(--font-display); font-size: 2.2em; font-weight: 800; color: var(--htb-fg); letter-spacing: -.02em; margin-top: 0; margin-bottom: .4em; line-height: 1.15; }
+    .docs-body h2 { font-family: var(--font-display); font-size: 1.5em; font-weight: 700; color: var(--htb-fg); margin-top: 2em; padding-bottom: .4em; border-bottom: 1px solid var(--htb-line); }
+    .docs-body h3 { font-family: var(--font-display); font-size: 1.2em; font-weight: 700; color: var(--htb-fg); margin-top: 1.6em; }
+    .docs-body h4 { font-size: 1em; font-weight: 700; color: var(--htb-fg-2); margin-top: 1.4em; }
+    .docs-body h5, .docs-body h6 { font-size: .9em; font-weight: 600; color: var(--htb-fg-3); }
+
+    .docs-body p { margin-bottom: .7em; }
+    .docs-body a { color: var(--p-cyan); text-decoration: none; border-bottom: 1px solid rgba(92,179,255,.3); transition: color .15s, border-color .15s; }
+    .docs-body a:hover { color: var(--htb-green); border-bottom-color: var(--htb-green); }
+
+    .docs-body ul, .docs-body ol { padding-left: 1.4em; margin: .5em 0; }
+    .docs-body li { margin: .25em 0; }
+    .docs-body li > ul, .docs-body li > ol { margin: .15em 0; }
+
+    .docs-body code {
+      background: rgba(45,212,191,.06); border: 1px solid rgba(45,212,191,.15);
+      padding: 1px 6px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: .84em; color: var(--htb-green);
+    }
+    .docs-body pre {
+      margin: 1em 0; border-radius: 10px; overflow-x: auto;
+      border: 1px solid var(--htb-line);
+    }
+    .docs-body pre code { background: none; border: none; padding: 0; color: inherit; font-size: .85em; }
+    .code-block { position: relative; margin: 1em 0; }
+    .code-block pre { margin: 0; border-radius: 10px; }
+    .code-lang {
+      position: absolute; top: 10px; right: 14px;
+      font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-4);
+      letter-spacing: .08em; text-transform: uppercase; pointer-events: none;
+    }
+
+    .docs-body blockquote {
+      border-left: 3px solid var(--htb-line-2); padding-left: 16px;
+      color: var(--htb-fg-3); margin: 1em 0;
+    }
+
+    .docs-body table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: .93em; }
+    .docs-body th { background: var(--htb-card-2); padding: 10px 14px; text-align: left; color: var(--htb-fg); font-weight: 600; border-bottom: 2px solid var(--htb-line); }
+    .docs-body td { padding: 9px 14px; border-bottom: 1px solid var(--htb-line); }
+    .docs-body tr:hover td { background: rgba(255,255,255,.02); }
+
+    .docs-body img { max-width: 100%; border-radius: 8px; margin: .5em 0; }
+    .docs-body hr { border: none; border-top: 1px solid var(--htb-line); margin: 2em 0; }
+
+    .docs-body strong { color: var(--htb-fg); font-weight: 700; }
+    .docs-body em { color: var(--htb-fg-2); }
+
+    /* WikiLinks */
+    .wiki-link { color: var(--htb-green); border-bottom-color: rgba(45,212,191,.35); }
+    .wiki-link:hover { border-bottom-color: var(--htb-green); }
+    .wiki-link.missing { color: var(--htb-fg-3); border-bottom: 1px dashed rgba(110,123,150,.4); cursor: not-allowed; }
+
+    /* Callout blocks */
+    .callout {
+      border-radius: 8px; margin: 1em 0; overflow: hidden;
+      border: 1px solid;
+    }
+    .callout-title {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 16px; font-size: 13px; font-weight: 700;
+      font-family: var(--font-mono); letter-spacing: .04em; text-transform: uppercase;
+    }
+    .callout-body { padding: 10px 16px; font-size: 14px; line-height: 1.65; }
+    .callout-body > p:last-child { margin-bottom: 0; }
+
+    .callout-note    { background: rgba(92,179,255,.04);  border-color: rgba(92,179,255,.25); }
+    .callout-note .callout-title    { background: rgba(92,179,255,.08);  color: var(--p-cyan); }
+    .callout-tip     { background: rgba(45,212,191,.04);   border-color: rgba(45,212,191,.25); }
+    .callout-tip .callout-title     { background: rgba(45,212,191,.08);   color: var(--htb-green); }
+    .callout-warning { background: rgba(255,175,0,.04);   border-color: rgba(255,175,0,.25); }
+    .callout-warning .callout-title { background: rgba(255,175,0,.08);   color: var(--htb-warning); }
+    .callout-danger  { background: rgba(255,62,62,.04);   border-color: rgba(255,62,62,.25); }
+    .callout-danger .callout-title  { background: rgba(255,62,62,.08);   color: var(--htb-danger); }
+    .callout-info    { background: rgba(92,179,255,.04);  border-color: rgba(92,179,255,.25); }
+    .callout-info .callout-title    { background: rgba(92,179,255,.08);  color: var(--p-cyan); }
+    .callout-important { background: rgba(255,175,0,.04); border-color: rgba(255,175,0,.25); }
+    .callout-important .callout-title { background: rgba(255,175,0,.08); color: var(--htb-warning); }
+
+    /* Loading state */
+    .docs-loading { padding: 48px; color: var(--htb-fg-4); font-family: var(--font-mono); font-size: 13px; }
+
+    /* Search highlight */
+    .tree-note.hidden, .tree-folder.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<nav class="mk-nav">
+  <div class="mk-logo">
+    <svg viewBox="0 0 64 72" width="26" height="30" fill="none">
+      <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+      <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
+    </svg>
+    <b>CH4RYBD3<span style="color:var(--htb-fg-3)">.FR</span></b>
+  </div>
+  <div class="mk-nav-mid">
+    <a href="/">Portfolio</a>
+    <a href="/projects">Projects</a>
+    <a href="/blog">Blog</a>
+    <a href="/docs" style="color:var(--htb-fg)">Docs</a>
+  </div>
+  <div class="mk-nav-r">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github" style="margin-right:6px"></i>GitHub</a>
+    <a href="mailto:fsalingue@protonmail.com"><button class="btn btn-primary">Contact</button></a>
+  </div>
+</nav>
+
+<div class="docs-layout">
+
+  <!-- ════════ SIDEBAR ════════ -->
+  <aside class="docs-sidebar">
+    <div class="docs-sidebar-head">
+      <div class="docs-sidebar-brand">
+        <i class="fa fa-book-open"></i>Knowledge Base
+      </div>
+      <div class="docs-search-wrap">
+        <i class="fa fa-magnifying-glass docs-search-icon"></i>
+        <input class="docs-search" id="searchInput" placeholder="Rechercher…" autocomplete="off"/>
+      </div>
+    </div>
+    <nav class="docs-tree" id="docsTree">
+      <div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>
+    </nav>
+  </aside>
+
+  <!-- ════════ MAIN ════════ -->
+  <main class="docs-main">
+    <div class="docs-breadcrumb" id="docsBreadcrumb" style="display:none"></div>
+
+    <div id="docsContent">
+      <div class="docs-welcome" id="docsWelcome">
+        <h2>Knowledge Base</h2>
+        <p>Sélectionnez une note dans le panneau de gauche, ou recherchez un sujet dans la barre de recherche.</p>
+      </div>
+      <div id="docsArticle" style="display:none">
+        <div class="docs-article">
+          <div class="note-tags" id="noteTags"></div>
+          <div class="note-meta" id="noteMeta"></div>
+          <div class="docs-body" id="noteBody"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════
+   STATE
+════════════════════════════════════════════════ */
+let allNotes = []
+let notesByTitle = new Map()   // lowercase title → note object
+let notesByPath  = new Map()   // path → note object
+
+/* ════════════════════════════════════════════════
+   MARKED SETUP (WikiLinks + code highlight + callouts)
+════════════════════════════════════════════════ */
+function setupMarked() {
+  const renderer = new marked.Renderer()
+
+  renderer.code = function(token) {
+    const code = typeof token === 'object' ? token.text : token
+    const lang = typeof token === 'object' ? token.lang : arguments[1]
+    const language = (lang && hljs.getLanguage(lang)) ? lang : 'plaintext'
+    try {
+      const highlighted = hljs.highlight(code, { language }).value
+      const label = lang ? `<span class="code-lang">${lang}</span>` : ''
+      return `<div class="code-block">${label}<pre><code class="hljs language-${language}">${highlighted}</code></pre></div>`
+    } catch {
+      return `<pre><code>${code.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</code></pre>`
+    }
+  }
+
+  renderer.image = function(token) {
+    const href = typeof token === 'object' ? token.href : token
+    const text = typeof token === 'object' ? token.text : arguments[2]
+    return `<img src="${href}" alt="${text||''}" loading="lazy"/>`
+  }
+
+  marked.use({
+    renderer,
+    gfm: true,
+    breaks: true,
+    extensions: [{
+      name: 'wikiLink',
+      level: 'inline',
+      start(src) { return src.indexOf('[[') },
+      tokenizer(src) {
+        const m = /^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/.exec(src)
+        if (m) return { type: 'wikiLink', raw: m[0], target: m[1].trim(), label: (m[2]||m[1]).trim() }
+      },
+      renderer(token) {
+        // Resolve by title first, then fall back to path match
+        const note = notesByTitle.get(token.target.toLowerCase())
+               || notesByPath.get(token.target)
+               || notesByPath.get(token.target.toLowerCase())
+        if (note) {
+          return `<a href="/docs/${note.path}" class="wiki-link" onclick="navigate('${note.path}');return false">${token.label}</a>`
+        }
+        return `<span class="wiki-link missing" title="Note introuvable : ${token.target}">[[${token.label}]]</span>`
+      }
+    }]
+  })
+}
+
+/* ════════════════════════════════════════════════
+   CALLOUT POST-PROCESS
+════════════════════════════════════════════════ */
+const CALLOUT_ICONS = {
+  note: 'fa-circle-info', tip: 'fa-lightbulb', warning: 'fa-triangle-exclamation',
+  danger: 'fa-circle-exclamation', info: 'fa-circle-info', important: 'fa-star'
+}
+function postProcess(html) {
+  return html.replace(
+    /<blockquote>\s*<p>\[!(NOTE|TIP|WARNING|DANGER|INFO|IMPORTANT)\](.*?)<\/p>([\s\S]*?)<\/blockquote>/gi,
+    (_, type, titleRaw, body) => {
+      const t = type.toLowerCase()
+      const title = titleRaw.trim() || type.toUpperCase()
+      const icon = CALLOUT_ICONS[t] || 'fa-circle-info'
+      return `<div class="callout callout-${t}"><div class="callout-title"><i class="fa fa-fw ${icon}"></i>${title}</div><div class="callout-body">${body}</div></div>`
+    }
+  )
+}
+
+function renderMarkdown(content) {
+  return postProcess(marked.parse(content || ''))
+}
+
+/* ════════════════════════════════════════════════
+   TREE BUILD & RENDER
+════════════════════════════════════════════════ */
+function buildTree(notes) {
+  const root = { _notes: [], _folders: {} }
+  notes.forEach(note => {
+    const parts = note.path.split('/')
+    let node = root
+    for (let i = 0; i < parts.length - 1; i++) {
+      const f = parts[i]
+      if (!node._folders[f]) node._folders[f] = { _notes: [], _folders: {} }
+      node = node._folders[f]
+    }
+    node._notes.push(note)
+  })
+  return root
+}
+
+function formatFolder(name) {
+  return name.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+}
+
+function renderTreeNode(node, level) {
+  const ul = document.createElement('ul')
+  ul.className = 'tree-ul'
+
+  // Folders first (sorted alphabetically)
+  Object.entries(node._folders).sort(([a],[b]) => a.localeCompare(b)).forEach(([name, child]) => {
+    const li = document.createElement('li')
+    li.className = 'tree-folder open'
+    li.dataset.folder = name
+
+    const head = document.createElement('div')
+    head.className = 'tree-folder-head'
+    head.innerHTML = `<i class="fa fa-chevron-right"></i><i class="fa fa-folder-open"></i><span>${formatFolder(name)}</span>`
+    head.addEventListener('click', () => {
+      li.classList.toggle('open')
+      head.querySelector('.fa-folder-open, .fa-folder').className = li.classList.contains('open') ? 'fa fa-folder-open' : 'fa fa-folder'
+    })
+
+    li.appendChild(head)
+    li.appendChild(renderTreeNode(child, level + 1))
+    ul.appendChild(li)
+  })
+
+  // Notes (sorted alphabetically by title)
+  node._notes.slice().sort((a,b) => a.title.localeCompare(b.title)).forEach(note => {
+    const li = document.createElement('li')
+    li.className = 'tree-note'
+    li.dataset.path = note.path
+    li.innerHTML = `<i class="fa fa-file-lines"></i><span>${note.title}</span>`
+    li.addEventListener('click', () => navigate(note.path))
+    ul.appendChild(li)
+  })
+
+  return ul
+}
+
+function renderTree(notes) {
+  const tree = buildTree(notes)
+  const container = document.getElementById('docsTree')
+  container.innerHTML = ''
+
+  if (!notes.length) {
+    container.innerHTML = '<div class="tree-empty">Aucune note publiée.</div>'
+    return
+  }
+
+  const ul = renderTreeNode(tree, 0)
+  container.appendChild(ul)
+}
+
+/* ════════════════════════════════════════════════
+   NAVIGATION & RENDERING
+════════════════════════════════════════════════ */
+function setActiveNote(path) {
+  document.querySelectorAll('.tree-note.active').forEach(el => el.classList.remove('active'))
+  const el = document.querySelector(`.tree-note[data-path="${CSS.escape(path)}"]`)
+  if (el) {
+    el.classList.add('active')
+    // Open parent folders
+    let parent = el.parentElement
+    while (parent) {
+      if (parent.classList.contains('tree-folder')) {
+        parent.classList.add('open')
+        const icon = parent.querySelector('.fa-folder, .fa-folder-open')
+        if (icon) icon.className = 'fa fa-folder-open'
+      }
+      parent = parent.parentElement
+    }
+  }
+}
+
+function renderBreadcrumb(notePath) {
+  const bc = document.getElementById('docsBreadcrumb')
+  const parts = notePath.split('/')
+  const items = [{ label: 'Docs', path: null }]
+  let built = ''
+  parts.forEach((p, i) => {
+    built += (i ? '/' : '') + p
+    items.push({ label: formatFolder(p), path: i === parts.length - 1 ? built : null })
+  })
+  bc.innerHTML = items.map((item, i) => {
+    const isLast = i === items.length - 1
+    const el = item.path && !isLast
+      ? `<a onclick="navigate('${item.path}');return false" href="/docs/${item.path}">${item.label}</a>`
+      : `<span style="color:var(--htb-fg)">${item.label}</span>`
+    return i > 0 ? `<span class="docs-breadcrumb-sep">/</span>${el}` : el
+  }).join('')
+  bc.style.display = 'flex'
+}
+
+async function navigate(notePath) {
+  if (!notePath) { showWelcome(); return }
+
+  document.getElementById('docsWelcome').style.display = 'none'
+  document.getElementById('docsArticle').style.display = 'none'
+  document.getElementById('noteBody').innerHTML = '<div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>'
+  document.getElementById('docsArticle').style.display = 'block'
+
+  history.pushState({ notePath }, '', `/docs/${notePath}`)
+  setActiveNote(notePath)
+  renderBreadcrumb(notePath)
+
+  try {
+    const res = await fetch(`/api/docs/note/${notePath}`)
+    if (!res.ok) { showError(notePath); return }
+    const note = await res.json()
+    renderNote(note)
+  } catch {
+    showError(notePath)
+  }
+}
+
+function renderNote(note) {
+  // Tags (escape values to prevent XSS)
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  const tags = (note.properties?.tags || [])
+  document.getElementById('noteTags').innerHTML = tags.map(t =>
+    `<span class="note-tag">${esc(t)}</span>`
+  ).join('')
+
+  // Meta
+  const updated = note.updated_at ? new Date(note.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  document.getElementById('noteMeta').textContent = updated ? `Mis à jour le ${updated}` : ''
+
+  // Body — sanitize HTML output from marked to prevent stored XSS
+  document.getElementById('noteBody').innerHTML = DOMPurify.sanitize(renderMarkdown(note.content))
+  document.getElementById('docsWelcome').style.display = 'none'
+  document.getElementById('docsArticle').style.display = 'block'
+
+  // Scroll to top of content
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function showWelcome() {
+  document.getElementById('docsWelcome').style.display = 'block'
+  document.getElementById('docsArticle').style.display = 'none'
+  document.getElementById('docsBreadcrumb').style.display = 'none'
+  history.pushState({}, '', '/docs')
+  document.querySelectorAll('.tree-note.active').forEach(el => el.classList.remove('active'))
+}
+
+function showError(path) {
+  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Note introuvable : <code>${path}</code></div>`
+}
+
+/* ════════════════════════════════════════════════
+   SEARCH
+════════════════════════════════════════════════ */
+document.getElementById('searchInput').addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim()
+  if (!q) {
+    document.querySelectorAll('.tree-note, .tree-folder').forEach(el => el.classList.remove('hidden'))
+    return
+  }
+  // Hide notes that don't match
+  document.querySelectorAll('.tree-note').forEach(el => {
+    const title = el.querySelector('span')?.textContent.toLowerCase() || ''
+    const path  = el.dataset.path?.toLowerCase() || ''
+    el.classList.toggle('hidden', !title.includes(q) && !path.includes(q))
+  })
+  // Hide folders with all children hidden
+  document.querySelectorAll('.tree-folder').forEach(folder => {
+    const visible = [...folder.querySelectorAll('.tree-note')].some(n => !n.classList.contains('hidden'))
+    folder.classList.toggle('hidden', !visible)
+    if (!folder.classList.contains('hidden')) folder.classList.add('open')
+  })
+})
+
+/* ════════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════════ */
+async function init() {
+  setupMarked()
+
+  try {
+    const res = await fetch('/api/docs')
+    allNotes = await res.json()
+    notesByTitle = new Map(allNotes.map(n => [n.title.toLowerCase(), n]))
+    notesByPath  = new Map(allNotes.map(n => [n.path, n]))
+  } catch {
+    allNotes = []
+  }
+
+  renderTree(allNotes)
+
+  // Determine note from URL
+  const urlPath = location.pathname.replace(/^\/docs\/?/, '').trim()
+  if (urlPath) {
+    navigate(urlPath)
+  } else if (allNotes.find(n => n.path === 'welcome')) {
+    navigate('welcome')
+  }
+}
+
+window.addEventListener('popstate', () => {
+  const urlPath = location.pathname.replace(/^\/docs\/?/, '').trim()
+  if (urlPath) navigate(urlPath)
+  else showWelcome()
+})
+
+init()
+</script>
+</body>
+</html>

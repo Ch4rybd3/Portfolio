@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Projects — Ch4rybd3</title>
+  <meta name="viewport" content="width=1440"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <link rel="stylesheet" href="/colors_and_type.css"/>
+  <link rel="stylesheet" href="/marketing.css"/>
+  <style>
+    :root { --p-cyan: #5CB3FF; --p-cyan-glow: rgba(92,179,255,0.16); }
+    body { background: #0A1018; }
+
+    /* ══════════════════════════════════════════════
+       RAIL
+    ══════════════════════════════════════════════ */
+    .rail {
+      position: fixed; top: 64px; bottom: 0; left: 0; width: 56px;
+      border-right: 1px solid var(--htb-line);
+      display: flex; flex-direction: column; align-items: center;
+      padding: 18px 0;
+      font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-4);
+      letter-spacing: 0.1em;
+      background: rgba(11,18,31,0.55);
+      z-index: 30;
+    }
+    .rail .vert { writing-mode: vertical-rl; transform: rotate(180deg); margin: auto 0; color: var(--htb-fg-3); letter-spacing: 0.35em; }
+    .rail .nums { display: flex; flex-direction: column; gap: 6px; }
+    .rail .nums span { display: block; }
+    .rail .sock { display: flex; flex-direction: column; gap: 10px; font-size: 13px; }
+    .rail .sock a { color: var(--htb-fg-3); }
+    .rail .sock a:hover { color: var(--htb-green); }
+
+    /* ══════════════════════════════════════════════
+       LAYOUT OFFSETS
+    ══════════════════════════════════════════════ */
+    .mk-nav     { padding-left: 80px; }
+    .proj-hero  { padding-left: 96px; }
+    .section-nav,
+    .proj-section,
+    .foot       { padding-left: 80px; }
+
+    /* ══════════════════════════════════════════════
+       HERO (compact)
+    ══════════════════════════════════════════════ */
+    .proj-hero {
+      position: relative;
+      padding: 56px 56px 48px 96px;
+      background-color: var(--htb-space);
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='56' height='64' viewBox='0 0 56 64'><polygon points='28,2 54,17 54,47 28,62 2,47 2,17' fill='none' stroke='%231F2A3D' stroke-width='1'/></svg>");
+      background-size: 56px 64px;
+      overflow: hidden;
+    }
+    .proj-hero::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 10% 60%, rgba(45,212,191,0.12), transparent 32%),
+        radial-gradient(circle at 85% 20%, rgba(92,179,255,0.09), transparent 36%),
+        linear-gradient(180deg, transparent 55%, var(--htb-space) 100%);
+      pointer-events: none;
+    }
+    @keyframes pulse { 50% { opacity: .3; } }
+    .proj-hero-wrap { position: relative; max-width: 1280px; display: grid; grid-template-columns: 1fr auto; gap: 64px; align-items: center; }
+    .proj-hero-eyebrow { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); text-transform: uppercase; letter-spacing: 0.14em; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .proj-hero-eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--htb-green); box-shadow: 0 0 6px var(--htb-green); animation: pulse 1.8s ease-in-out infinite; }
+    .proj-hero h1 { font-family: var(--font-display); font-size: 52px; font-weight: 800; color: var(--htb-fg); line-height: 1; letter-spacing: -0.025em; margin: 0 0 16px; }
+    .proj-hero h1 .accent { color: var(--htb-green); }
+    .proj-hero p { color: var(--htb-fg-2); font-size: 15px; line-height: 1.6; max-width: 560px; }
+    /* Hero right — counters */
+    .hero-counters { display: flex; gap: 28px; }
+    .hero-counter { text-align: center; }
+    .hero-counter .v { font-family: var(--font-display); font-weight: 800; font-size: 40px; line-height: 1; color: var(--htb-green); letter-spacing: -0.03em; }
+    .hero-counter .l { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 4px; }
+    .hero-counter-sep { width: 1px; background: var(--htb-line); align-self: stretch; }
+
+    /* ══════════════════════════════════════════════
+       SECTION NAV (sticky tabs)
+    ══════════════════════════════════════════════ */
+    .section-nav {
+      position: sticky; top: 64px; z-index: 40;
+      height: 44px;
+      background: rgba(11,18,31,0.94); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--htb-line);
+      padding: 0 56px 0 80px;
+      display: flex; align-items: center; gap: 0;
+    }
+    .section-nav a {
+      font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--htb-fg-3);
+      padding: 0 18px; height: 100%; display: flex; align-items: center;
+      border-bottom: 2px solid transparent; text-decoration: none;
+      transition: color .15s, border-color .15s;
+      margin-bottom: -1px;
+    }
+    .section-nav a:hover { color: var(--htb-fg); }
+    .section-nav a.active { color: var(--htb-green); border-bottom-color: var(--htb-green); }
+
+    /* ══════════════════════════════════════════════
+       SECTION WRAPPER
+    ══════════════════════════════════════════════ */
+    .proj-section { padding: 80px 56px 64px 80px; }
+    .proj-section + .proj-section { border-top: 1px solid var(--htb-line); }
+    .proj-section-wrap { max-width: 1280px; }
+    .proj-section-head { margin-bottom: 48px; }
+    .proj-section-head .eye { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 10px; }
+    .proj-section-head h2 { font-family: var(--font-display); font-weight: 800; font-size: 40px; color: var(--htb-fg); letter-spacing: -0.02em; margin: 0 0 10px; }
+    .proj-section-head p { color: var(--htb-fg-3); font-size: 15px; }
+
+    /* ══════════════════════════════════════════════
+       STATUS BADGE
+    ══════════════════════════════════════════════ */
+    .status { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 10px; border-radius: var(--r-pill); }
+    .status .dot { width: 6px; height: 6px; border-radius: 50%; }
+    .status-active    { color: var(--htb-green);   background: rgba(45,212,191,.08);  border: 1px solid rgba(45,212,191,.25); }
+    .status-active .dot    { background: var(--htb-green); box-shadow: 0 0 5px var(--htb-green); animation: pulse 2s ease-in-out infinite; }
+    .status-wip       { color: var(--htb-warning); background: rgba(255,175,0,.08);  border: 1px solid rgba(255,175,0,.25); }
+    .status-wip .dot       { background: var(--htb-warning); }
+    .status-maintained{ color: var(--p-cyan);       background: rgba(92,179,255,.08); border: 1px solid rgba(92,179,255,.25); }
+    .status-maintained .dot{ background: var(--p-cyan); }
+    .status-archived  { color: var(--htb-fg-4);    background: rgba(110,123,150,.08);border: 1px solid rgba(110,123,150,.2); }
+    .status-archived .dot  { background: var(--htb-fg-4); }
+
+    /* ══════════════════════════════════════════════
+       FEATURED PROJECT CARD (enhanced)
+    ══════════════════════════════════════════════ */
+    .feat-card {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      overflow: hidden; margin-bottom: 24px;
+      display: grid; grid-template-columns: 1.15fr 1fr;
+      transition: border-color .2s;
+    }
+    .feat-card:hover { border-color: rgba(45,212,191,.3); }
+    .feat-art {
+      position: relative; min-height: 400px;
+      background-color: #0a0f18;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='46' viewBox='0 0 40 46'><polygon points='20,1.5 38,12 38,34 20,44.5 2,34 2,12' fill='none' stroke='%231F2A3D' stroke-width='1'/></svg>");
+      background-size: 40px 46px;
+      display: flex; align-items: center; justify-content: center;
+      border-right: 1px solid var(--htb-line);
+    }
+    .feat-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+    .feat-art-placeholder { display: flex; flex-direction: column; align-items: center; gap: 16px; color: var(--htb-fg-4); }
+    .feat-art-placeholder .hex { width: 72px; height: 82px; clip-path: polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); background: rgba(45,212,191,.07); border: 1px solid rgba(45,212,191,.2); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--htb-green); }
+    .feat-art-placeholder span { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; }
+    .feat-body { padding: 36px; display: flex; flex-direction: column; gap: 16px; }
+    .feat-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .feat-eyebrow { font-family: var(--font-mono); font-size: 11px; color: var(--htb-green); letter-spacing: 0.14em; text-transform: uppercase; }
+    .feat-title { font-family: var(--font-display); font-weight: 800; font-size: 36px; letter-spacing: -0.02em; color: var(--htb-fg); margin: 0; line-height: 1; }
+    .feat-title .ac { color: var(--htb-green); }
+    .feat-desc { color: var(--htb-fg-2); font-size: 14px; line-height: 1.65; }
+    .feat-stack { display: flex; gap: 6px; flex-wrap: wrap; }
+    .feat-stack span { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); padding: 3px 8px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill); letter-spacing: 0.04em; }
+    .feat-stack span.hl { color: var(--p-cyan); border-color: rgba(92,179,255,.35); background: rgba(92,179,255,.06); }
+
+    /* Annotation block */
+    .annotation {
+      background: rgba(45,212,191,.03); border-left: 3px solid rgba(45,212,191,.35);
+      border-radius: 0 var(--r-md) var(--r-md) 0;
+      padding: 12px 16px; display: flex; gap: 10px; align-items: flex-start;
+    }
+    .annotation i { color: var(--htb-green); font-size: 13px; margin-top: 2px; flex-shrink: 0; }
+    .annotation p { font-family: var(--font-mono); font-size: 12px; color: var(--htb-fg-3); line-height: 1.55; margin: 0; }
+
+    /* Milestones */
+    .milestones { display: flex; flex-direction: column; gap: 6px; }
+    .milestones-title { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; }
+    .milestone { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--htb-fg-3); }
+    .milestone.done { color: var(--htb-fg-2); }
+    .milestone .check { width: 16px; height: 16px; border-radius: 3px; border: 1px solid var(--htb-line-2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .milestone.done .check { background: rgba(45,212,191,.15); border-color: rgba(45,212,191,.4); }
+    .milestone.done .check::after { content: '✓'; font-size: 10px; color: var(--htb-green); font-weight: 700; }
+    .milestone:not(.done) .check { background: var(--htb-card-3); }
+
+    .feat-meta { display: flex; gap: 20px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+    .feat-meta div { display: flex; flex-direction: column; gap: 3px; }
+    .feat-meta .l { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.1em; text-transform: uppercase; }
+    .feat-meta .v { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--htb-fg); }
+    .feat-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ══════════════════════════════════════════════
+       PROJECT GRID CARD (enhanced)
+    ══════════════════════════════════════════════ */
+    .proj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .proj-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+    .proj-card {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      padding: 26px; display: flex; flex-direction: column; gap: 14px;
+      text-decoration: none; position: relative; overflow: hidden;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+    }
+    .proj-card:hover { border-color: rgba(45,212,191,.35); transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,.35), 0 0 0 1px rgba(45,212,191,.12); }
+    .proj-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+    .proj-card-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; color: var(--htb-green); text-transform: uppercase; }
+    .proj-card h4 { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--htb-fg); margin: 0; letter-spacing: -0.01em; }
+    .proj-card p { font-size: 13px; line-height: 1.6; color: var(--htb-fg-3); }
+    .proj-stack { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 10px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+    .proj-stack span { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.04em; }
+    .proj-stack span::before { content: '#'; color: var(--htb-fg-4); }
+    .proj-card-ext { position: absolute; top: 22px; right: 22px; color: var(--htb-fg-4); font-size: 12px; transition: all .15s; }
+    .proj-card:hover .proj-card-ext { color: var(--htb-green); transform: translate(2px,-2px); }
+    .proj-card-actions { display: flex; gap: 8px; }
+
+    /* ══════════════════════════════════════════════
+       TALK CARD (extended)
+    ══════════════════════════════════════════════ */
+    .talk-full {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      display: grid; grid-template-columns: 160px 1fr; overflow: hidden;
+      margin-bottom: 20px;
+      transition: border-color .2s;
+    }
+    .talk-full:hover { border-color: rgba(45,212,191,.25); }
+    .talk-stage {
+      background: linear-gradient(160deg, rgba(45,212,191,.08), rgba(11,18,31,.6));
+      border-right: 1px solid var(--htb-line);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 10px; padding: 28px 16px; text-align: center;
+    }
+    .talk-stage .mic { font-size: 34px; color: var(--htb-green); }
+    .talk-stage .conf { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.14em; text-transform: uppercase; line-height: 1.4; }
+    .talk-stage .year { font-family: var(--font-display); font-weight: 800; font-size: 28px; color: var(--htb-fg); }
+    .talk-body-full { padding: 32px 36px; display: flex; flex-direction: column; gap: 14px; }
+    .talk-eyebrow { font-family: var(--font-mono); font-size: 10px; color: var(--htb-green); letter-spacing: 0.16em; text-transform: uppercase; }
+    .talk-title { font-family: var(--font-display); font-weight: 700; font-size: 22px; color: var(--htb-fg); margin: 0; line-height: 1.25; }
+    .talk-title em { color: var(--htb-green); font-style: normal; }
+    .talk-abstract { font-size: 14px; line-height: 1.7; color: var(--htb-fg-3); max-width: 720px; }
+    .talk-topics { display: flex; gap: 8px; flex-wrap: wrap; }
+    .talk-topic { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); padding: 3px 10px; border: 1px solid var(--htb-line-2); border-radius: var(--r-pill); letter-spacing: 0.06em; }
+    .talk-meta { display: flex; gap: 18px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+    .talk-meta span { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-3); display: inline-flex; align-items: center; gap: 6px; }
+    .talk-meta i { color: var(--p-cyan); }
+    .talk-links { display: flex; gap: 8px; }
+
+    /* ══════════════════════════════════════════════
+       COMMUNITY CONTRIBUTIONS
+    ══════════════════════════════════════════════ */
+    .contrib-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .contrib-card {
+      background: var(--htb-card); border: 1px solid var(--htb-line); border-radius: var(--r-xl);
+      padding: 26px; display: flex; flex-direction: column; gap: 12px;
+      transition: border-color .2s;
+    }
+    .contrib-card:hover { border-color: rgba(45,212,191,.25); }
+    .contrib-card-top { display: flex; align-items: center; gap: 14px; }
+    .contrib-icon { width: 44px; height: 50px; clip-path: polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); background: rgba(45,212,191,.07); border: 1px solid rgba(45,212,191,.2); display: flex; align-items: center; justify-content: center; color: var(--htb-green); font-size: 16px; flex-shrink: 0; }
+    .contrib-label { font-family: var(--font-mono); font-size: 10px; color: var(--htb-green); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 3px; }
+    .contrib-card h4 { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--htb-fg); margin: 0; }
+    .contrib-card p { font-size: 13px; line-height: 1.6; color: var(--htb-fg-3); }
+    .contrib-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 7px; }
+    .contrib-list li { font-size: 13px; color: var(--htb-fg-2); display: flex; align-items: flex-start; gap: 8px; }
+    .contrib-list li i { color: var(--htb-green); font-size: 11px; margin-top: 3px; flex-shrink: 0; }
+    .contrib-meta { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4); padding-top: 10px; border-top: 1px solid var(--htb-line); margin-top: auto; }
+
+    /* ══════════════════════════════════════════════
+       DIVIDER BAND
+    ══════════════════════════════════════════════ */
+    .stats-band { background: var(--htb-deep); border-top: 1px solid var(--htb-line); border-bottom: 1px solid var(--htb-line); padding: 48px 56px; }
+    .stats-grid { max-width: 1280px; margin: 0 auto; display: grid; grid-template-columns: repeat(5, 1fr); gap: 36px; text-align: center; padding-left: 24px; }
+    .stat-v { font-family: var(--font-display); font-weight: 800; font-size: 48px; line-height: 1; color: var(--htb-green); letter-spacing: -0.03em; }
+    .stat-l { font-family: var(--font-mono); font-size: 10px; color: var(--htb-fg-3); letter-spacing: 0.14em; text-transform: uppercase; margin-top: 8px; }
+
+    /* ══════════════════════════════════════════════
+       FOOTER override for rail offset
+    ══════════════════════════════════════════════ */
+    .foot { padding-left: 80px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ NAV ═══════════════════════════ -->
+<nav class="mk-nav">
+  <div class="mk-logo">
+    <svg viewBox="0 0 64 72" width="26" height="30" fill="none">
+      <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+      <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
+    </svg>
+    <b>CH4RYBD3<span style="color:var(--htb-fg-3)">.FR</span></b>
+  </div>
+  <div class="mk-nav-mid">
+    <a href="/">Portfolio</a>
+    <a href="/projects" style="color:var(--htb-fg)">Projects</a>
+    <a href="/blog">Blog</a>
+    <a href="/docs">Docs</a>
+  </div>
+  <div class="mk-nav-r">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github" style="margin-right:6px"></i>GitHub</a>
+    <a href="mailto:fsalingue@protonmail.com"><button class="btn btn-primary">Contact</button></a>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════ RAIL ═══════════════════════════ -->
+<aside class="rail">
+  <div class="nums">
+    <span>01</span><span>02</span><span>03</span><span>04</span>
+  </div>
+  <div class="vert">// PROJECTS · OSS · TALKS</div>
+  <div class="sock">
+    <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener" title="GitHub"><i class="fa-brands fa-github"></i></a>
+    <a href="mailto:fsalingue@protonmail.com" title="Email"><i class="fa-solid fa-at"></i></a>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+<section class="proj-hero">
+  <div class="proj-hero-wrap">
+    <div>
+      <div class="proj-hero-eyebrow"><span class="dot"></span>// PROJECTS · WORK · COMMUNITY</div>
+      <h1>Building tools.<br/>Sharing <span class="accent">knowledge.</span></h1>
+      <p>Open-source DFIR tooling, side experiments, conference talks, and contributions to the security community. Everything I build, present, and give back.</p>
+    </div>
+    <div class="hero-counters">
+      <div class="hero-counter"><div class="v">4</div><div class="l">OSS Projects</div></div>
+      <div class="hero-counter-sep"></div>
+      <div class="hero-counter"><div class="v">1</div><div class="l">Conf. Talks</div></div>
+      <div class="hero-counter-sep"></div>
+      <div class="hero-counter"><div class="v">3+</div><div class="l">Workshops</div></div>
+      <div class="hero-counter-sep"></div>
+      <div class="hero-counter"><div class="v">∞</div><div class="l">Caffeine</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ SECTION NAV ═══════════════════════════ -->
+<nav class="section-nav" id="sectionNav">
+  <a href="#oss"       class="active" data-section="oss">// OSS Tools</a>
+  <a href="#side"      data-section="side">// Side Projects</a>
+  <a href="#talks"     data-section="talks">// Talks</a>
+  <a href="#community" data-section="community">// Community</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 01 — OPEN SOURCE TOOLS
+═══════════════════════════════════════════════════════════ -->
+<section class="proj-section" id="oss">
+  <div class="proj-section-wrap">
+    <div class="proj-section-head">
+      <div class="eye">// 01 · OPEN SOURCE · IN PROGRESS</div>
+      <h2>Tools I'm <span style="color:var(--htb-green)">building.</span></h2>
+      <p>All projects are in active development. Stars and contributions are welcome.</p>
+    </div>
+
+    <!-- ── Featured: Remora ── -->
+    <div id="oss-featured"><article class="feat-card">
+      <div class="feat-art">
+        <img src="/assets/remora-preview.png" alt="Remora preview" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+        <div class="feat-art-placeholder" style="display:none">
+          <div class="hex"><i class="fa-solid fa-shield-halved"></i></div>
+          <span>// preview pending</span>
+        </div>
+      </div>
+      <div class="feat-body">
+        <div class="feat-top">
+          <span class="feat-eyebrow">// FEATURED · 01 · DFIR PLATFORM</span>
+          <span class="status status-wip"><span class="dot"></span>In Progress</span>
+        </div>
+        <h3 class="feat-title">Re<span class="ac">mora</span></h3>
+        <p class="feat-desc">A DFIR case management platform built to cover the full investigative lifecycle. Manage cases, follow structured playbooks, process and tag artifacts, maintain chain of custody, take structured notes, and generate reports automatically — all from one place.</p>
+        <p class="feat-desc" style="margin-top:-6px">Designed from first principles to match how analysts actually work: fast triage, flexible note-taking, and deep artifact integration without forcing you out of your terminal.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-lightbulb"></i>
+          <p>Building Remora because nothing out there truly integrates the full DFIR workflow — from acquisition to final report — without forcing context switches between 5 different tools.</p>
+        </div>
+
+        <div class="feat-stack">
+          <span class="hl">Rust</span><span class="hl">Python</span><span>SQLite</span><span>REST API</span><span>CLI</span><span>TBD stack</span>
+        </div>
+
+        <!-- Roadmap -->
+        <div>
+          <p class="milestones-title">// ROADMAP</p>
+          <div class="milestones">
+            <div class="milestone done"><div class="check"></div>Concept & architecture defined</div>
+            <div class="milestone done"><div class="check"></div>Repository structure & initial setup</div>
+            <div class="milestone"><div class="check"></div>Case management core (create / assign / close)</div>
+            <div class="milestone"><div class="check"></div>Artifact ingestion & tagging pipeline</div>
+            <div class="milestone"><div class="check"></div>Playbook engine with step tracking</div>
+            <div class="milestone"><div class="check"></div>Chain of custody ledger</div>
+            <div class="milestone"><div class="check"></div>Report generator (PDF / Markdown)</div>
+          </div>
+        </div>
+
+        <div class="feat-meta">
+          <div><span class="l">Type</span><span class="v">OSS · DFIR Platform</span></div>
+          <div><span class="l">Lang</span><span class="v">Rust / Python</span></div>
+          <div><span class="l">Status</span><span class="v">Early Dev</span></div>
+          <div><span class="l">License</span><span class="v">MIT</span></div>
+        </div>
+        <div class="feat-actions">
+          <a href="https://github.com/Ch4rybd3/Remora" target="_blank" rel="noopener">
+            <button class="btn btn-primary"><i class="fa-brands fa-github"></i> GitHub</button>
+          </a>
+          <button class="btn btn-secondary" disabled style="opacity:.5;cursor:not-allowed"><i class="fa-solid fa-book"></i> Docs (soon)</button>
+        </div>
+      </div>
+    </article>
+
+    </article></div><!-- /oss-featured -->
+
+    <!-- ── Grid: Marianas / Kaluga / Abzu ── -->
+    <div class="proj-grid" id="oss-grid">
+
+      <!-- Marianas -->
+      <article class="proj-card">
+        <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+        <div class="proj-card-top">
+          <span class="proj-card-tag">// 02 · MALDEV</span>
+          <span class="status status-active"><span class="dot"></span>Active</span>
+        </div>
+        <h4>Marianas</h4>
+        <p>Malware development repository for education, CTFs, crisis simulations and workshops. Ransomwares, C2 frameworks, payload generators, loaders and more — all for controlled, ethical use in security training.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <p>All samples are for authorized use only. Designed for internal training and controlled lab environments.</p>
+        </div>
+
+        <div class="proj-stack"><span>python</span><span>rust</span><span>c</span><span>maldev</span><span>c2</span><span>education</span></div>
+        <div class="proj-card-actions">
+          <a href="https://github.com/Ch4rybd3/Marianas" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
+      </article>
+
+      <!-- Kaluga -->
+      <article class="proj-card">
+        <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+        <div class="proj-card-top">
+          <span class="proj-card-tag">// 03 · DFIR TOOLING</span>
+          <span class="status status-wip"><span class="dot"></span>In Progress</span>
+        </div>
+        <h4>Kaluga</h4>
+        <p>A DFIR-tailored container environment inspired by Exegol. Spins up isolated, reproducible containers on the fly for each incident response, keeping your host ecosystem clean across engagements.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-lightbulb"></i>
+          <p>Born from the need to keep my DFIR workstation clean between cases. Each engagement gets a fresh, scoped container.</p>
+        </div>
+
+        <div class="proj-stack"><span>docker</span><span>shell</span><span>dfir</span><span>containers</span><span>isolation</span></div>
+        <div class="proj-card-actions">
+          <a href="https://github.com/Ch4rybd3/Kaluga" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
+      </article>
+
+      <!-- Abzu -->
+      <article class="proj-card">
+        <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+        <div class="proj-card-top">
+          <span class="proj-card-tag">// 04 · KNOWLEDGE BASE</span>
+          <span class="status status-active"><span class="dot"></span>Growing</span>
+        </div>
+        <h4>Abzu</h4>
+        <p>A public Obsidian vault documenting everything I learn across my cybersecurity journey — DFIR techniques, CTI methods, SOC workflows, tool notes, and lab writeups. Clone it, open it in Obsidian, explore freely.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-lightbulb"></i>
+          <p>Named after the Sumerian primordial waters of knowledge. All that I know, structured and shared. Contributions and corrections welcome.</p>
+        </div>
+
+        <div class="proj-stack"><span>obsidian</span><span>markdown</span><span>dfir</span><span>cti</span><span>knowledge</span></div>
+        <div class="proj-card-actions">
+          <a href="https://github.com/Ch4rybd3/Abzu" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>
+          <a href="/docs" class="btn btn-ghost" style="font-size:12px;padding:8px 14px;"><i class="fa-solid fa-book"></i> Docs</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     STATS BAND
+═══════════════════════════════════════════════════════════ -->
+<div class="stats-band">
+  <div class="stats-grid">
+    <div><div class="stat-v">4</div><div class="stat-l">OSS Projects</div></div>
+    <div><div class="stat-v">2+</div><div class="stat-l">Side Projects</div></div>
+    <div><div class="stat-v">1</div><div class="stat-l">Conf. Talks</div></div>
+    <div><div class="stat-v">3+</div><div class="stat-l">Workshops</div></div>
+    <div><div class="stat-v">∞</div><div class="stat-l">Work in Progress</div></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 02 — SIDE PROJECTS
+═══════════════════════════════════════════════════════════ -->
+<section class="proj-section" id="side">
+  <div class="proj-section-wrap">
+    <div class="proj-section-head">
+      <div class="eye">// 02 · SIDE PROJECTS &amp; EXPERIMENTS</div>
+      <h2>Built for <span style="color:var(--htb-green)">fun.</span></h2>
+      <p>Not everything has to be serious. These are personal experiments, automations and hobby tools.</p>
+    </div>
+
+    <div class="proj-grid proj-grid-2" id="side-grid">
+
+      <!-- Retroarch -->
+      <article class="proj-card">
+        <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+        <div class="proj-card-top">
+          <span class="proj-card-tag">// PERSONAL · GAMING</span>
+          <span class="status status-maintained"><span class="dot"></span>Maintained</span>
+        </div>
+        <h4>Retroarch-GitHub_Sync</h4>
+        <p>A GitHub-synced save-state system for retro gaming across multiple machines — no Syncthing, no cloud subscriptions. Built for seamless Pokémon runs across different computers. Uses GitHub as a free, versioned save-state backend.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-lightbulb"></i>
+          <p>Started because I couldn't keep save files in sync between my desktop and laptop without some cursed Syncthing setup. Why not use git?</p>
+        </div>
+
+        <div class="proj-stack"><span>shell</span><span>git</span><span>retroarch</span><span>automation</span></div>
+        <div class="proj-card-actions">
+          <a href="https://github.com/Ch4rybd3/Retroarch-GitHub_Sync" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
+      </article>
+
+      <!-- PokeMMO -->
+      <article class="proj-card">
+        <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+        <div class="proj-card-top">
+          <span class="proj-card-tag">// PERSONAL · AUTOMATION</span>
+          <span class="status status-maintained"><span class="dot"></span>Maintained</span>
+        </div>
+        <h4>PokeMMO-NoMoreLostShinies</h4>
+        <p>A Python companion for shiny hunting in PokeMMO that watches for rare encounters and alerts you — because shinies shouldn't die to recoil damage while you're looking away. Screen detection + sound alerts.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-lightbulb"></i>
+          <p>Lost a shiny Ralts to recoil once. Never again. Built in an evening out of spite and it's been working perfectly since.</p>
+        </div>
+
+        <div class="proj-stack"><span>python</span><span>opencv</span><span>pokemmo</span><span>screen-capture</span></div>
+        <div class="proj-card-actions">
+          <a href="https://github.com/Ch4rybd3/PokeMMO-NoMoreLostShinies" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 03 — TALKS & CONFERENCES
+═══════════════════════════════════════════════════════════ -->
+<section class="proj-section" id="talks">
+  <div class="proj-section-wrap">
+    <div class="proj-section-head">
+      <div class="eye">// 03 · PUBLIC TALKS · CONFERENCES</div>
+      <h2>On <span style="color:var(--htb-green)">stage.</span></h2>
+      <p>Conference presentations, workshops and public speaking engagements.</p>
+    </div>
+
+    <div id="talks-list"><!-- WAQ 2023 -->
+    <article class="talk-full">
+      <div class="talk-stage">
+        <i class="fa-solid fa-microphone mic"></i>
+        <div class="conf">WAQ<br/>Québec</div>
+        <div class="year">2023</div>
+      </div>
+      <div class="talk-body-full">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <span class="talk-eyebrow">// CONFERENCE TALK · WEB À QUÉBEC 2023</span>
+          <span class="status status-maintained"><span class="dot"></span>Delivered</span>
+        </div>
+        <h3 class="talk-title">"Phishing and Social Engineering —<br/><em>Ever been in a hacker's mind?"</em></h3>
+
+        <p class="talk-abstract">A walk through the mind of an attacker — from target selection to payload delivery. Rather than a classic awareness lecture, I placed the audience directly inside the attacker's perspective using reverse psychology, making the threat viscerally real rather than abstract.</p>
+        <p class="talk-abstract">The talk covered the full phishing kill chain: initial recon, pretexting, email spoofing and infrastructure, payload delivery, evasion, and post-click actions. I demonstrated live tooling (GoPhish, Evilginx, custom pretexts) in a controlled setup. Strong audience engagement and discussions continued well past the session slot.</p>
+
+        <div class="annotation">
+          <i class="fa-solid fa-quote-left"></i>
+          <p>The goal was to make people uncomfortable in a productive way. Not "here are phishing red flags" but "here is exactly how I would phish you, step by step, right now." Reaction was exactly what I hoped for.</p>
+        </div>
+
+        <div class="talk-topics">
+          <span class="talk-topic">Phishing</span>
+          <span class="talk-topic">Social Engineering</span>
+          <span class="talk-topic">Security Awareness</span>
+          <span class="talk-topic">Red Team</span>
+          <span class="talk-topic">GoPhish</span>
+          <span class="talk-topic">Evilginx</span>
+        </div>
+
+        <div class="talk-meta">
+          <span><i class="fa-solid fa-location-dot"></i>Québec City, Canada</span>
+          <span><i class="fa-solid fa-calendar"></i>WAQ 2023 · April 2023</span>
+          <span><i class="fa-solid fa-users"></i>~150 attendees</span>
+          <span><i class="fa-solid fa-language"></i>French</span>
+        </div>
+        <div class="talk-links">
+          <button class="btn btn-ghost" style="font-size:12px;padding:8px 14px;" disabled title="Slides not yet public"><i class="fa-solid fa-presentation-screen"></i> Slides (soon)</button>
+        </div>
+      </div>
+    </article>
+    </div><!-- /talks-list -->
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 04 — COMMUNITY CONTRIBUTIONS
+═══════════════════════════════════════════════════════════ -->
+<section class="proj-section" id="community">
+  <div class="proj-section-wrap">
+    <div class="proj-section-head">
+      <div class="eye">// 04 · COMMUNITY · KNOWLEDGE SHARING</div>
+      <h2>Giving <span style="color:var(--htb-green)">back.</span></h2>
+      <p>Training, workshops, challenge design, and open-source contributions to the security community.</p>
+    </div>
+
+    <div class="contrib-grid" id="community-grid">
+
+      <!-- DFIR Training -->
+      <div class="contrib-card">
+        <div class="contrib-card-top">
+          <div class="contrib-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+          <div>
+            <div class="contrib-label">// Training</div>
+            <h4>DFIR Training for SOC Teams</h4>
+          </div>
+        </div>
+        <p>Designed and delivered technical DFIR training sessions for SOC analysts — covering memory forensics, disk triage, artifact analysis, and incident timeline reconstruction. Adapted for both French and international teams.</p>
+        <ul class="contrib-list">
+          <li><i class="fa-solid fa-check"></i>Memory acquisition & Volatility3 deep-dive</li>
+          <li><i class="fa-solid fa-check"></i>Windows artifact collection (KAPE, EZ Tools)</li>
+          <li><i class="fa-solid fa-check"></i>Timeline analysis &amp; evidence correlation</li>
+          <li><i class="fa-solid fa-check"></i>DFIR-IRIS case management walkthrough</li>
+          <li><i class="fa-solid fa-check"></i>Hands-on IR playbook exercises</li>
+        </ul>
+        <div class="contrib-meta">Amaris Consulting · 2025 · Lyon / Remote</div>
+      </div>
+
+      <!-- CTF & Challenge Design -->
+      <div class="contrib-card">
+        <div class="contrib-card-top">
+          <div class="contrib-icon"><i class="fa-solid fa-flag"></i></div>
+          <div>
+            <div class="contrib-label">// CTF Design</div>
+            <h4>Challenge &amp; CTF Authoring</h4>
+          </div>
+        </div>
+        <p>Designed CTF challenges and lab scenarios for internal workshops, covering forensics, reverse engineering, and attacker simulation. Scenarios built to teach real-world investigation techniques in a controlled environment.</p>
+        <ul class="contrib-list">
+          <li><i class="fa-solid fa-check"></i>DFIR forensics challenges (memory, disk, network)</li>
+          <li><i class="fa-solid fa-check"></i>Attacker simulation scenarios for blue team training</li>
+          <li><i class="fa-solid fa-check"></i>Crisis simulation exercises with realistic malware samples</li>
+          <li><i class="fa-solid fa-check"></i>IR tabletop exercises with decision-point branching</li>
+        </ul>
+        <div class="contrib-meta">Amaris Consulting · 2025 · Lyon</div>
+      </div>
+
+      <!-- Malware simulations -->
+      <div class="contrib-card">
+        <div class="contrib-card-top">
+          <div class="contrib-icon"><i class="fa-solid fa-virus"></i></div>
+          <div>
+            <div class="contrib-label">// Red Team Support</div>
+            <h4>Malware Simulations for Training</h4>
+          </div>
+        </div>
+        <p>Developed custom malware samples (ransomware simulators, C2 implants, loaders) for use in crisis simulation exercises and SOC training environments. All samples are inert outside controlled lab contexts.</p>
+        <ul class="contrib-list">
+          <li><i class="fa-solid fa-check"></i>Ransomware simulator (safe, no real encryption)</li>
+          <li><i class="fa-solid fa-check"></i>C2 beacon for IR triage training</li>
+          <li><i class="fa-solid fa-check"></i>Payload loaders for detection rule testing</li>
+          <li><i class="fa-solid fa-check"></i>YARA rule coverage validation suite</li>
+        </ul>
+        <div class="contrib-meta">Internal use · Amaris Consulting · 2025</div>
+      </div>
+
+      <!-- OSS & Public Knowledge -->
+      <div class="contrib-card">
+        <div class="contrib-card-top">
+          <div class="contrib-icon"><i class="fa-solid fa-book-open"></i></div>
+          <div>
+            <div class="contrib-label">// Open Source</div>
+            <h4>Public Knowledge &amp; OSS</h4>
+          </div>
+        </div>
+        <p>Public resources for the community — from the Abzu knowledge vault to blog articles, tool documentation, and process templates. Built to be referenced, forked, and improved by anyone.</p>
+        <ul class="contrib-list">
+          <li><i class="fa-solid fa-check"></i><strong>Abzu</strong> — public Obsidian vault (DFIR / SOC / CTI notes)</li>
+          <li><i class="fa-solid fa-check"></i>Blog articles on DFIR techniques &amp; tool usage</li>
+          <li><i class="fa-solid fa-check"></i>IR playbook templates &amp; documentation</li>
+          <li><i class="fa-solid fa-check"></i>Detection rules &amp; DFIR tooling open-sourced via GitHub</li>
+        </ul>
+        <div class="contrib-meta">Public · github.com/Ch4rybd3 · Ongoing</div>
+      </div>
+
+      <!-- Data breach detection -->
+      <div class="contrib-card">
+        <div class="contrib-card-top">
+          <div class="contrib-icon"><i class="fa-solid fa-magnifying-glass-chart"></i></div>
+          <div>
+            <div class="contrib-label">// CTI</div>
+            <h4>Data Breach Detection Branch</h4>
+          </div>
+        </div>
+        <p>At Formind Canada, built a proactive data breach detection capability from scratch — monitoring dark web sources, paste sites, and leak channels to identify unreported victims and notify them before public disclosure.</p>
+        <ul class="contrib-list">
+          <li><i class="fa-solid fa-check"></i>Dark web monitoring pipeline</li>
+          <li><i class="fa-solid fa-check"></i>Automated correlation &amp; victim identification</li>
+          <li><i class="fa-solid fa-check"></i>Responsible disclosure process design</li>
+          <li><i class="fa-solid fa-check"></i>IOC extraction &amp; threat actor profiling</li>
+        </ul>
+        <div class="contrib-meta">Formind Canada · Montréal · 2023–2024</div>
+      </div>
+
+      <!-- Knowledge Base internal -->
+      <div class="contrib-card">
+        <div class="contrib-card-top">
+          <div class="contrib-icon"><i class="fa-solid fa-sitemap"></i></div>
+          <div>
+            <div class="contrib-label">// Documentation</div>
+            <h4>SOC Process &amp; Playbook Docs</h4>
+          </div>
+        </div>
+        <p>Built internal knowledge bases and SOC runbooks across multiple employers — structured documentation for alert handling, IR procedures, tool onboarding, and detection logic. Designed for both junior analysts and incident commanders.</p>
+        <ul class="contrib-list">
+          <li><i class="fa-solid fa-check"></i>Incident response playbooks (ransomware, BEC, insider)</li>
+          <li><i class="fa-solid fa-check"></i>Alert triage procedures &amp; escalation trees</li>
+          <li><i class="fa-solid fa-check"></i>Tool onboarding docs (SentinelOne, DFIR-IRIS, Velociraptor)</li>
+          <li><i class="fa-solid fa-check"></i>Post-incident report templates</li>
+        </ul>
+        <div class="contrib-meta">Amaris · Formind · Cyberprotect · 2020–2025</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+<footer class="foot">
+  <div class="foot-wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <div class="mk-logo">
+          <svg viewBox="0 0 64 72" width="22" height="26" fill="none">
+            <path d="M32 2 L60 18 V54 L32 70 L4 54 V18 Z" stroke="#2DD4BF" stroke-width="3"/>
+            <path d="M20 20 V52 M20 20 H44 M20 38 H38" stroke="#2DD4BF" stroke-width="4" stroke-linecap="square"/>
+          </svg>
+          <b>CH4RYBD3.FR</b>
+        </div>
+        <p>Florian Salingue · DFIR / SOC / CTI Analyst · Lyon, France.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Navigate</h5>
+        <ul>
+          <li><a href="/">Portfolio</a></li>
+          <li><a href="/projects">Projects</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/docs">Docs</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Projects</h5>
+        <ul>
+          <li><a href="https://github.com/Ch4rybd3/Remora" target="_blank" rel="noopener">Remora</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Marianas" target="_blank" rel="noopener">Marianas</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Kaluga" target="_blank" rel="noopener">Kaluga</a></li>
+          <li><a href="https://github.com/Ch4rybd3/Abzu" target="_blank" rel="noopener">Abzu</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Expertise</h5>
+        <ul>
+          <li><a>DFIR</a></li>
+          <li><a>SOC</a></li>
+          <li><a>CTI</a></li>
+          <li><a>Red Team</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>Contact</h5>
+        <ul>
+          <li><a href="mailto:fsalingue@protonmail.com">Email</a></li>
+          <li><a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener">GitHub</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-meta">
+      <div>© 2026 ch4rybd3.fr · no cookies, no trackers · built in Lyon</div>
+      <div class="socials">
+        <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i></a>
+        <a href="mailto:fsalingue@protonmail.com"><i class="fa-solid fa-at"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+<script>
+/* ═══════════════════════════════════════════════════
+   DYNAMIC CONTENT — fetched from /api/config/*
+═══════════════════════════════════════════════════ */
+(async () => {
+  const api = key => fetch(`/api/config/${key}`).then(r => r.ok ? r.json() : null).catch(() => null)
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  const mdInline = s => { try { return marked.parseInline(String(s||'')) } catch { return esc(s) } }
+  const mdBlock  = s => { try { return marked.parse(String(s||'')) } catch { return esc(s) } }
+
+  const STATUS_MAP = {
+    active:     ['status-active',     'Active'],
+    wip:        ['status-wip',        'In Progress'],
+    maintained: ['status-maintained', 'Maintained'],
+    archived:   ['status-archived',   'Archived'],
+  }
+  const statusBadge = s => {
+    const [cls, label] = STATUS_MAP[s] || STATUS_MAP.wip
+    return `<span class="status ${cls}"><span class="dot"></span>${label}</span>`
+  }
+
+  const [oss, side, talks, community] = await Promise.all([
+    api('projects.oss'), api('projects.side'), api('projects.talks'), api('projects.community')
+  ])
+
+  /* ── OSS: featured + grid ── */
+  if (Array.isArray(oss) && oss.length) {
+    const featured = oss.find(p => p.featured) || oss[0]
+    const grid     = oss.filter(p => !p.featured)
+
+    /* Featured card */
+    const featEl = document.getElementById('oss-featured')
+    if (featEl) {
+      const stack = (featured.stack || []).map(t =>
+        `<span class="${t.hl ? 'hl' : ''}">${esc(t.name)}</span>`).join('')
+      const milestones = (featured.milestones || []).map(m =>
+        `<div class="milestone${m.done ? ' done' : ''}"><div class="check"></div>${esc(m.text)}</div>`).join('')
+      featEl.innerHTML = `
+        <article class="feat-card">
+          <div class="feat-art">
+            <div class="feat-art-placeholder" style="display:flex">
+              <div class="hex"><i class="fa-solid fa-shield-halved"></i></div>
+              <span>// preview pending</span>
+            </div>
+          </div>
+          <div class="feat-body">
+            <div class="feat-top">
+              <span class="feat-eyebrow">// FEATURED · 01 · ${esc(featured.category || 'OSS')}</span>
+              ${statusBadge(featured.status)}
+            </div>
+            <h3 class="feat-title">${esc(featured.name)}</h3>
+            <div class="feat-desc md-rendered">${mdBlock(featured.description)}</div>
+            ${featured.annotation ? `<div class="annotation"><i class="fa-solid fa-lightbulb"></i><p>${mdInline(featured.annotation)}</p></div>` : ''}
+            <div class="feat-stack">${stack}</div>
+            ${milestones ? `<div><p class="milestones-title">// ROADMAP</p><div class="milestones">${milestones}</div></div>` : ''}
+            <div class="feat-meta">
+              <div><span class="l">Type</span><span class="v">${esc(featured.category || 'OSS')}</span></div>
+              ${featured.github ? `<div><span class="l">GitHub</span><span class="v">${esc(featured.github.replace('https://github.com/',''))}</span></div>` : ''}
+            </div>
+            <div class="feat-actions">
+              ${featured.github ? `<a href="${esc(featured.github)}" target="_blank" rel="noopener"><button class="btn btn-primary"><i class="fa-brands fa-github"></i> GitHub</button></a>` : ''}
+            </div>
+          </div>
+        </article>`
+    }
+
+    /* OSS grid */
+    const gridEl = document.getElementById('oss-grid')
+    if (gridEl && grid.length) {
+      gridEl.innerHTML = grid.map((p, i) => `
+        <article class="proj-card">
+          <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+          <div class="proj-card-top">
+            <span class="proj-card-tag">// 0${i+2} · ${esc(p.category || 'OSS')}</span>
+            ${statusBadge(p.status)}
+          </div>
+          <h4>${esc(p.name)}</h4>
+          <div class="md-rendered">${mdBlock(p.description)}</div>
+          ${p.annotation ? `<div class="annotation"><i class="fa-solid fa-lightbulb"></i><p>${mdInline(p.annotation)}</p></div>` : ''}
+          <div class="proj-stack">${(p.stack||[]).map(t=>`<span>${esc(t.name||t)}</span>`).join('')}</div>
+          <div class="proj-card-actions">
+            ${p.github ? `<a href="${esc(p.github)}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
+          </div>
+        </article>`
+      ).join('')
+    }
+  }
+
+  /* ── Side projects ── */
+  if (Array.isArray(side) && side.length) {
+    const gridEl = document.getElementById('side-grid')
+    if (gridEl) gridEl.innerHTML = side.map(p => `
+      <article class="proj-card">
+        <i class="fa-solid fa-arrow-up-right-from-square proj-card-ext"></i>
+        <div class="proj-card-top">
+          <span class="proj-card-tag">// ${esc(p.category || 'PERSONAL')}</span>
+          ${statusBadge(p.status || 'maintained')}
+        </div>
+        <h4>${esc(p.name)}</h4>
+        <div class="md-rendered">${mdBlock(p.description)}</div>
+        ${p.annotation ? `<div class="annotation"><i class="fa-solid fa-lightbulb"></i><p>${mdInline(p.annotation)}</p></div>` : ''}
+        <div class="proj-stack">${(p.stack||[]).map(t=>`<span>${esc(t.name||t)}</span>`).join('')}</div>
+        <div class="proj-card-actions">
+          ${p.github ? `<a href="${esc(p.github)}" target="_blank" rel="noopener" class="btn btn-secondary" style="font-size:12px;padding:8px 14px;"><i class="fa-brands fa-github"></i> GitHub</a>` : ''}
+        </div>
+      </article>`
+    ).join('')
+  }
+
+  /* ── Talks ── */
+  if (Array.isArray(talks) && talks.length) {
+    const listEl = document.getElementById('talks-list')
+    if (listEl) listEl.innerHTML = talks.map(t => `
+      <article class="talk-full">
+        <div class="talk-stage">
+          <i class="fa-solid fa-microphone mic"></i>
+          <div class="conf">${esc(t.conf)}<br/>${esc(t.location||'')}</div>
+          <div class="year">${esc(t.year)}</div>
+        </div>
+        <div class="talk-body-full">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+            <span class="talk-eyebrow">// ${esc(t.eyebrow || 'CONFERENCE TALK')}</span>
+            ${statusBadge(t.status || 'maintained')}
+          </div>
+          <h3 class="talk-title">${esc(t.title)}</h3>
+          <div class="talk-abstract md-rendered">${mdBlock(t.abstract)}</div>
+          ${t.annotation ? `<div class="annotation"><i class="fa-solid fa-quote-left"></i><p>${mdInline(t.annotation)}</p></div>` : ''}
+          <div class="talk-topics">
+            ${(t.topics||[]).map(tp=>`<span class="talk-topic">${esc(tp)}</span>`).join('')}
+          </div>
+          <div class="talk-meta">
+            ${t.location ? `<span><i class="fa-solid fa-location-dot"></i>${esc(t.location)}</span>` : ''}
+            ${t.date ? `<span><i class="fa-solid fa-calendar"></i>${esc(t.date)}</span>` : ''}
+            ${t.attendees ? `<span><i class="fa-solid fa-users"></i>${esc(t.attendees)}</span>` : ''}
+            ${t.language ? `<span><i class="fa-solid fa-language"></i>${esc(t.language)}</span>` : ''}
+          </div>
+        </div>
+      </article>`
+    ).join('')
+  }
+
+  /* ── Community ── */
+  if (Array.isArray(community) && community.length) {
+    const gridEl = document.getElementById('community-grid')
+    if (gridEl) gridEl.innerHTML = community.map(c => {
+      const items = (c.items || []).map(item =>
+        `<li><i class="fa-solid fa-check"></i>${esc(item)}</li>`).join('')
+      return `
+        <div class="contrib-card">
+          <div class="contrib-card-top">
+            <div class="contrib-icon"><i class="${esc(c.icon || 'fa-solid fa-star')}"></i></div>
+            <div>
+              <div class="contrib-label">// ${esc(c.category)}</div>
+              <h4>${esc(c.title)}</h4>
+            </div>
+          </div>
+          <p>${esc(c.description)}</p>
+          ${items ? `<ul class="contrib-list">${items}</ul>` : ''}
+          <div class="contrib-meta">${esc(c.meta || '')}</div>
+        </div>`
+    }).join('')
+  }
+})()
+
+/* ── Section nav: highlight active tab based on scroll ── */
+  const sections   = ['oss','side','talks','community'].map(id => document.getElementById(id))
+  const navLinks   = document.querySelectorAll('.section-nav a[data-section]')
+  const navEl      = document.getElementById('sectionNav')
+
+  function updateActiveNav() {
+    const scrollY = window.scrollY + 160
+    let current = 'oss'
+    sections.forEach(s => { if (s && s.offsetTop <= scrollY) current = s.id })
+    navLinks.forEach(a => a.classList.toggle('active', a.dataset.section === current))
+  }
+
+  /* ── Smooth scroll on tab click ── */
+  navLinks.forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault()
+      const target = document.getElementById(a.dataset.section)
+      if (target) {
+        const offset = 64 + 44 + 20  // nav + section-nav + breathing room
+        window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' })
+      }
+    })
+  })
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true })
+  updateActiveNav()
+</script>
+
+</body>
+</html>

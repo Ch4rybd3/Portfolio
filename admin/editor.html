@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
-  <link rel="stylesheet" href="/admin/src/style.css"/>
+  <link rel="stylesheet" href="./src/style.css"/>
   <style>
     .editor-layout { display: grid; grid-template-columns: 1fr 280px; gap: 24px; align-items: start; }
     .editor-wrap { display: flex; flex-direction: column; gap: 16px; }
@@ -25,7 +25,7 @@
       font-family: var(--mono);
     }
     .toolbar button:hover  { background: var(--card-3); color: var(--fg); }
-    .toolbar button.active { background: rgba(159,239,0,.12); color: var(--green); }
+    .toolbar button.active { background: rgba(45,212,191,.12); color: var(--green); }
     .toolbar .sep { width: 1px; background: var(--line-2); margin: 2px 4px; align-self: stretch; }
 
     /* TipTap editor area */
@@ -69,7 +69,7 @@
       border: 1px solid var(--line-2); padding: 8px 12px; vertical-align: top;
     }
     .ProseMirror th { background: var(--card-3); font-weight: 600; }
-    .ProseMirror .selectedCell { background: rgba(159,239,0,.08); }
+    .ProseMirror .selectedCell { background: rgba(45,212,191,.08); }
     .ProseMirror p.is-editor-empty:first-child::before {
       content: attr(data-placeholder); color: var(--fg-4); pointer-events: none; float: left; height: 0;
     }
@@ -86,7 +86,7 @@
       background: none; color: var(--fg-3); transition: all .15s; text-align: center;
     }
     .status-btn.active-draft     { background: rgba(163,179,188,.1); color: var(--fg-2); border-color: var(--line-2); }
-    .status-btn.active-published { background: rgba(159,239,0,.12); color: var(--green); border-color: rgba(159,239,0,.3); }
+    .status-btn.active-published { background: rgba(45,212,191,.12); color: var(--green); border-color: rgba(45,212,191,.3); }
 
     .cover-preview { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; margin-bottom: 8px; display: none; }
   </style>
@@ -99,6 +99,9 @@
         <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
         <a href="/admin/editor" class="active"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
         <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
+        <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
+        <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Docs</a>
+        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
       </nav>
       <div class="bottom">
         <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
@@ -157,6 +160,15 @@
               </div>
             </div>
             <div class="sidebar-card">
+              <h3>Tags</h3>
+              <div id="tagsDisplay" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:24px;"></div>
+              <div style="display:flex;gap:6px;">
+                <input id="tagInput" type="text" placeholder="Ajouter un tag…" style="flex:1;font-size:12px;padding:6px 8px;" onkeydown="handleTagKey(event)"/>
+                <button class="btn btn-ghost btn-sm" onclick="addTagFromInput()" style="padding:6px 10px;" type="button"><i class="fa fa-plus"></i></button>
+              </div>
+              <p style="font-size:11px;color:var(--fg-4);margin-top:8px;">Entrée ou virgule pour valider. Ex : dfir, ctf, soc</p>
+            </div>
+            <div class="sidebar-card">
               <h3>Extrait</h3>
               <textarea id="excerptInput" rows="4" placeholder="Résumé affiché dans la liste des articles…"></textarea>
             </div>
@@ -173,6 +185,7 @@
       </div>
     </div>
   </div>
-  <script type="module" src="/admin/src/editor.js"></script>
+  <script type="module" src="./src/editor.js"></script>
 </body>
 </html>
+
