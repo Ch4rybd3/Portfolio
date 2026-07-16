@@ -119,6 +119,59 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('pwdModalOverlay').classList.contains('open')) closePwdModal()
 })
 
+/* ════════════════════════════════════════════════
+   EXPORT
+════════════════════════════════════════════════ */
+function triggerExport(url) {
+  window.open(url, '_blank')
+}
+
+document.getElementById('exportArticlesBtn').addEventListener('click', () => triggerExport('/api/export/articles'))
+document.getElementById('exportKbBtn').addEventListener('click',       () => triggerExport('/api/export/docs?section=kb'))
+document.getElementById('exportRemoraBtn').addEventListener('click',   () => triggerExport('/api/export/docs?section=remora'))
+
+/* ════════════════════════════════════════════════
+   IMPORT / RESTORE (docs)
+════════════════════════════════════════════════ */
+let importMode = 'merge'
+const importInput = document.getElementById('importFileInput')
+document.getElementById('importMergeBtn').addEventListener('click',   () => { importMode = 'merge';   importInput.click() })
+document.getElementById('importReplaceBtn').addEventListener('click', () => { importMode = 'replace'; importInput.click() })
+
+importInput.addEventListener('change', async e => {
+  const file = e.target.files[0]
+  e.target.value = ''
+  if (!file) return
+  const out = document.getElementById('importResult')
+  out.textContent = ''
+
+  let data
+  try { data = JSON.parse(await file.text()) } catch { out.textContent = '✗ Fichier JSON invalide'; return }
+  const notes = Array.isArray(data?.notes) ? data.notes : (Array.isArray(data) ? data : null)
+  if (!notes || !notes.length) { out.textContent = '✗ Aucune note trouvée dans ce fichier'; return }
+
+  const sections = [...new Set(notes.map(n => n?.section === 'remora' ? 'remora' : 'kb'))].join(', ')
+  const msg = importMode === 'replace'
+    ? `⚠ RESTAURATION COMPLÈTE\n\nToutes les notes actuelles des sections [${sections}] seront SUPPRIMÉES, puis remplacées par les ${notes.length} notes de "${file.name}".\n\nContinuer ?`
+    : `Fusionner les ${notes.length} notes de "${file.name}" (sections : ${sections}) avec l'existant ?\n\nLes notes de même chemin seront écrasées, le reste est conservé.`
+  if (!confirm(msg)) return
+
+  out.textContent = 'Import en cours…'
+  try {
+    const r = await fetch('/api/export/docs/import', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes, mode: importMode })
+    })
+    if (r.status === 401) { location.href = '/admin/login'; return }
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) { out.textContent = `✗ ${j.error || 'Erreur pendant l\'import'}`; return }
+    out.textContent = `✓ ${j.imported} note${j.imported > 1 ? 's' : ''} importée${j.imported > 1 ? 's' : ''} (${j.mode === 'replace' ? 'remplacement' : 'fusion'})`
+      + (j.removed ? ` · ${j.removed} supprimée${j.removed > 1 ? 's' : ''}` : '')
+      + (j.skipped ? `\n⚠ ${j.skipped} ignorée${j.skipped > 1 ? 's' : ''} : ${j.errors.join(' ; ')}` : '')
+  } catch { out.textContent = '✗ Erreur réseau pendant l\'import' }
+})
+
 document.getElementById('newPwd').addEventListener('input', function () {
   updatePolicyUI(this.value)
   document.getElementById('pwdError').textContent = ''

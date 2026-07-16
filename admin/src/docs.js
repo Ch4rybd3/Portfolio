@@ -13,11 +13,32 @@ import { common, createLowlight } from 'lowlight'
 const lowlight = createLowlight(common)
 
 /* ════════════════════════════════════════════════
+   SECTION  (set by the HTML page before module load)
+════════════════════════════════════════════════ */
+const SECTION = window.DOCS_SECTION || 'kb'
+const PUBLIC_BASE = SECTION === 'remora' ? '/remora' : '/docs'
+
+/* ════════════════════════════════════════════════
    STATE
 ════════════════════════════════════════════════ */
 let currentPath = null
 let allNotes    = []
 let noteProps   = {}  // Record<string, string> — replaces tags
+let treeFilterQuery = ''
+
+/* ── Persisted tree state (localStorage, per section) ── */
+const LS_EMPTY_FOLDERS = `docsEmptyFolders:${window.DOCS_SECTION || 'kb'}`
+const LS_FOLDER_OPEN   = `docsFolderOpen:${window.DOCS_SECTION || 'kb'}`
+
+function lsLoad(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback } catch { return fallback }
+}
+let emptyFolders = new Set(lsLoad(LS_EMPTY_FOLDERS, []))   // dossiers sans note (virtuels)
+let folderOpen   = lsLoad(LS_FOLDER_OPEN, {})              // path → bool (défaut : ouvert)
+
+function saveEmptyFolders() { localStorage.setItem(LS_EMPTY_FOLDERS, JSON.stringify([...emptyFolders])) }
+function saveFolderOpen()   { localStorage.setItem(LS_FOLDER_OPEN, JSON.stringify(folderOpen)) }
+function isFolderOpen(path) { return folderOpen[path] !== false }
 
 /* ════════════════════════════════════════════════
    HELPERS
@@ -51,8 +72,17 @@ async function apiGet(url) {
 async function apiPut(url, data) {
   const r = await fetch(url, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
   if (r.status === 401) { location.href = '/admin/login'; throw new Error('401') }
-  if (!r.ok) throw new Error(r.statusText)
+  if (!r.ok) {
+    const msg = await r.json().then(j => j.error).catch(() => null)
+    throw new Error(msg || r.statusText)
+  }
   return r.json()
+}
+
+/* ── Visibilité publique (propriété `public` : absente = public) ── */
+function isPublicProps(props) {
+  const v = props?.public
+  return v === undefined || v === null || v === '' || (v !== false && v !== 'false' && v !== 0)
 }
 async function apiDel(url) {
   const r = await fetch(url, { method: 'DELETE', credentials: 'include' })
@@ -472,7 +502,9 @@ document.getElementById('imageFileInput').addEventListener('change', async e => 
 function renderProperties() {
   const wrap = document.getElementById('propsRows')
   wrap.innerHTML = ''
-  Object.entries(noteProps).forEach(([key, value]) => {
+  // La propriété `public` est pilotée par le toggle dédié, pas par les lignes clé:valeur
+  document.getElementById('publicToggle').checked = isPublicProps(noteProps)
+  Object.entries(noteProps).filter(([key]) => key !== 'public').forEach(([key, value]) => {
     const row = document.createElement('div')
     row.className = 'prop-row'
     row.innerHTML = `
@@ -504,6 +536,10 @@ function updatePropSuggestions(key) {
   })
 }
 
+document.getElementById('publicToggle').addEventListener('change', function() {
+  noteProps.public = this.checked
+})
+
 function addProp() {
   const key = document.getElementById('propKeyInput').value.trim()
   const val = document.getElementById('propValInput').value.trim()
@@ -531,17 +567,163 @@ document.getElementById('propAddBtn').addEventListener('click', addProp)
 ════════════════════════════════════════════════ */
 function buildTree(notes) {
   const root = { _notes: [], _folders: {} }
-  notes.forEach(note => {
-    const parts = note.path.split('/')
+  const ensureFolder = (folderPath) => {
     let node = root
-    for (let i = 0; i < parts.length - 1; i++) {
-      const f = parts[i]
+    folderPath.split('/').forEach(f => {
       if (!node._folders[f]) node._folders[f] = { _notes: [], _folders: {} }
       node = node._folders[f]
-    }
+    })
+    return node
+  }
+  notes.forEach(note => {
+    const parts = note.path.split('/')
+    const node = parts.length > 1 ? ensureFolder(parts.slice(0, -1).join('/')) : root
     node._notes.push(note)
   })
+  // Dossiers vides (créés mais sans note) — masqués quand un filtre est actif
+  if (!treeFilterQuery) emptyFolders.forEach(f => ensureFolder(f))
   return root
+}
+
+/* ── Filtre : texte libre et/ou tokens clé:valeur ── */
+function noteMatchesFilter(note, tokens) {
+  return tokens.every(t => {
+    const ci = t.indexOf(':')
+    if (ci > 0) {
+      const k = t.slice(0, ci), v = t.slice(ci + 1)
+      const pv = note.properties?.[k]
+      if (pv === undefined || pv === null) return false
+      return v === '' || String(pv).toLowerCase().includes(v)
+    }
+    return note.title.toLowerCase().includes(t) || note.path.toLowerCase().includes(t)
+  })
+}
+
+function filteredNotes() {
+  if (!treeFilterQuery) return allNotes
+  const tokens = treeFilterQuery.toLowerCase().split(/\s+/).filter(Boolean)
+  return allNotes.filter(n => noteMatchesFilter(n, tokens))
+}
+
+/* ── Déplacement (rename / drag & drop) ── */
+async function moveNote(oldPath, newPath) {
+  try {
+    const r = await fetch(`/api/docs/admin/move/${oldPath}`, {
+      method: 'PATCH', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ newPath })
+    })
+    if (r.status === 401) { location.href = '/admin/login'; return false }
+    if (r.status === 409) { toast('Une note existe déjà à ce chemin', 'error'); return false }
+    if (!r.ok) {
+      const msg = await r.json().then(j => j.error).catch(() => null)
+      toast(msg || 'Erreur lors du déplacement', 'error')
+      return false
+    }
+    if (currentPath === oldPath) {
+      currentPath = newPath
+      document.getElementById('notePath').value = newPath
+      document.getElementById('propsPathInput').value = newPath
+      document.getElementById('previewLink').href = `${PUBLIC_BASE}/${newPath}`
+    }
+    allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
+    refreshTree()
+    toast(`✓ Déplacé → ${newPath}`)
+    return true
+  } catch { toast('Erreur lors du déplacement', 'error'); return false }
+}
+
+/* ── Renommage de dossier : réécrit le préfixe de toutes les notes qu'il contient ── */
+async function moveFolder(oldPath, newPath) {
+  try {
+    const r = await fetch('/api/docs/admin/move-folder', {
+      method: 'PATCH', credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldPath, newPath, section: SECTION })
+    })
+    if (r.status === 401) { location.href = '/admin/login'; return false }
+    if (!r.ok) {
+      const msg = await r.json().then(j => j.error).catch(() => null)
+      toast(msg || 'Erreur lors du renommage du dossier', 'error')
+      return false
+    }
+    // Transfère l'état local (dossiers vides, plis, note ouverte) vers le nouveau préfixe
+    const remap = p => p === oldPath ? newPath : (p.startsWith(oldPath + '/') ? newPath + p.slice(oldPath.length) : p)
+    emptyFolders = new Set([...emptyFolders].map(remap))
+    saveEmptyFolders()
+    folderOpen = Object.fromEntries(Object.entries(folderOpen).map(([p, v]) => [remap(p), v]))
+    saveFolderOpen()
+    if (currentPath && currentPath.startsWith(oldPath + '/')) {
+      currentPath = remap(currentPath)
+      document.getElementById('notePath').value = currentPath
+      document.getElementById('propsPathInput').value = currentPath
+      document.getElementById('previewLink').href = `${PUBLIC_BASE}/${currentPath}`
+    }
+    allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
+    refreshTree()
+    toast(`✓ Dossier renommé → ${newPath}`)
+    return true
+  } catch { toast('Erreur lors du renommage du dossier', 'error'); return false }
+}
+
+function startFolderRename(head, folderPath) {
+  if (head.querySelector('.folder-rename-input')) return
+  const nameSpan = head.querySelector('.ft-folder-name')
+  const seg = folderPath.split('/').pop()
+  const inp = document.createElement('input')
+  inp.className = 'new-note-input folder-rename-input'
+  inp.value = seg
+  inp.style.flex = '1'
+  inp.style.minWidth = '0'
+  nameSpan.replaceWith(inp)
+  inp.focus(); inp.select()
+
+  let done = false
+  const cancel = () => { if (done) return; done = true; inp.replaceWith(nameSpan) }
+  const confirm = () => {
+    if (done) return
+    const slug = inp.value.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '')
+    if (!slug || slug === seg) { cancel(); return }
+    done = true
+    const parent = folderPath.includes('/') ? folderPath.slice(0, folderPath.lastIndexOf('/') + 1) : ''
+    moveFolder(folderPath, parent + slug)
+  }
+  inp.addEventListener('click', e => e.stopPropagation())
+  inp.addEventListener('keydown', e => {
+    e.stopPropagation()
+    if (e.key === 'Enter')  { e.preventDefault(); confirm() }
+    if (e.key === 'Escape') cancel()
+  })
+  inp.addEventListener('blur', () => setTimeout(cancel, 200))
+}
+
+function makeNoteDraggable(li, note) {
+  li.draggable = true
+  li.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/note-path', note.path)
+    e.dataTransfer.effectAllowed = 'move'
+    li.classList.add('dragging')
+  })
+  li.addEventListener('dragend', () => li.classList.remove('dragging'))
+}
+
+function makeDropTarget(el, folderPath) {  // folderPath '' = racine
+  el.addEventListener('dragover', e => {
+    if (![...e.dataTransfer.types].includes('text/note-path')) return
+    e.preventDefault(); e.stopPropagation()
+    e.dataTransfer.dropEffect = 'move'
+    el.classList.add('drag-over')
+  })
+  el.addEventListener('dragleave', () => el.classList.remove('drag-over'))
+  el.addEventListener('drop', e => {
+    e.preventDefault(); e.stopPropagation()
+    el.classList.remove('drag-over')
+    const oldPath = e.dataTransfer.getData('text/note-path')
+    if (!oldPath) return
+    const name = oldPath.split('/').pop()
+    const newPath = folderPath ? `${folderPath}/${name}` : name
+    if (newPath !== oldPath) moveNote(oldPath, newPath)
+  })
 }
 
 function fmtFolder(name) {
@@ -553,28 +735,46 @@ function renderTreeNode(node, prefix = '') {
   ul.className = 'ft-ul'
   Object.entries(node._folders).sort(([a],[b]) => a.localeCompare(b)).forEach(([name, child]) => {
     const li = document.createElement('li')
-    li.className = 'ft-folder open'
     const folderPath = prefix ? `${prefix}/${name}` : name
+    // Filtre actif → tout ouvert pour montrer les résultats
+    const open = treeFilterQuery ? true : isFolderOpen(folderPath)
+    li.className = 'ft-folder' + (open ? ' open' : '')
     const head = document.createElement('div')
     head.className = 'ft-folder-head'
     head.innerHTML = `
       <i class="fa fa-chevron-right"></i>
       <i class="fa fa-folder-open" style="font-size:11px;color:var(--fg-4)"></i>
-      <span style="flex:1">${fmtFolder(name)}</span>
+      <span class="ft-folder-name" style="flex:1">${fmtFolder(name)}</span>
       <span class="folder-actions">
         <span class="add-btn add-note-btn" title="Nouvelle note dans ce dossier"><i class="fa fa-file-circle-plus"></i></span>
         <span class="add-btn add-folder-btn" title="Nouveau sous-dossier"><i class="fa fa-folder-plus"></i></span>
+        <span class="add-btn rename-folder-btn" title="Renommer le dossier"><i class="fa fa-pen"></i></span>
+        <span class="add-btn moc-btn" title="Générer la MOC du dossier"><i class="fa fa-sitemap"></i></span>
       </span>
     `
     head.querySelector('.add-note-btn').addEventListener('click', e => {
       e.stopPropagation()
       showNewNoteBar(folderPath + '/')
     })
+    head.querySelector('.rename-folder-btn').addEventListener('click', e => {
+      e.stopPropagation()
+      startFolderRename(head, folderPath)
+    })
     head.querySelector('.add-folder-btn').addEventListener('click', e => {
       e.stopPropagation()
       showInlineFolderInput(li, folderPath + '/')
     })
-    head.addEventListener('click', e => { if (e.target.closest('.folder-actions')) return; li.classList.toggle('open') })
+    head.querySelector('.moc-btn').addEventListener('click', e => {
+      e.stopPropagation()
+      generateMoc(folderPath)
+    })
+    head.addEventListener('click', e => {
+      if (e.target.closest('.folder-actions')) return
+      const nowOpen = li.classList.toggle('open')
+      folderOpen[folderPath] = nowOpen
+      saveFolderOpen()
+    })
+    makeDropTarget(head, folderPath)
     li.appendChild(head)
     li.appendChild(renderTreeNode(child, folderPath))
     ul.appendChild(li)
@@ -583,18 +783,23 @@ function renderTreeNode(node, prefix = '') {
     const li = document.createElement('li')
     li.className = 'ft-note' + (note.path === currentPath ? ' active' : '') + (note.published ? '' : ' draft')
     li.dataset.path = note.path
-    li.innerHTML = `<i class="fa fa-file-lines"></i><span>${note.title}</span><span class="del-btn" title="Supprimer"><i class="fa fa-trash"></i></span>`
+    const lock = isPublicProps(note.properties) ? '' : '<i class="fa fa-lock" title="Note privée" style="font-size:9px;color:var(--fg-4);flex-shrink:0"></i>'
+    li.innerHTML = `<i class="fa fa-file-lines"></i><span>${note.title}</span>${lock}<span class="del-btn" title="Supprimer"><i class="fa fa-trash"></i></span>`
     li.querySelector('.del-btn').addEventListener('click', e => { e.stopPropagation(); deleteNote(note.path) })
     li.addEventListener('click', e => { if (e.target.closest('.del-btn')) return; loadNote(note.path) })
+    makeNoteDraggable(li, note)
+    // Déposer sur une note = déposer dans son dossier parent
+    makeDropTarget(li, prefix)
     ul.appendChild(li)
   })
   return ul
 }
 
 function showInlineFolderInput(parentLi, prefix) {
-  // Remove any pre-existing inline input
-  parentLi.querySelectorAll('.ft-folder-inline').forEach(el => el.remove())
-  parentLi.classList.add('open')
+  // parentLi = null → création à la racine de l'arbre
+  const container = parentLi || document.getElementById('fileTree')
+  container.querySelectorAll('.ft-folder-inline').forEach(el => el.remove())
+  if (parentLi) parentLi.classList.add('open')
 
   const li = document.createElement('li')
   li.className = 'ft-folder-inline'
@@ -603,9 +808,9 @@ function showInlineFolderInput(parentLi, prefix) {
   inp.placeholder = 'nom-du-dossier'
   li.appendChild(inp)
 
-  const childUl = parentLi.querySelector('.ft-ul')
+  const childUl = container.querySelector('.ft-ul')
   if (childUl) childUl.insertBefore(li, childUl.firstChild)
-  else parentLi.appendChild(li)
+  else container.appendChild(li)
 
   inp.focus()
 
@@ -614,7 +819,18 @@ function showInlineFolderInput(parentLi, prefix) {
     li.remove()
     if (!raw) return
     const slug = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '')
-    if (slug) showNewNoteBar(prefix + slug + '/')
+    if (!slug) return
+    const folderPath = prefix + slug
+    emptyFolders.add(folderPath)
+    saveEmptyFolders()
+    // Ouvre le nouveau dossier et ses parents
+    folderPath.split('/').reduce((acc, seg) => {
+      const p = acc ? `${acc}/${seg}` : seg
+      folderOpen[p] = true
+      return p
+    }, '')
+    saveFolderOpen()
+    refreshTree()
   }
   inp.addEventListener('keydown', e => {
     if (e.key === 'Enter')  { e.preventDefault(); confirm() }
@@ -624,10 +840,78 @@ function showInlineFolderInput(parentLi, prefix) {
 }
 
 function refreshTree() {
+  // Nettoyage : un dossier "vide" qui contient désormais des notes devient réel
+  emptyFolders.forEach(f => {
+    if (allNotes.some(n => n.path.startsWith(f + '/'))) emptyFolders.delete(f)
+  })
+  saveEmptyFolders()
+
   const container = document.getElementById('fileTree')
   container.innerHTML = ''
-  if (!allNotes.length) { container.innerHTML = '<div style="padding:12px 14px;font-size:12px;color:var(--fg-4)">Aucune note.</div>'; return }
-  container.appendChild(renderTreeNode(buildTree(allNotes)))
+  const notes = filteredNotes()
+  if (!notes.length && !emptyFolders.size) {
+    container.innerHTML = `<div style="padding:12px 14px;font-size:12px;color:var(--fg-4)">${treeFilterQuery ? 'Aucun résultat.' : 'Aucune note.'}</div>`
+    return
+  }
+  container.appendChild(renderTreeNode(buildTree(notes)))
+}
+
+/* ── Déplier / replier tout ── */
+function setAllFolders(open) {
+  const collect = (notes) => {
+    const set = new Set()
+    notes.forEach(n => {
+      const parts = n.path.split('/')
+      for (let i = 1; i < parts.length; i++) set.add(parts.slice(0, i).join('/'))
+    })
+    emptyFolders.forEach(f => {
+      f.split('/').reduce((acc, seg) => { const p = acc ? `${acc}/${seg}` : seg; set.add(p); return p }, '')
+    })
+    return set
+  }
+  collect(allNotes).forEach(p => { folderOpen[p] = open })
+  saveFolderOpen()
+  refreshTree()
+}
+
+/* ── MOC (map of content) : note générée listant les notes d'un dossier ── */
+async function generateMoc(folderPath = '') {
+  const mocPath = folderPath ? `${folderPath}/moc` : 'moc'
+  const notes = allNotes.filter(n =>
+    (folderPath ? n.path.startsWith(folderPath + '/') : true) && n.path !== mocPath
+  )
+  if (!notes.length) { toast('Aucune note dans ce dossier', 'error'); return }
+
+  // Groupées par sous-dossier (relatif), triées
+  const groups = {}
+  notes.forEach(n => {
+    const rel = folderPath ? n.path.slice(folderPath.length + 1) : n.path
+    const g = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : ''
+    ;(groups[g] ||= []).push(n)
+  })
+
+  const title = folderPath ? `MOC — ${fmtFolder(folderPath.split('/').pop())}` : 'MOC'
+  let md = `# ${title}\n`
+  Object.keys(groups).sort((a, b) => a.localeCompare(b)).forEach(g => {
+    if (g) md += `\n## ${g.split('/').map(fmtFolder).join(' / ')}\n`
+    md += '\n'
+    groups[g].sort((a, b) => a.title.localeCompare(b.title)).forEach(n => { md += `- [[${n.title}]]\n` })
+  })
+
+  // Conserve les propriétés d'une MOC existante, marque type: moc
+  let props = { type: 'moc' }
+  try {
+    const existing = await apiGet(`/api/docs/admin/note/${mocPath}`)
+    props = { ...existing.properties, type: 'moc' }
+  } catch { /* pas encore de MOC */ }
+
+  try {
+    await apiPut(`/api/docs/admin/note/${mocPath}`, { title, content: md, properties: props, published: true, section: SECTION })
+    allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
+    refreshTree()
+    await loadNote(mocPath)
+    toast(`✓ MOC générée (${notes.length} note${notes.length > 1 ? 's' : ''})`)
+  } catch { toast('Erreur génération MOC', 'error') }
 }
 
 /* ════════════════════════════════════════════════
@@ -642,6 +926,68 @@ function showNewNoteBar(prefix = '') {
 }
 
 document.getElementById('btnNewNote').addEventListener('click', () => showNewNoteBar())
+document.getElementById('btnNewFolder').addEventListener('click', () => showInlineFolderInput(null, ''))
+document.getElementById('btnRootMoc').addEventListener('click', () => generateMoc(''))
+
+document.getElementById('btnToggleAll').addEventListener('click', () => {
+  // Un dossier ouvert au moins → tout replier, sinon tout déplier
+  const anyOpen = [...document.querySelectorAll('#fileTree .ft-folder')].some(li => li.classList.contains('open'))
+  setAllFolders(!anyOpen)
+  const icon = document.querySelector('#btnToggleAll i')
+  icon.className = anyOpen ? 'fa fa-angles-right' : 'fa fa-angles-down'
+})
+
+/* ── Filtre de l'arborescence ── */
+const treeFilterInput = document.getElementById('treeFilter')
+treeFilterInput.addEventListener('input', () => {
+  treeFilterQuery = treeFilterInput.value.trim()
+  treeFilterInput.closest('.ft-filter').classList.toggle('active', !!treeFilterQuery)
+  refreshTree()
+})
+treeFilterInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { treeFilterInput.value = ''; treeFilterInput.dispatchEvent(new Event('input')) }
+})
+document.getElementById('treeFilterClear').addEventListener('click', () => {
+  treeFilterInput.value = ''
+  treeFilterInput.dispatchEvent(new Event('input'))
+})
+
+/* ── Drop à la racine (zone vide de l'arbre) ── */
+const fileTreeEl = document.getElementById('fileTree')
+fileTreeEl.addEventListener('dragover', e => {
+  if (![...e.dataTransfer.types].includes('text/note-path')) return
+  if (e.target.closest('.ft-folder-head, .ft-note')) { fileTreeEl.classList.remove('drag-over-root'); return }
+  e.preventDefault()
+  e.dataTransfer.dropEffect = 'move'
+  fileTreeEl.classList.add('drag-over-root')
+})
+fileTreeEl.addEventListener('dragleave', e => {
+  if (e.target === fileTreeEl) fileTreeEl.classList.remove('drag-over-root')
+})
+fileTreeEl.addEventListener('drop', e => {
+  fileTreeEl.classList.remove('drag-over-root')
+  if (e.target.closest('.ft-folder-head, .ft-note')) return  // géré par la cible elle-même
+  e.preventDefault()
+  const oldPath = e.dataTransfer.getData('text/note-path')
+  if (!oldPath || !oldPath.includes('/')) return
+  moveNote(oldPath, oldPath.split('/').pop())
+})
+
+/* ── Renommage / déplacement via le panneau de droite ── */
+function renameFromPanel() {
+  if (!currentPath) { toast('Aucune note chargée', 'error'); return }
+  const raw = document.getElementById('propsPathInput').value.trim()
+  const cleaned = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_/]/g, '').replace(/^\/+|\/+$/g, '')
+  if (!cleaned) { toast('Chemin invalide', 'error'); return }
+  document.getElementById('propsPathInput').value = cleaned
+  if (cleaned === currentPath) return
+  moveNote(currentPath, cleaned)
+}
+document.getElementById('renameBtn').addEventListener('click', renameFromPanel)
+document.getElementById('propsPathInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); renameFromPanel() }
+  if (e.key === 'Escape') document.getElementById('propsPathInput').value = currentPath || ''
+})
 document.getElementById('btnCancelNew').addEventListener('click', () => document.getElementById('newNoteBar').classList.remove('show'))
 document.getElementById('btnCreate').addEventListener('click', createNote)
 document.getElementById('newNotePath').addEventListener('keydown', e => {
@@ -661,6 +1007,7 @@ function createNote() {
   currentPath = null
   const title = fmtFolder(p.split('/').pop())
   document.getElementById('notePath').value = p
+  document.getElementById('propsPathInput').value = p
   document.getElementById('noteTitle').value = title
   editor.commands.setContent(`# ${title}\n\n`)
   noteProps = {}; renderProperties()
@@ -668,6 +1015,8 @@ function createNote() {
   document.getElementById('propsMeta').textContent = ''
   document.getElementById('previewLink').href = '#'
   editor.commands.focus('end')
+  // Proposer un template pour la nouvelle note
+  if (allTemplates.length) openTplPicker()
 }
 
 // No auto-slash on blur — too aggressive, caused accidental path mangling
@@ -680,6 +1029,7 @@ async function loadNote(p) {
     const note = await apiGet(`/api/docs/admin/note/${p}`)
     currentPath = p
     document.getElementById('notePath').value  = note.path
+    document.getElementById('propsPathInput').value = note.path
     document.getElementById('noteTitle').value = note.title
     editor.commands.setContent(note.content || '')
     // Migrate legacy tags array → noteProps.tags string
@@ -688,7 +1038,7 @@ async function loadNote(p) {
     noteProps = rawProps
     renderProperties()
     document.getElementById('publishedToggle').checked = !!note.published
-    document.getElementById('previewLink').href = `/docs/${note.path}`
+    document.getElementById('previewLink').href = `${PUBLIC_BASE}/${note.path}`
     const upd = note.updated_at ? new Date(note.updated_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' }) : ''
     document.getElementById('propsMeta').innerHTML = upd ? `Mis à jour le ${upd}<br/><code style="font-size:10px">${escHtml(note.path)}</code>` : ''
     refreshTree()
@@ -706,6 +1056,13 @@ async function saveNote() {
   const published = document.getElementById('publishedToggle').checked
 
   if (!path) { toast('Chemin requis', 'error'); return }
+  // Check : pas d'espaces ni de caractères hors slug dans le nom de la note
+  if (/\s/.test(path)) { toast('Le chemin ne doit pas contenir d\'espaces', 'error'); return }
+  if (!/^[a-zA-Z0-9\-_]+(\/[a-zA-Z0-9\-_]+)*$/.test(path)) {
+    toast('Chemin invalide (lettres, chiffres, tirets, underscores et / uniquement)', 'error'); return
+  }
+
+  noteProps.public = document.getElementById('publicToggle').checked
 
   // If path changed → delete old
   if (currentPath && currentPath !== path) {
@@ -713,12 +1070,13 @@ async function saveNote() {
   }
 
   try {
-    await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: noteProps, published })
+    await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: noteProps, published, section: SECTION })
     currentPath = path
+    document.getElementById('propsPathInput').value = path
     toast(`✓ ${path} sauvegardé`)
-    allNotes = await apiGet('/api/docs/admin/all')
+    allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
-  } catch { toast('Erreur sauvegarde', 'error') }
+  } catch (e) { toast(e.message && e.message !== '401' ? e.message : 'Erreur sauvegarde', 'error') }
 }
 
 async function deleteNote(p) {
@@ -728,11 +1086,12 @@ async function deleteNote(p) {
     if (currentPath === p) {
       currentPath = null
       document.getElementById('notePath').value = ''
+      document.getElementById('propsPathInput').value = ''
       document.getElementById('noteTitle').value = ''
       editor.commands.setContent('')
       noteProps = {}; renderProperties()
     }
-    allNotes = await apiGet('/api/docs/admin/all')
+    allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
     toast('Note supprimée')
   } catch { toast('Erreur suppression', 'error') }
@@ -805,6 +1164,48 @@ document.addEventListener('keydown', e => {
 let allTemplates  = []
 let tplEditor     = null
 let currentTplId  = null   // id du template sélectionné dans le modal, null = nouveau
+let tplProps      = {}     // métadonnées du template en cours d'édition
+
+/* ── Métadonnées du template (modal) ── */
+function renderTplProps() {
+  const wrap = document.getElementById('tplPropsRows')
+  wrap.innerHTML = ''
+  Object.entries(tplProps).forEach(([key, value]) => {
+    const row = document.createElement('div')
+    row.className = 'prop-row'
+    row.innerHTML = `
+      <span class="prop-key-label" title="${escHtml(key)}">${escHtml(key)}</span>
+      <span class="prop-colon">:</span>
+      <input class="prop-val-edit" value="${escHtml(String(value))}"/>
+      <button class="prop-del" title="Supprimer">×</button>
+    `
+    const valInput = row.querySelector('.prop-val-edit')
+    valInput.addEventListener('input', () => { tplProps[key] = valInput.value })
+    row.querySelector('.prop-del').addEventListener('click', () => {
+      delete tplProps[key]
+      renderTplProps()
+    })
+    wrap.appendChild(row)
+  })
+}
+
+function addTplProp() {
+  const keyEl = document.getElementById('tplPropKeyInput')
+  const valEl = document.getElementById('tplPropValInput')
+  const key = keyEl.value.trim()
+  if (!key) { keyEl.focus(); return }
+  tplProps[key] = valEl.value.trim()
+  keyEl.value = ''; valEl.value = ''
+  renderTplProps()
+  keyEl.focus()
+}
+document.getElementById('tplPropAddBtn').addEventListener('click', addTplProp)
+document.getElementById('tplPropKeyInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); document.getElementById('tplPropValInput').focus() }
+})
+document.getElementById('tplPropValInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addTplProp() }
+})
 
 /* ── Fetch ── */
 async function fetchTemplates() {
@@ -920,6 +1321,8 @@ function selectTpl(tpl) {
   currentTplId = tpl.id
   document.getElementById('tplModalName').value = tpl.name
   tplEditor.commands.setContent(tpl.content || '')
+  tplProps = { ...(tpl.properties || {}) }
+  renderTplProps()
   renderTplModalList()
 }
 
@@ -927,6 +1330,8 @@ function newTpl() {
   currentTplId = null
   document.getElementById('tplModalName').value = ''
   tplEditor?.commands.setContent('')
+  tplProps = {}
+  renderTplProps()
   renderTplModalList()
   document.getElementById('tplModalName').focus()
 }
@@ -941,6 +1346,8 @@ document.getElementById('tplFromNoteBtn').addEventListener('click', () => {
   const suggestedName = document.getElementById('noteTitle').value.trim() || ''
   document.getElementById('tplModalName').value = suggestedName
   tplEditor.commands.setContent(content)
+  tplProps = { ...noteProps }   // reprend aussi les métadonnées de la note
+  renderTplProps()
   renderTplModalList()
   document.getElementById('tplModalName').focus()
   document.getElementById('tplModalName').select()
@@ -956,15 +1363,12 @@ document.getElementById('tplModalSave').addEventListener('click', async () => {
   if (conflict && !confirm(`Un template "${name}" existe déjà. Le remplacer ?`)) return
 
   const content = tplEditor.storage.markdown.getMarkdown()
-  const saveName = currentTplId
-    ? allTemplates.find(t => t.id === currentTplId)?.name ?? name  // keep original name on update unless renamed
-    : name
 
   try {
     const saved = await fetch('/api/docs/admin/templates', {
       method: 'PUT', credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, content, tags: {} })
+      body: JSON.stringify({ name, content, tags: [], properties: tplProps })
     }).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
 
     currentTplId = saved.id
@@ -974,14 +1378,34 @@ document.getElementById('tplModalSave').addEventListener('click', async () => {
   } catch { toast('Erreur sauvegarde template', 'error') }
 })
 
-/* ── Apply to current note ── */
+/* ── Insertion dans la note (au curseur, sans remplacer le contenu) ── */
+function applyTemplateToNote(tpl) {
+  if (!editor) return
+  const content = tpl.content || ''
+  const props   = tpl.properties || {}
+  if (content.trim()) {
+    const { $from } = editor.state.selection
+    if ($from.parent.type.name === 'heading') {
+      // Curseur dans un titre : insérer après le bloc, jamais fusionner dedans
+      editor.chain().focus().insertContentAt($from.after($from.depth), content).run()
+    } else {
+      editor.chain().focus().insertContent(content).run()
+    }
+  }
+  // Fusion des métadonnées : les clés déjà renseignées sur la note sont conservées
+  let added = 0
+  Object.entries(props).forEach(([k, v]) => {
+    if (!(k in noteProps) || noteProps[k] === '') { noteProps[k] = v; added++ }
+  })
+  renderProperties()
+  toast('Template inséré' + (added ? ` · ${added} propriété${added > 1 ? 's' : ''}` : ''))
+}
+
 document.getElementById('tplModalApply').addEventListener('click', () => {
   if (!editor || !tplEditor) return
   const content = tplEditor.storage.markdown.getMarkdown()
-  if (!content.trim()) { toast('Template vide', 'error'); return }
-  if (!confirm('Appliquer ce template ? Le contenu de la note sera remplacé.')) return
-  editor.commands.setContent(content)
-  toast('Template appliqué')
+  if (!content.trim() && !Object.keys(tplProps).length) { toast('Template vide', 'error'); return }
+  applyTemplateToNote({ content, properties: { ...tplProps } })
   closeTplModal()
   editor.commands.focus()
 })
@@ -1003,14 +1427,68 @@ document.getElementById('tplModalDelete').addEventListener('click', async () => 
 })
 
 /* ════════════════════════════════════════════════
+   TEMPLATE PICKER — proposé à la création d'une note
+════════════════════════════════════════════════ */
+let tplPickIdx = 0
+
+function openTplPicker() {
+  const overlay = document.getElementById('tplPickOverlay')
+  const list    = document.getElementById('tplPickList')
+  list.innerHTML = ''
+  tplPickIdx = 0
+  allTemplates.forEach((tpl, i) => {
+    const item = document.createElement('div')
+    item.className = 'tpl-pick-item' + (i === 0 ? ' active' : '')
+    const nProps = Object.keys(tpl.properties || {}).length
+    item.innerHTML = `<i class="fa fa-file-code"></i><span>${escHtml(tpl.name)}</span>` +
+      (nProps ? `<span class="tpl-pick-props">${nProps} prop.</span>` : '')
+    item.addEventListener('click', () => { closeTplPicker(); applyTemplateToNote(tpl) })
+    item.addEventListener('mouseenter', () => setTplPickActive(i))
+    list.appendChild(item)
+  })
+  overlay.classList.add('open')
+}
+
+function setTplPickActive(i) {
+  tplPickIdx = i
+  document.querySelectorAll('.tpl-pick-item').forEach((el, j) => el.classList.toggle('active', j === i))
+}
+
+function closeTplPicker() {
+  document.getElementById('tplPickOverlay').classList.remove('open')
+  editor?.commands.focus('end')
+}
+
+document.getElementById('tplPickNone').addEventListener('click', closeTplPicker)
+document.getElementById('tplPickOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('tplPickOverlay')) closeTplPicker()
+})
+document.addEventListener('keydown', e => {
+  const overlay = document.getElementById('tplPickOverlay')
+  if (!overlay.classList.contains('open')) return
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeTplPicker() }
+  if (e.key === 'ArrowDown') { e.preventDefault(); setTplPickActive((tplPickIdx + 1) % allTemplates.length) }
+  if (e.key === 'ArrowUp')   { e.preventDefault(); setTplPickActive((tplPickIdx - 1 + allTemplates.length) % allTemplates.length) }
+  if (e.key === 'Enter') {
+    e.preventDefault(); e.stopPropagation()
+    const tpl = allTemplates[tplPickIdx]
+    closeTplPicker()
+    if (tpl) applyTemplateToNote(tpl)
+  }
+}, true)  // capture : prioritaire sur les raccourcis de l'éditeur
+
+/* ════════════════════════════════════════════════
    INIT
 ════════════════════════════════════════════════ */
 async function init() {
   initEditor()
   renderProperties()
   fetchTemplates()   // preload, tplEditor lazy-init on first modal open
+  // Set the tree panel title based on section
+  const treeTitle = document.querySelector('.ft-head-title')
+  if (treeTitle) treeTitle.textContent = SECTION === 'remora' ? 'Remora Docs' : 'Knowledge Base'
   try {
-    allNotes = await apiGet('/api/docs/admin/all')
+    allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
   } catch (e) {
     if (e.message !== '401') toast('Erreur chargement des notes', 'error')

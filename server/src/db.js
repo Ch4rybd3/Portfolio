@@ -58,6 +58,9 @@ if (count === 0) {
 // Migration: add tags column if it doesn't exist yet
 try { db.exec(`ALTER TABLE articles ADD COLUMN tags TEXT NOT NULL DEFAULT '[]'`) } catch {}
 
+// Migration: add section column to docs_notes (kb | remora)
+try { db.exec(`ALTER TABLE docs_notes ADD COLUMN section TEXT NOT NULL DEFAULT 'kb'`) } catch {}
+
 // Docs knowledge base
 db.exec(`
   CREATE TABLE IF NOT EXISTS docs_notes (
@@ -67,6 +70,7 @@ db.exec(`
     content    TEXT NOT NULL DEFAULT '',
     properties TEXT NOT NULL DEFAULT '{}',
     published  INTEGER NOT NULL DEFAULT 1,
+    section    TEXT NOT NULL DEFAULT 'kb',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -79,15 +83,19 @@ db.exec(`
     name       TEXT NOT NULL UNIQUE,
     content    TEXT NOT NULL DEFAULT '',
     tags       TEXT NOT NULL DEFAULT '[]',
+    properties TEXT NOT NULL DEFAULT '{}',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `)
 
-// Seed welcome note
+// Migration: add properties column to docs_templates (Obsidian-like metadata)
+try { db.exec(`ALTER TABLE docs_templates ADD COLUMN properties TEXT NOT NULL DEFAULT '{}'`) } catch {}
+
+// Seed KB welcome note
 db.prepare(`
-  INSERT INTO docs_notes (path, title, content, properties)
-  VALUES ('welcome', 'Welcome', ?, '{"tags":["meta"]}')
+  INSERT INTO docs_notes (path, title, content, properties, section)
+  VALUES ('welcome', 'Welcome', ?, '{"tags":["meta"]}', 'kb')
   ON CONFLICT(path) DO NOTHING
 `).run(`# Welcome to the Knowledge Base
 
@@ -106,6 +114,29 @@ Browse the folder tree on the left, or use the search bar to find a specific not
 
 > [!NOTE]
 > All techniques described here are for **defensive and educational** purposes.
+`)
+
+// Seed Remora welcome note
+db.prepare(`
+  INSERT INTO docs_notes (path, title, content, properties, section)
+  VALUES ('getting-started', 'Getting Started', ?, '{"tags":["overview"]}', 'remora')
+  ON CONFLICT(path) DO NOTHING
+`).run(`# Remora — Getting Started
+
+**Remora** is a DFIR case management platform built to cover the full investigative lifecycle.
+
+## What is Remora?
+
+Remora lets you manage cases, follow structured playbooks, process and tag artifacts, maintain chain of custody, take structured notes, and generate reports — all from one place.
+
+Designed from first principles to match how analysts actually work: fast triage, flexible note-taking, and deep artifact integration without forcing context switches between tools.
+
+## Documentation
+
+This section covers the Remora documentation. Use the tree on the left to navigate.
+
+> [!NOTE]
+> Remora is currently in early development. This documentation is updated alongside the project.
 `)
 
 // Site configuration table

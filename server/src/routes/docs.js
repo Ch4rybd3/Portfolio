@@ -31,30 +31,28 @@ const upload = multer({
 
 const router = express.Router()
 
+const { parseNote, pathError, PUBLIC_SQL, regenerateRootMoc } = require('../docs-utils')
+
 /* ── helpers ── */
 function notePath(req) { return req.params[0] || '' }
-function parseNote(n) {
-  if (!n) return null
-  return { ...n, properties: JSON.parse(n.properties || '{}') }
-}
 
 /* ══════════════════════════════════════════════
-   PUBLIC routes
+   PUBLIC routes  (Knowledge Base — section = 'kb')
 ══════════════════════════════════════════════ */
 
 // GET /api/docs  — full tree (path + title + properties, no content)
 router.get('/', (req, res) => {
   const rows = db.prepare(`
     SELECT path, title, properties, updated_at
-    FROM docs_notes WHERE published = 1 ORDER BY path
+    FROM docs_notes WHERE published = 1 AND section = 'kb' AND ${PUBLIC_SQL} ORDER BY path
   `).all()
   res.json(rows.map(parseNote))
 })
 
-// GET /api/docs/note/*  — single published note with content
+// GET /api/docs/note/*  — single published KB note with content
 router.get('/note/*', (req, res) => {
   const p = notePath(req)
-  const row = db.prepare('SELECT * FROM docs_notes WHERE path = ? AND published = 1').get(p)
+  const row = db.prepare(`SELECT * FROM docs_notes WHERE path = ? AND published = 1 AND section = 'kb' AND ${PUBLIC_SQL}`).get(p)
   if (!row) return res.status(404).json({ error: 'Not found' })
   res.json(parseNote(row))
 })
@@ -63,9 +61,10 @@ router.get('/note/*', (req, res) => {
    ADMIN routes  (auth required)
 ══════════════════════════════════════════════ */
 
-// GET /api/docs/admin/all  — all notes (incl. drafts)
+// GET /api/docs/admin/all  — all notes for a section (incl. drafts)
 router.get('/admin/all', requireAuth, (req, res) => {
-  const rows = db.prepare('SELECT path, title, properties, published, updated_at FROM docs_notes ORDER BY path').all()
+  const section = req.query.section || 'kb'
+  const rows = db.prepare('SELECT path, title, properties, published, updated_at FROM docs_notes WHERE section = ? ORDER BY path').all(section)
   res.json(rows.map(parseNote))
 })
 
@@ -80,18 +79,21 @@ router.get('/admin/note/*', requireAuth, (req, res) => {
 // PUT /api/docs/admin/note/*  — create or update
 router.put('/admin/note/*', requireAuth, (req, res) => {
   const p = notePath(req)
-  if (!p) return res.status(400).json({ error: 'Path required' })
-  const { title = 'Untitled', content = '', properties = {}, published = true } = req.body
+  const err = pathError(p)
+  if (err) return res.status(400).json({ error: err })
+  const { title = 'Untitled', content = '', properties = {}, published = true, section = 'kb' } = req.body
   db.prepare(`
-    INSERT INTO docs_notes (path, title, content, properties, published, updated_at)
-    VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+    INSERT INTO docs_notes (path, title, content, properties, published, section, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
     ON CONFLICT(path) DO UPDATE SET
       title = excluded.title,
       content = excluded.content,
       properties = excluded.properties,
       published = excluded.published,
+      section = excluded.section,
       updated_at = CURRENT_TIMESTAMP
-  `).run(p, title, content, JSON.stringify(properties), published ? 1 : 0)
+  `).run(p, title, content, JSON.stringify(properties), published ? 1 : 0, section)
+  if (p !== 'moc') regenerateRootMoc(section)
   res.json({ ok: true, path: p })
 })
 
@@ -99,45 +101,88 @@ router.put('/admin/note/*', requireAuth, (req, res) => {
 router.patch('/admin/move/*', requireAuth, (req, res) => {
   const oldPath = notePath(req)
   const { newPath } = req.body
-  if (!newPath) return res.status(400).json({ error: 'newPath required' })
+  const err = pathError(newPath)
+  if (err) return res.status(400).json({ error: err })
   try {
+    const row = db.prepare('SELECT section FROM docs_notes WHERE path = ?').get(oldPath)
     db.prepare('UPDATE docs_notes SET path = ?, updated_at = CURRENT_TIMESTAMP WHERE path = ?').run(newPath, oldPath)
+    if (row) regenerateRootMoc(row.section)
     res.json({ ok: true, path: newPath })
   } catch {
     res.status(409).json({ error: 'Path already exists' })
   }
 })
 
+// PATCH /api/docs/admin/move-folder  — rename/move a whole folder (prefix rewrite)
+router.patch('/admin/move-folder', requireAuth, (req, res) => {
+  const { oldPath, newPath, section = 'kb' } = req.body
+  if (!oldPath) return res.status(400).json({ error: 'oldPath required' })
+  const err = pathError(newPath)
+  if (err) return res.status(400).json({ error: err })
+  if (oldPath === newPath) return res.json({ ok: true, path: newPath, moved: 0 })
+  if (newPath.startsWith(oldPath + '/')) return res.status(400).json({ error: 'Impossible de déplacer un dossier dans lui-même' })
+
+  const moved = db.prepare(`SELECT path FROM docs_notes WHERE section = ? AND path LIKE ? ESCAPE '\\'`)
+    .all(section, oldPath.replace(/[\\%_]/g, '\\$&') + '/%')
+  if (!moved.length) return res.json({ ok: true, path: newPath, moved: 0 })
+
+  try {
+    db.transaction(() => {
+      const movedSet = new Set(moved.map(r => r.path))
+      const clashStmt = db.prepare('SELECT 1 FROM docs_notes WHERE path = ?')
+      for (const r of moved) {
+        const target = newPath + r.path.slice(oldPath.length)
+        if (!movedSet.has(target) && clashStmt.get(target)) {
+          const e = new Error(`Une note existe déjà à ${target}`); e.conflict = true; throw e
+        }
+      }
+      const upd = db.prepare('UPDATE docs_notes SET path = ?, updated_at = CURRENT_TIMESTAMP WHERE path = ?')
+      for (const r of moved) upd.run(newPath + r.path.slice(oldPath.length), r.path)
+    })()
+    regenerateRootMoc(section)
+    res.json({ ok: true, path: newPath, moved: moved.length })
+  } catch (e) {
+    res.status(e.conflict ? 409 : 500).json({ error: e.message })
+  }
+})
+
 // DELETE /api/docs/admin/note/*
 router.delete('/admin/note/*', requireAuth, (req, res) => {
   const p = notePath(req)
+  const row = db.prepare('SELECT section FROM docs_notes WHERE path = ?').get(p)
   db.prepare('DELETE FROM docs_notes WHERE path = ?').run(p)
+  if (row && p !== 'moc') regenerateRootMoc(row.section)
   res.json({ ok: true })
 })
 
 /* ── Templates ── */
 
+function parseTemplate(r) {
+  return { ...r, tags: JSON.parse(r.tags || '[]'), properties: JSON.parse(r.properties || '{}') }
+}
+
 // GET /api/docs/admin/templates
 router.get('/admin/templates', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT * FROM docs_templates ORDER BY name COLLATE NOCASE').all()
-  res.json(rows.map(r => ({ ...r, tags: JSON.parse(r.tags || '[]') })))
+  res.json(rows.map(parseTemplate))
 })
 
-// PUT /api/docs/admin/templates/:id  — create (id=0) or update (id>0) by name (upsert)
+// PUT /api/docs/admin/templates  — create or update by name (upsert)
 router.put('/admin/templates', requireAuth, (req, res) => {
-  const { name, content = '', tags = [] } = req.body
+  const { name, content = '', tags = [], properties = {} } = req.body
   if (!name?.trim()) return res.status(400).json({ error: 'name required' })
   try {
     db.prepare(`
-      INSERT INTO docs_templates (name, content, tags, updated_at)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      INSERT INTO docs_templates (name, content, tags, properties, updated_at)
+      VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(name) DO UPDATE SET
         content    = excluded.content,
         tags       = excluded.tags,
+        properties = excluded.properties,
         updated_at = CURRENT_TIMESTAMP
-    `).run(name.trim(), content, JSON.stringify(tags))
+    `).run(name.trim(), content, JSON.stringify(tags), JSON.stringify(properties))
     const row = db.prepare('SELECT * FROM docs_templates WHERE name = ?').get(name.trim())
-    res.json({ ...row, tags: JSON.parse(row.tags || '[]') })
+    res.json(parseTemplate(row))
   } catch (e) {
     res.status(500).json({ error: e.message })
   }

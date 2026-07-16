@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8"/>
-  <title>Admin — Docs Editor</title>
+  <title>Admin — Remora Docs</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="./src/style.css"/>
@@ -473,8 +473,8 @@
       <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
       <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
       <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
-      <a href="/admin/docs" class="active"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
-      <a href="/admin/remora"><i class="fa fa-fish fa-fw"></i> Remora</a>
+      <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
+      <a href="/admin/remora" class="active"><i class="fa fa-fish fa-fw"></i> Remora</a>
       <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
     </nav>
     <div class="bottom">
@@ -487,13 +487,13 @@
   <!-- File tree -->
   <div class="file-tree-panel">
     <div class="ft-head">
-      <span class="ft-head-title">Knowledge Base</span>
+      <span class="ft-head-title">Remora Docs</span>
       <div class="ft-actions">
         <button class="btn btn-ghost btn-sm" id="btnNewNote" title="Nouvelle note"><i class="fa fa-file-circle-plus"></i></button>
         <button class="btn btn-ghost btn-sm" id="btnNewFolder" title="Nouveau dossier"><i class="fa fa-folder-plus"></i></button>
         <button class="btn btn-ghost btn-sm" id="btnToggleAll" title="Déplier / replier tout"><i class="fa fa-angles-down"></i></button>
         <button class="btn btn-ghost btn-sm" id="btnRootMoc" title="Générer la MOC globale"><i class="fa fa-sitemap"></i></button>
-        <a href="/docs" target="_blank" class="btn btn-ghost btn-sm" title="Voir le site public"><i class="fa fa-arrow-up-right-from-square"></i></a>
+        <a href="/remora" target="_blank" class="btn btn-ghost btn-sm" title="Voir le site public"><i class="fa fa-arrow-up-right-from-square"></i></a>
       </div>
     </div>
     <div class="ft-filter">
@@ -687,7 +687,7 @@
   </div>
 </div>
 
-<script>window.DOCS_SECTION = 'kb'</script>
+<script>window.DOCS_SECTION = 'remora'</script>
 <script type="module" src="./src/docs.js"></script>
 </body>
 </html>

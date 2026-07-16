@@ -12,6 +12,7 @@ export default defineConfig({
         editor:    resolve(__dirname, 'editor.html'),
         kanban:    resolve(__dirname, 'kanban.html'),
         docs:      resolve(__dirname, 'docs.html'),
+        remora:    resolve(__dirname, 'remora.html'),
         security:  resolve(__dirname, 'security.html'),
       }
     }

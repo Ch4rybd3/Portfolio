@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Docs — Ch4rybd3</title>
+  <title>Remora — Ch4rybd3</title>
   <meta name="viewport" content="width=1200"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
@@ -15,12 +15,8 @@
     :root { --p-cyan: #5CB3FF; --docs-sidebar: 268px; }
     body { background: #0A1018; overflow-x: hidden; }
 
-    /* ── Nav offset for docs ── */
     .mk-nav { padding-left: 24px; }
 
-    /* ══════════════════════════════════════════════
-       DOCS LAYOUT
-    ══════════════════════════════════════════════ */
     .docs-layout {
       display: flex;
       min-height: calc(100vh - 64px);
@@ -49,9 +45,7 @@
       color: var(--htb-green); text-transform: uppercase; letter-spacing: .08em;
       margin-bottom: 10px;
     }
-    .docs-search-wrap {
-      position: relative;
-    }
+    .docs-search-wrap { position: relative; }
     .docs-search {
       width: 100%; background: var(--htb-card-3); border: 1px solid var(--htb-line-2);
       border-radius: 6px; color: var(--htb-fg); font-size: 13px;
@@ -112,7 +106,6 @@
       flex-direction: column;
     }
 
-    /* Breadcrumb */
     .docs-breadcrumb {
       padding: 12px 48px;
       border-bottom: 1px solid var(--htb-line);
@@ -125,7 +118,6 @@
     .docs-breadcrumb a:hover { color: var(--htb-green); }
     .docs-breadcrumb-sep { color: var(--htb-fg-4); }
 
-    /* Article container */
     .docs-article {
       max-width: 860px;
       padding: 48px 48px 96px;
@@ -133,7 +125,6 @@
     }
     .docs-article-inner { margin: 0 auto; }
 
-    /* Note header */
     .note-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
     .note-tag {
       font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em;
@@ -142,16 +133,19 @@
     }
     .note-meta { font-family: var(--font-mono); font-size: 11px; color: var(--htb-fg-4); margin-bottom: 32px; }
 
-    /* Welcome / empty state */
     .docs-welcome {
       max-width: 600px; padding: 80px 48px; color: var(--htb-fg-3);
     }
     .docs-welcome h2 { font-family: var(--font-display); font-size: 32px; color: var(--htb-fg); margin-bottom: 12px; }
     .docs-welcome p { font-size: 15px; line-height: 1.65; }
+    .docs-welcome .remora-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em;
+      color: var(--htb-green); background: rgba(45,212,191,.08); border: 1px solid rgba(45,212,191,.2);
+      padding: 3px 10px; border-radius: 999px; margin-bottom: 20px;
+    }
 
-    /* ══════════════════════════════════════════════
-       MARKDOWN BODY STYLES
-    ══════════════════════════════════════════════ */
+    /* Markdown body */
     .docs-body { font-size: 15px; line-height: 1.75; color: var(--htb-fg-2); }
     .docs-body > * + * { margin-top: .75em; }
 
@@ -203,11 +197,6 @@
     .docs-body strong { color: var(--htb-fg); font-weight: 700; }
     .docs-body em { color: var(--htb-fg-2); }
 
-    /* WikiLinks */
-    .wiki-link { color: var(--htb-green); border-bottom-color: rgba(45,212,191,.35); }
-    .wiki-link:hover { border-bottom-color: var(--htb-green); }
-    .wiki-link.missing { color: var(--htb-fg-3); border-bottom: 1px dashed rgba(110,123,150,.4); cursor: not-allowed; }
-
     /* Callout blocks */
     .callout {
       border-radius: 8px; margin: 1em 0; overflow: hidden;
@@ -234,10 +223,8 @@
     .callout-important { background: rgba(255,175,0,.04); border-color: rgba(255,175,0,.25); }
     .callout-important .callout-title { background: rgba(255,175,0,.08); color: var(--htb-warning); }
 
-    /* Loading state */
     .docs-loading { padding: 48px; color: var(--htb-fg-4); font-family: var(--font-mono); font-size: 13px; }
 
-    /* Search highlight */
     .tree-note.hidden, .tree-folder.hidden { display: none; }
   </style>
 </head>
@@ -255,8 +242,8 @@
     <a href="/">Portfolio</a>
     <a href="/projects">Projects</a>
     <a href="/blog">Blog</a>
-    <a href="/docs" style="color:var(--htb-fg)">Knowledge Base</a>
-    <a href="/remora">Remora</a>
+    <a href="/docs">Knowledge Base</a>
+    <a href="/remora" style="color:var(--htb-fg)">Remora</a>
   </div>
   <div class="mk-nav-r">
     <a href="https://github.com/Ch4rybd3" target="_blank" rel="noopener"><i class="fa-brands fa-github" style="margin-right:6px"></i>GitHub</a>
@@ -270,7 +257,7 @@
   <aside class="docs-sidebar">
     <div class="docs-sidebar-head">
       <div class="docs-sidebar-brand">
-        <i class="fa fa-book-open"></i>Knowledge Base
+        <i class="fa fa-fish"></i>Remora
       </div>
       <div class="docs-search-wrap">
         <i class="fa fa-magnifying-glass docs-search-icon"></i>
@@ -288,8 +275,9 @@
 
     <div id="docsContent">
       <div class="docs-welcome" id="docsWelcome">
-        <h2>Knowledge Base</h2>
-        <p>Sélectionnez une note dans le panneau de gauche, ou recherchez un sujet dans la barre de recherche.</p>
+        <div class="remora-badge"><i class="fa fa-fish"></i> Remora · DFIR Case Management</div>
+        <h2>Documentation</h2>
+        <p>Sélectionnez une page dans le panneau de gauche pour naviguer dans la documentation Remora.</p>
       </div>
       <div id="docsArticle" style="display:none">
         <div class="docs-article">
@@ -307,11 +295,11 @@
    STATE
 ════════════════════════════════════════════════ */
 let allNotes = []
-let notesByTitle = new Map()   // lowercase title → note object
-let notesByPath  = new Map()   // path → note object
+let notesByTitle = new Map()
+let notesByPath  = new Map()
 
 /* ════════════════════════════════════════════════
-   MARKED SETUP (WikiLinks + code highlight + callouts)
+   MARKED SETUP
 ════════════════════════════════════════════════ */
 function setupMarked() {
   const renderer = new marked.Renderer()
@@ -335,30 +323,7 @@ function setupMarked() {
     return `<img src="${href}" alt="${text||''}" loading="lazy"/>`
   }
 
-  marked.use({
-    renderer,
-    gfm: true,
-    breaks: true,
-    extensions: [{
-      name: 'wikiLink',
-      level: 'inline',
-      start(src) { return src.indexOf('[[') },
-      tokenizer(src) {
-        const m = /^\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/.exec(src)
-        if (m) return { type: 'wikiLink', raw: m[0], target: m[1].trim(), label: (m[2]||m[1]).trim() }
-      },
-      renderer(token) {
-        // Resolve by title first, then fall back to path match
-        const note = notesByTitle.get(token.target.toLowerCase())
-               || notesByPath.get(token.target)
-               || notesByPath.get(token.target.toLowerCase())
-        if (note) {
-          return `<a href="/docs/${note.path}" class="wiki-link" onclick="navigate('${note.path}');return false">${token.label}</a>`
-        }
-        return `<span class="wiki-link missing" title="Note introuvable : ${token.target}">[[${token.label}]]</span>`
-      }
-    }]
-  })
+  marked.use({ renderer, gfm: true, breaks: true })
 }
 
 /* ════════════════════════════════════════════════
@@ -410,7 +375,6 @@ function renderTreeNode(node, level) {
   const ul = document.createElement('ul')
   ul.className = 'tree-ul'
 
-  // Folders first (sorted alphabetically)
   Object.entries(node._folders).sort(([a],[b]) => a.localeCompare(b)).forEach(([name, child]) => {
     const li = document.createElement('li')
     li.className = 'tree-folder open'
@@ -429,7 +393,6 @@ function renderTreeNode(node, level) {
     ul.appendChild(li)
   })
 
-  // Notes (sorted alphabetically by title)
   node._notes.slice().sort((a,b) => a.title.localeCompare(b.title)).forEach(note => {
     const li = document.createElement('li')
     li.className = 'tree-note'
@@ -448,12 +411,11 @@ function renderTree(notes) {
   container.innerHTML = ''
 
   if (!notes.length) {
-    container.innerHTML = '<div class="tree-empty">Aucune note publiée.</div>'
+    container.innerHTML = '<div class="tree-empty">Aucune page publiée.</div>'
     return
   }
 
-  const ul = renderTreeNode(tree, 0)
-  container.appendChild(ul)
+  container.appendChild(renderTreeNode(tree, 0))
 }
 
 /* ════════════════════════════════════════════════
@@ -464,7 +426,6 @@ function setActiveNote(path) {
   const el = document.querySelector(`.tree-note[data-path="${CSS.escape(path)}"]`)
   if (el) {
     el.classList.add('active')
-    // Open parent folders
     let parent = el.parentElement
     while (parent) {
       if (parent.classList.contains('tree-folder')) {
@@ -480,7 +441,7 @@ function setActiveNote(path) {
 function renderBreadcrumb(notePath) {
   const bc = document.getElementById('docsBreadcrumb')
   const parts = notePath.split('/')
-  const items = [{ label: 'Docs', path: null }]
+  const items = [{ label: 'Remora', path: null }]
   let built = ''
   parts.forEach((p, i) => {
     built += (i ? '/' : '') + p
@@ -489,7 +450,7 @@ function renderBreadcrumb(notePath) {
   bc.innerHTML = items.map((item, i) => {
     const isLast = i === items.length - 1
     const el = item.path && !isLast
-      ? `<a onclick="navigate('${item.path}');return false" href="/docs/${item.path}">${item.label}</a>`
+      ? `<a onclick="navigate('${item.path}');return false" href="/remora/${item.path}">${item.label}</a>`
       : `<span style="color:var(--htb-fg)">${item.label}</span>`
     return i > 0 ? `<span class="docs-breadcrumb-sep">/</span>${el}` : el
   }).join('')
@@ -504,12 +465,12 @@ async function navigate(notePath) {
   document.getElementById('noteBody').innerHTML = '<div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>'
   document.getElementById('docsArticle').style.display = 'block'
 
-  history.pushState({ notePath }, '', `/docs/${notePath}`)
+  history.pushState({ notePath }, '', `/remora/${notePath}`)
   setActiveNote(notePath)
   renderBreadcrumb(notePath)
 
   try {
-    const res = await fetch(`/api/docs/note/${notePath}`)
+    const res = await fetch(`/api/remora/note/${notePath}`)
     if (!res.ok) { showError(notePath); return }
     const note = await res.json()
     renderNote(note)
@@ -519,23 +480,19 @@ async function navigate(notePath) {
 }
 
 function renderNote(note) {
-  // Tags (escape values to prevent XSS)
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
   const tags = (note.properties?.tags || [])
   document.getElementById('noteTags').innerHTML = tags.map(t =>
     `<span class="note-tag">${esc(t)}</span>`
   ).join('')
 
-  // Meta
   const updated = note.updated_at ? new Date(note.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
   document.getElementById('noteMeta').textContent = updated ? `Mis à jour le ${updated}` : ''
 
-  // Body — sanitize HTML output from marked to prevent stored XSS
   document.getElementById('noteBody').innerHTML = DOMPurify.sanitize(renderMarkdown(note.content))
   document.getElementById('docsWelcome').style.display = 'none'
   document.getElementById('docsArticle').style.display = 'block'
 
-  // Scroll to top of content
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -543,12 +500,12 @@ function showWelcome() {
   document.getElementById('docsWelcome').style.display = 'block'
   document.getElementById('docsArticle').style.display = 'none'
   document.getElementById('docsBreadcrumb').style.display = 'none'
-  history.pushState({}, '', '/docs')
+  history.pushState({}, '', '/remora')
   document.querySelectorAll('.tree-note.active').forEach(el => el.classList.remove('active'))
 }
 
 function showError(path) {
-  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Note introuvable : <code>${path}</code></div>`
+  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Page introuvable : <code>${path}</code></div>`
 }
 
 /* ════════════════════════════════════════════════
@@ -560,13 +517,11 @@ document.getElementById('searchInput').addEventListener('input', function() {
     document.querySelectorAll('.tree-note, .tree-folder').forEach(el => el.classList.remove('hidden'))
     return
   }
-  // Hide notes that don't match
   document.querySelectorAll('.tree-note').forEach(el => {
     const title = el.querySelector('span')?.textContent.toLowerCase() || ''
     const path  = el.dataset.path?.toLowerCase() || ''
     el.classList.toggle('hidden', !title.includes(q) && !path.includes(q))
   })
-  // Hide folders with all children hidden
   document.querySelectorAll('.tree-folder').forEach(folder => {
     const visible = [...folder.querySelectorAll('.tree-note')].some(n => !n.classList.contains('hidden'))
     folder.classList.toggle('hidden', !visible)
@@ -581,7 +536,7 @@ async function init() {
   setupMarked()
 
   try {
-    const res = await fetch('/api/docs')
+    const res = await fetch('/api/remora')
     allNotes = await res.json()
     notesByTitle = new Map(allNotes.map(n => [n.title.toLowerCase(), n]))
     notesByPath  = new Map(allNotes.map(n => [n.path, n]))
@@ -591,17 +546,16 @@ async function init() {
 
   renderTree(allNotes)
 
-  // Determine note from URL
-  const urlPath = location.pathname.replace(/^\/docs\/?/, '').trim()
+  const urlPath = location.pathname.replace(/^\/remora\/?/, '').trim()
   if (urlPath) {
     navigate(urlPath)
-  } else if (allNotes.find(n => n.path === 'welcome')) {
-    navigate('welcome')
+  } else if (allNotes.find(n => n.path === 'getting-started')) {
+    navigate('getting-started')
   }
 }
 
 window.addEventListener('popstate', () => {
-  const urlPath = location.pathname.replace(/^\/docs\/?/, '').trim()
+  const urlPath = location.pathname.replace(/^\/remora\/?/, '').trim()
   if (urlPath) navigate(urlPath)
   else showWelcome()
 })
