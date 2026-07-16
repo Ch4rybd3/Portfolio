@@ -21,6 +21,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/templates/default.conf.template:ro
     ports:
-      - "8080:80"
+      # BIND_ADDR : interface d'écoute sur l'hôte (0.0.0.0 = toutes, 127.0.0.1 = localhost seul)
+      # HTTP_PORT : port public sur l'hôte
+      - "${BIND_ADDR:-0.0.0.0}:${HTTP_PORT:-8080}:80"
     depends_on:
       - app
