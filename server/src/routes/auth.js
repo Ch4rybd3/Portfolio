@@ -2,6 +2,7 @@ const express = require('express')
 const bcrypt = require('bcryptjs')
 const db = require('../db')
 const { requireAuth } = require('../middleware/auth')
+const { loginRateLimit, recordLoginFailure, clearLoginFailures } = require('../middleware/rate-limit')
 
 const router = express.Router()
 
@@ -16,19 +17,24 @@ function validatePassword(pwd) {
   return errors
 }
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginRateLimit, async (req, res) => {
   const { username, password } = req.body
   if (!username || !password) return res.status(400).json({ error: 'Champs requis' })
 
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username)
-  if (!user) return res.status(401).json({ error: 'Identifiants incorrects' })
+  if (!user) { recordLoginFailure(req); return res.status(401).json({ error: 'Identifiants incorrects' }) }
 
   const valid = await bcrypt.compare(password, user.password_hash)
-  if (!valid) return res.status(401).json({ error: 'Identifiants incorrects' })
+  if (!valid) { recordLoginFailure(req); return res.status(401).json({ error: 'Identifiants incorrects' }) }
 
-  req.session.userId = user.id
-  req.session.username = user.username
-  res.json({ ok: true })
+  // Nouvel ID de session à la connexion (anti fixation de session)
+  req.session.regenerate(err => {
+    if (err) return res.status(500).json({ error: 'Erreur de session' })
+    req.session.userId = user.id
+    req.session.username = user.username
+    clearLoginFailures(req)
+    res.json({ ok: true })
+  })
 })
 
 router.post('/change-password', requireAuth, async (req, res) => {

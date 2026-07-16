@@ -20,6 +20,18 @@ const app = express()
 // Derrière nginx (et le tunnel Cloudflare) : fait confiance au premier proxy
 // pour X-Forwarded-Proto/For — requis pour le cookie de session `secure`.
 app.set('trust proxy', 1)
+app.disable('x-powered-by')
+
+// En-têtes de sécurité sur toutes les réponses
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'DENY')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  // HSTS uniquement quand la requête est arrivée en HTTPS (via Cloudflare)
+  if (req.secure) res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains')
+  next()
+})
 const PORT = process.env.PORT || 3000
 const DATA_DIR        = process.env.DATA_DIR        || path.join(__dirname, '../../data')
 const UPLOADS_DIR     = process.env.UPLOADS_DIR     || path.join(__dirname, '../../uploads')
@@ -69,7 +81,13 @@ app.get('/admin', requireAuth, (req, res) => res.sendFile(path.join(adminDist, '
 app.get('/admin/editor', requireAuth, (req, res) => res.sendFile(path.join(adminDist, 'editor.html')))
 app.get('/admin/kanban',    requireAuth, (req, res) => res.sendFile(path.join(adminDist, 'kanban.html')))
 app.get('/admin/security', requireAuth, (req, res) => res.sendFile(path.join(adminDist, 'security.html')))
-app.use('/admin', express.static(adminDist))
+// Static admin : la page de login et les assets restent publics,
+// toute autre page HTML exige une session (défense en profondeur)
+app.use('/admin', (req, res, next) => {
+  if (req.path === '/login.html' || req.path.startsWith('/assets/')) return next()
+  if (req.path.endsWith('.html')) return requireAuth(req, res, next)
+  next()
+}, express.static(adminDist))
 
 // API
 app.use('/api/auth', authRoutes)
