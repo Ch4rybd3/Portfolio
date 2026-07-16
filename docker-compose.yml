@@ -26,3 +26,15 @@ services:
       - "${BIND_ADDR:-0.0.0.0}:${HTTP_PORT:-8080}:80"
     depends_on:
       - app
+
+  # Tunnel Cloudflare — activé uniquement avec COMPOSE_PROFILES=tunnel dans le .env
+  # (aucun port à ouvrir : cloudflared joint nginx via le réseau Docker interne)
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN:-}
+    depends_on:
+      - nginx

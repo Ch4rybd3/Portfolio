@@ -16,6 +16,10 @@ const exportRoutes = require('./routes/export')
 const { requireAuth } = require('./middleware/auth')
 
 const app = express()
+
+// Derrière nginx (et le tunnel Cloudflare) : fait confiance au premier proxy
+// pour X-Forwarded-Proto/For — requis pour le cookie de session `secure`.
+app.set('trust proxy', 1)
 const PORT = process.env.PORT || 3000
 const DATA_DIR        = process.env.DATA_DIR        || path.join(__dirname, '../../data')
 const UPLOADS_DIR     = process.env.UPLOADS_DIR     || path.join(__dirname, '../../uploads')
