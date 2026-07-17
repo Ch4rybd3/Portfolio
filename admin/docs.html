@@ -57,7 +57,7 @@
       display: flex; align-items: center; gap: 6px;
       padding: 4px 14px 4px 10px; cursor: pointer;
       font-family: var(--mono); font-size: 10px; font-weight: 600;
-      color: var(--fg-3); letter-spacing: .04em;
+      color: var(--fg-3); letter-spacing: .06em; text-transform: uppercase;
       user-select: none; transition: all .15s;
     }
     .ft-folder-head:hover { color: var(--fg); background: rgba(255,255,255,.03); }
@@ -517,6 +517,7 @@
       <input id="notePath" placeholder="folder/slug" autocomplete="off"/>
       <input id="noteTitle" placeholder="Note title…"/>
       <button class="btn btn-primary btn-sm" id="saveBtn"><i class="fa fa-floppy-disk"></i> Save</button>
+      <span id="autosaveStatus" style="font-family:var(--mono);font-size:10px;white-space:nowrap"></span>
       <a id="previewLink" href="#" target="_blank" class="btn btn-ghost btn-sm" title="View on site"><i class="fa fa-external-link-alt"></i></a>
     </div>
     <div class="tiptap-toolbar" id="toolbar">

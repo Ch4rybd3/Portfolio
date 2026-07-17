@@ -421,7 +421,7 @@ function initEditor() {
         return false
       }
     },
-    onUpdate: () => { updateToolbar(); checkWikiSuggest() },
+    onUpdate: () => { updateToolbar(); checkWikiSuggest(); scheduleAutosave() },
     onSelectionUpdate: () => { updateToolbar(); checkWikiSuggest() },
   })
 }
@@ -527,11 +527,12 @@ function renderProperties() {
       <button class="prop-del" title="Delete">×</button>
     `
     const valInput = row.querySelector('.prop-val-edit')
-    valInput.addEventListener('input',  () => { noteProps[key] = valInput.value })
+    valInput.addEventListener('input',  () => { noteProps[key] = valInput.value; scheduleAutosave() })
     valInput.addEventListener('change', () => { noteProps[key] = valInput.value })
     row.querySelector('.prop-del').addEventListener('click', () => {
       delete noteProps[key]
       renderProperties()
+      scheduleAutosave()
     })
     wrap.appendChild(row)
   })
@@ -551,6 +552,7 @@ function updatePropSuggestions(key) {
 
 document.getElementById('publicToggle').addEventListener('change', function() {
   noteProps.public = this.checked
+  scheduleAutosave()
 })
 
 function addProp() {
@@ -563,6 +565,7 @@ function addProp() {
   document.getElementById('propValInput').value = ''
   document.getElementById('propValSuggestions').innerHTML = ''
   renderProperties()
+  scheduleAutosave()
 }
 
 document.getElementById('propKeyInput').addEventListener('input', function() {
@@ -1010,6 +1013,7 @@ document.getElementById('newNotePath').addEventListener('keydown', e => {
 })
 
 function createNote() {
+  flushAutosave()   // sauvegarde les modifications en attente de la note précédente
   const raw = document.getElementById('newNotePath').value.trim()
   let p = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_/]/g, '')
   if (!p) return
@@ -1038,7 +1042,70 @@ function createNote() {
 /* ════════════════════════════════════════════════
    LOAD / SAVE / DELETE
 ════════════════════════════════════════════════ */
+/* ── Autosave ──
+   Déclenché après chaque modification (contenu, titre, propriétés, toggles),
+   avec un délai depuis la dernière frappe. Ne concerne que les notes déjà
+   sauvegardées une première fois (currentPath) et jamais un renommage :
+   le champ path doit correspondre à la note chargée. */
+const AUTOSAVE_DELAY = 1500
+let autosaveTimer = null
+
+function setAutosaveStatus(state) {
+  const el = document.getElementById('autosaveStatus')
+  if (!el) return
+  if      (state === 'pending') { el.textContent = '●'; el.style.color = 'var(--fg-4)' }
+  else if (state === 'saving')  { el.textContent = '● saving…'; el.style.color = 'var(--warning)' }
+  else if (state === 'saved')   { el.textContent = `✓ saved ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`; el.style.color = 'var(--green)' }
+  else if (state === 'error')   { el.textContent = '⚠ autosave failed — Ctrl+S to retry'; el.style.color = 'var(--danger)' }
+  else el.textContent = ''
+}
+
+function scheduleAutosave() {
+  if (!currentPath) return
+  setAutosaveStatus('pending')
+  clearTimeout(autosaveTimer)
+  autosaveTimer = setTimeout(() => { autosaveTimer = null; saveNote({ auto: true }) }, AUTOSAVE_DELAY)
+}
+
+// Capture les champs de façon synchrone puis sauvegarde — sûr à appeler
+// juste avant de charger/réinitialiser l'éditeur, sans await.
+function flushAutosave() {
+  if (!autosaveTimer) return
+  clearTimeout(autosaveTimer)
+  autosaveTimer = null
+  saveNote({ auto: true })
+}
+
+function cancelAutosave() {
+  clearTimeout(autosaveTimer)
+  autosaveTimer = null
+  setAutosaveStatus('')
+}
+
+// Dernier filet : sauvegarde en arrière-plan si on quitte la page avec des
+// modifications en attente (keepalive survit à la fermeture de l'onglet).
+window.addEventListener('beforeunload', () => {
+  if (!autosaveTimer || !currentPath) return
+  clearTimeout(autosaveTimer)
+  autosaveTimer = null
+  const path = document.getElementById('notePath').value.trim().replace(/^\/+|\/+$/g, '')
+  if (path !== currentPath) return
+  noteProps.public = document.getElementById('publicToggle').checked
+  fetch(`/api/docs/admin/note/${path}`, {
+    method: 'PUT', credentials: 'include', keepalive: true,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      title: document.getElementById('noteTitle').value.trim() || 'Untitled',
+      content: editor.storage.markdown.getMarkdown(),
+      properties: noteProps,
+      published: document.getElementById('publishedToggle').checked,
+      section: SECTION,
+    })
+  })
+})
+
 async function loadNote(p) {
+  flushAutosave()
   try {
     const note = await apiGet(`/api/docs/admin/note/${p}`)
     currentPath = p
@@ -1060,10 +1127,16 @@ async function loadNote(p) {
   } catch { toast('Load failed', 'error') }
 }
 
-async function saveNote() {
+async function saveNote(opts = {}) {
+  const auto = opts.auto === true
+  // Une sauvegarde (manuelle ou auto) annule le timer d'autosave en attente
+  clearTimeout(autosaveTimer); autosaveTimer = null
+
   const rawPath   = document.getElementById('notePath').value.trim()
   // Always strip leading/trailing slashes — avoids "dfir/registry/" accidents
   const path      = rawPath.replace(/^\/+|\/+$/g, '')
+  // Autosave : uniquement une note existante, jamais de création/renommage implicite
+  if (auto && (!currentPath || path !== currentPath)) return
   document.getElementById('notePath').value = path
   const title     = document.getElementById('noteTitle').value.trim() || 'Untitled'
   const content   = editor.storage.markdown.getMarkdown()
@@ -1076,26 +1149,62 @@ async function saveNote() {
     toast('Invalid path (letters, digits, dashes, underscores and / only)', 'error'); return
   }
 
-  noteProps.public = document.getElementById('publicToggle').checked
+  const propsSnapshot = { ...noteProps, public: document.getElementById('publicToggle').checked }
+  if (!auto) noteProps = propsSnapshot
 
   // If path changed → delete old
   if (currentPath && currentPath !== path) {
     await apiDel(`/api/docs/admin/note/${currentPath}`).catch(() => {})
   }
 
+  if (auto) setAutosaveStatus('saving')
   try {
-    const saved = await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: noteProps, published, section: SECTION })
+    const saved = await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: propsSnapshot, published, section: SECTION })
+    if (auto) {
+      // Maj légère : pas de re-fetch complet, on met à jour l'entrée locale.
+      // L'UI n'est rafraîchie que si la note affichée est toujours celle-ci
+      // (une autre note a pu être chargée pendant le PUT).
+      const entry = allNotes.find(n => n.path === path)
+      let treeChanged = false
+      if (entry) {
+        treeChanged = entry.title !== title || !!entry.published !== published ||
+                      isPublicProps(entry.properties) !== isPublicProps(saved.properties || propsSnapshot)
+        entry.title = title
+        entry.published = published ? 1 : 0
+        entry.properties = saved.properties || propsSnapshot
+      }
+      if (currentPath === path) {
+        if (saved.properties) {
+          // Fusionne uniquement les clés auto (created/updated/creator) et ne
+          // re-render que si elles ont changé — évite de perdre le focus d'un
+          // champ propriété en cours d'édition.
+          const changedAuto = AUTO_PROPS.some(k => String(noteProps[k] ?? '') !== String(saved.properties[k] ?? ''))
+          AUTO_PROPS.forEach(k => { if (saved.properties[k] !== undefined) noteProps[k] = saved.properties[k] })
+          noteProps.public = propsSnapshot.public
+          if (changedAuto) renderProperties()
+        }
+        setAutosaveStatus('saved')
+      }
+      if (treeChanged) refreshTree()
+      return
+    }
     if (saved.properties) { noteProps = saved.properties; renderProperties() }
     currentPath = path
     document.getElementById('propsPathInput').value = path
     toast(`✓ ${path} saved`)
+    setAutosaveStatus('saved')
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
-  } catch (e) { toast(e.message && e.message !== '401' ? e.message : 'Save failed', 'error') }
+  } catch (e) {
+    if (auto) { setAutosaveStatus('error'); return }
+    toast(e.message && e.message !== '401' ? e.message : 'Save failed', 'error')
+  }
 }
 
 async function deleteNote(p) {
   if (!confirm(`Delete "${p}"?`)) return
+  // Ne pas laisser un autosave en attente recréer la note supprimée
+  if (currentPath === p) cancelAutosave()
   try {
     await apiDel(`/api/docs/admin/note/${p}`)
     if (currentPath === p) {
@@ -1115,9 +1224,11 @@ async function deleteNote(p) {
 /* ════════════════════════════════════════════════
    SAVE BUTTONS + Ctrl+S
 ════════════════════════════════════════════════ */
-document.getElementById('saveBtn').addEventListener('click', saveNote)
-document.getElementById('saveBtnProps').addEventListener('click', saveNote)
+document.getElementById('saveBtn').addEventListener('click', () => saveNote())
+document.getElementById('saveBtnProps').addEventListener('click', () => saveNote())
 document.getElementById('deleteBtn').addEventListener('click', () => { if (currentPath) deleteNote(currentPath) })
+document.getElementById('noteTitle').addEventListener('input', scheduleAutosave)
+document.getElementById('publishedToggle').addEventListener('change', scheduleAutosave)
 document.addEventListener('keydown', e => {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveNote(); return }
   // Only intercept Alt shortcuts when focus is in the editor
