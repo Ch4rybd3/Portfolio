@@ -15,7 +15,7 @@ router.get('/', (req, res) => {
 
 router.get('/public/:slug', (req, res) => {
   const a = db.prepare(`SELECT * FROM articles WHERE slug = ? AND status = 'published'`).get(req.params.slug)
-  if (!a) return res.status(404).json({ error: 'Introuvable' })
+  if (!a) return res.status(404).json({ error: 'Not found' })
   res.json(a)
 })
 
@@ -29,13 +29,13 @@ router.get('/admin', requireAuth, (req, res) => {
 
 router.get('/admin/:id', requireAuth, (req, res) => {
   const a = db.prepare('SELECT * FROM articles WHERE id = ?').get(req.params.id)
-  if (!a) return res.status(404).json({ error: 'Introuvable' })
+  if (!a) return res.status(404).json({ error: 'Not found' })
   res.json(a)
 })
 
 router.post('/', requireAuth, (req, res) => {
   const { title, content, excerpt, cover_image, status, tags } = req.body
-  if (!title) return res.status(400).json({ error: 'Titre requis' })
+  if (!title) return res.status(400).json({ error: 'Title required' })
 
   const base = slugify(title, { lower: true, strict: true })
   let slug = base, i = 1
@@ -56,7 +56,7 @@ router.post('/', requireAuth, (req, res) => {
 
 router.put('/:id', requireAuth, (req, res) => {
   const existing = db.prepare('SELECT * FROM articles WHERE id = ?').get(req.params.id)
-  if (!existing) return res.status(404).json({ error: 'Introuvable' })
+  if (!existing) return res.status(404).json({ error: 'Not found' })
 
   const { title, content, excerpt, cover_image, status, tags } = req.body
   const published_at = status === 'published' && !existing.published_at
@@ -79,7 +79,7 @@ router.put('/:id', requireAuth, (req, res) => {
 
 router.delete('/:id', requireAuth, (req, res) => {
   const r = db.prepare('DELETE FROM articles WHERE id = ?').run(req.params.id)
-  if (r.changes === 0) return res.status(404).json({ error: 'Introuvable' })
+  if (r.changes === 0) return res.status(404).json({ error: 'Not found' })
   res.json({ ok: true })
 })
 

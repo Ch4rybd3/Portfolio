@@ -13,11 +13,11 @@ const ask = (q) => new Promise(r => rl.question(q, r))
 
   try {
     db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)').run(username, hash)
-    console.log(`✓ Admin "${username}" créé`)
+    console.log(`✓ Admin "${username}" created`)
   } catch (e) {
     if (e.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       db.prepare('UPDATE users SET password_hash = ? WHERE username = ?').run(hash, username)
-      console.log(`✓ Mot de passe mis à jour pour "${username}"`)
+      console.log(`✓ Password updated for "${username}"`)
     } else throw e
   }
 

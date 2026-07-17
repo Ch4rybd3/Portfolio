@@ -47,8 +47,8 @@ router.get('/docs', requireAuth, (req, res) => {
 //   replace : les sections présentes dans le fichier sont vidées puis réimportées
 router.post('/docs/import', requireAuth, (req, res) => {
   const { notes, mode = 'merge' } = req.body
-  if (!Array.isArray(notes) || !notes.length) return res.status(400).json({ error: 'Aucune note dans le fichier' })
-  if (!['merge', 'replace'].includes(mode)) return res.status(400).json({ error: 'mode invalide (merge | replace)' })
+  if (!Array.isArray(notes) || !notes.length) return res.status(400).json({ error: 'No notes in the file' })
+  if (!['merge', 'replace'].includes(mode)) return res.status(400).json({ error: 'invalid mode (merge | replace)' })
 
   const VALID_SECTIONS = ['kb', 'remora']
   const errors = []
@@ -68,7 +68,7 @@ router.post('/docs/import', requireAuth, (req, res) => {
       created_at: typeof n.created_at === 'string' ? n.created_at : null,
     })
   })
-  if (!clean.length) return res.status(400).json({ error: 'Aucune note valide dans le fichier', details: errors.slice(0, 10) })
+  if (!clean.length) return res.status(400).json({ error: 'No valid notes in the file', details: errors.slice(0, 10) })
 
   // Chemins dupliqués dans le fichier : la dernière occurrence gagne
   const finalNotes = [...new Map(clean.map(n => [n.path, n])).values()]

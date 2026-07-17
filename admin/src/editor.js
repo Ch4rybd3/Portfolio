@@ -42,7 +42,7 @@ const ImageWithPaste = Image.extend({
                 const file = item.getAsFile()
                 uploadImage(file).then(url => {
                   getEditor().chain().focus().setImage({ src: url }).run()
-                }).catch(() => toast('Erreur upload image', 'error'))
+                }).catch(() => toast('Image upload failed', 'error'))
                 return true
               }
             }
@@ -57,7 +57,7 @@ const ImageWithPaste = Image.extend({
             imgs.forEach(file => {
               uploadImage(file).then(url => {
                 getEditor().chain().focus().setImage({ src: url }).run()
-              }).catch(() => toast('Erreur upload image', 'error'))
+              }).catch(() => toast('Image upload failed', 'error'))
             })
             return true
           }
@@ -80,7 +80,7 @@ const editor = new Editor({
   ],
   content: '',
   editorProps: {
-    attributes: { 'data-placeholder': 'Commencez à écrire…' }
+    attributes: { 'data-placeholder': 'Start writing…' }
   },
   onUpdate: () => updateToolbarState(),
   onSelectionUpdate: () => updateToolbarState(),
@@ -129,7 +129,7 @@ document.querySelectorAll('#toolbar button[data-cmd]').forEach(btn => {
     else if (cmd === 'redo')        editor.chain().focus().redo().run()
     else if (cmd === 'link') {
       const prev = editor.getAttributes('link').href || ''
-      const url = prompt('URL du lien :', prev)
+      const url = prompt('Link URL:', prev)
       if (url === null) return
       if (url === '') editor.chain().focus().unsetLink().run()
       else editor.chain().focus().setLink({ href: url }).run()
@@ -145,7 +145,7 @@ document.getElementById('imageFileInput').addEventListener('change', async (e) =
   try {
     const url = await uploadImage(file)
     editor.chain().focus().setImage({ src: url }).run()
-  } catch { toast('Erreur upload image', 'error') }
+  } catch { toast('Image upload failed', 'error') }
   e.target.value = ''
 })
 
@@ -171,7 +171,7 @@ document.getElementById('coverFileInput').addEventListener('change', async (e) =
     preview.src = url
     preview.style.display = 'block'
     preview.dataset.url = url
-  } catch { toast('Erreur upload image de couverture', 'error') }
+  } catch { toast('Cover image upload failed', 'error') }
   e.target.value = ''
 })
 
@@ -216,7 +216,7 @@ document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && e.
 
 async function save() {
   const title = document.getElementById('titleInput').value.trim()
-  if (!title) { toast('Le titre est requis', 'error'); return }
+  if (!title) { toast('Title is required', 'error'); return }
 
   const btn = document.getElementById('saveBtn')
   btn.disabled = true
@@ -233,10 +233,10 @@ async function save() {
   try {
     if (articleId) {
       await api.put(`/api/articles/${articleId}`, payload)
-      toast('Article mis à jour')
+      toast('Article updated')
     } else {
       const created = await api.post('/api/articles', payload)
-      toast('Article créé')
+      toast('Article created')
       history.replaceState({}, '', `/admin/editor?id=${created.id}`)
       document.getElementById('pageTitle').textContent = 'Éditer l\'article'
     }
@@ -260,7 +260,7 @@ if (articleId) {
     }
     try { currentTags = JSON.parse(a.tags || '[]') } catch { currentTags = [] }
     renderTags()
-  }).catch(() => toast('Erreur de chargement', 'error'))
+  }).catch(() => toast('Failed to load', 'error'))
 }
 
 document.getElementById('logoutBtn')?.addEventListener('click', async () => {

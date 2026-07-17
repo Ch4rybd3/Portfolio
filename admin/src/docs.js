@@ -195,8 +195,8 @@ const ResizableImage = Image.extend({
             event.preventDefault()
             uploadDocImage(img.getAsFile()).then(url => {
               getEditor().chain().focus().setImage({ src: url }).run()
-              toast('Image insérée')
-            }).catch(() => toast('Erreur upload image', 'error'))
+              toast('Image inserted')
+            }).catch(() => toast('Image upload failed', 'error'))
             return true
           },
           handleDrop(view, event) {
@@ -205,8 +205,8 @@ const ResizableImage = Image.extend({
             event.preventDefault()
             files.forEach(f => uploadDocImage(f).then(url => {
               getEditor().chain().focus().setImage({ src: url }).run()
-              toast('Image insérée')
-            }).catch(() => toast('Erreur upload image', 'error')))
+              toast('Image inserted')
+            }).catch(() => toast('Image upload failed', 'error')))
             return true
           }
         }
@@ -242,7 +242,7 @@ const WikiLinkExtension = Extension.create({
                 decos.push(Decoration.inline(pos + m.index, pos + m.index + m[0].length, {
                   class: exists ? 'wiki-link-deco' : 'wiki-link-deco missing',
                   'data-target': title,
-                  title: exists ? `→ ${title}` : `Note introuvable : ${title}`
+                  title: exists ? `→ ${title}` : `Note not found: ${title}`
                 }))
               }
             })
@@ -257,7 +257,7 @@ const WikiLinkExtension = Extension.create({
               n.title.toLowerCase() === target.toLowerCase() || n.path === target || n.path.toLowerCase() === target.toLowerCase()
             )
             if (note) { loadNote(note.path); return true }
-            toast(`Note introuvable : ${target}`, 'error')
+            toast(`Note not found: ${target}`, 'error')
             return true
           }
         }
@@ -387,7 +387,7 @@ function initEditor() {
       Markdown.configure({ html: true, transformPastedText: true, transformCopiedText: true }),
       ResizableImage.configure({ inline: false, allowBase64: false }),
       Link.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: '# Titre de la note\n\nCommencez à écrire…' }),
+      Placeholder.configure({ placeholder: '# Note title\n\nStart writing…' }),
       CodeBlockLowlight.configure({ lowlight }),
       WikiLinkExtension,
     ],
@@ -472,7 +472,7 @@ document.getElementById('toolbar').addEventListener('mousedown', e => {
   else if (cmd === 'redo')        c.redo().run()
   else if (cmd === 'link') {
     const prev = editor.getAttributes('link').href || ''
-    const url = prompt('URL du lien :', prev)
+    const url = prompt('Link URL:', prev)
     if (url === null) return
     if (url === '') c.unsetLink().run()
     else c.setLink({ href: url }).run()
@@ -491,8 +491,8 @@ document.getElementById('imageFileInput').addEventListener('change', async e => 
   try {
     const url = await uploadDocImage(file)
     editor.chain().focus().setImage({ src: url }).run()
-    toast('Image insérée')
-  } catch { toast('Erreur upload image', 'error') }
+    toast('Image inserted')
+  } catch { toast('Image upload failed', 'error') }
   e.target.value = ''
 })
 
@@ -513,7 +513,7 @@ function renderProperties() {
     row.innerHTML = `
       <span class="prop-key-label" title="${escHtml(key)}">${escHtml(key)}</span>
       <span class="prop-colon">:</span>
-      <input class="prop-val-edit" value="${escHtml(String(noteProps[key]))}" readonly tabindex="-1" style="opacity:.6;cursor:default" title="Propriété gérée automatiquement"/>
+      <input class="prop-val-edit" value="${escHtml(String(noteProps[key]))}" readonly tabindex="-1" style="opacity:.6;cursor:default" title="Managed automatically"/>
     `
     wrap.appendChild(row)
   })
@@ -524,7 +524,7 @@ function renderProperties() {
       <span class="prop-key-label" title="${escHtml(key)}">${escHtml(key)}</span>
       <span class="prop-colon">:</span>
       <input class="prop-val-edit" value="${escHtml(String(value))}" data-key="${escHtml(key)}"/>
-      <button class="prop-del" title="Supprimer">×</button>
+      <button class="prop-del" title="Delete">×</button>
     `
     const valInput = row.querySelector('.prop-val-edit')
     valInput.addEventListener('input',  () => { noteProps[key] = valInput.value })
@@ -557,7 +557,7 @@ function addProp() {
   const key = document.getElementById('propKeyInput').value.trim()
   const val = document.getElementById('propValInput').value.trim()
   if (!key) { document.getElementById('propKeyInput').focus(); return }
-  if (AUTO_PROPS.includes(key)) { toast(`"${key}" est gérée automatiquement`, 'error'); return }
+  if (AUTO_PROPS.includes(key)) { toast(`"${key}" is managed automatically`, 'error'); return }
   noteProps[key] = val
   document.getElementById('propKeyInput').value = ''
   document.getElementById('propValInput').value = ''
@@ -628,10 +628,10 @@ async function moveNote(oldPath, newPath) {
       body: JSON.stringify({ newPath })
     })
     if (r.status === 401) { location.href = '/admin/login'; return false }
-    if (r.status === 409) { toast('Une note existe déjà à ce chemin', 'error'); return false }
+    if (r.status === 409) { toast('A note already exists at this path', 'error'); return false }
     if (!r.ok) {
       const msg = await r.json().then(j => j.error).catch(() => null)
-      toast(msg || 'Erreur lors du déplacement', 'error')
+      toast(msg || 'Move failed', 'error')
       return false
     }
     if (currentPath === oldPath) {
@@ -642,9 +642,9 @@ async function moveNote(oldPath, newPath) {
     }
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
-    toast(`✓ Déplacé → ${newPath}`)
+    toast(`✓ Moved → ${newPath}`)
     return true
-  } catch { toast('Erreur lors du déplacement', 'error'); return false }
+  } catch { toast('Move failed', 'error'); return false }
 }
 
 /* ── Renommage de dossier : réécrit le préfixe de toutes les notes qu'il contient ── */
@@ -658,7 +658,7 @@ async function moveFolder(oldPath, newPath) {
     if (r.status === 401) { location.href = '/admin/login'; return false }
     if (!r.ok) {
       const msg = await r.json().then(j => j.error).catch(() => null)
-      toast(msg || 'Erreur lors du renommage du dossier', 'error')
+      toast(msg || 'Folder rename failed', 'error')
       return false
     }
     // Transfère l'état local (dossiers vides, plis, note ouverte) vers le nouveau préfixe
@@ -675,9 +675,9 @@ async function moveFolder(oldPath, newPath) {
     }
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
-    toast(`✓ Dossier renommé → ${newPath}`)
+    toast(`✓ Folder renamed → ${newPath}`)
     return true
-  } catch { toast('Erreur lors du renommage du dossier', 'error'); return false }
+  } catch { toast('Folder rename failed', 'error'); return false }
 }
 
 function startFolderRename(head, folderPath) {
@@ -760,10 +760,10 @@ function renderTreeNode(node, prefix = '') {
       <i class="fa fa-folder-open" style="font-size:11px;color:var(--fg-4)"></i>
       <span class="ft-folder-name" style="flex:1">${fmtFolder(name)}</span>
       <span class="folder-actions">
-        <span class="add-btn add-note-btn" title="Nouvelle note dans ce dossier"><i class="fa fa-file-circle-plus"></i></span>
-        <span class="add-btn add-folder-btn" title="Nouveau sous-dossier"><i class="fa fa-folder-plus"></i></span>
-        <span class="add-btn rename-folder-btn" title="Renommer le dossier"><i class="fa fa-pen"></i></span>
-        <span class="add-btn moc-btn" title="Générer la MOC du dossier"><i class="fa fa-sitemap"></i></span>
+        <span class="add-btn add-note-btn" title="New note in this folder"><i class="fa fa-file-circle-plus"></i></span>
+        <span class="add-btn add-folder-btn" title="New subfolder"><i class="fa fa-folder-plus"></i></span>
+        <span class="add-btn rename-folder-btn" title="Rename folder"><i class="fa fa-pen"></i></span>
+        <span class="add-btn moc-btn" title="Generate folder MOC"><i class="fa fa-sitemap"></i></span>
       </span>
     `
     head.querySelector('.add-note-btn').addEventListener('click', e => {
@@ -797,7 +797,7 @@ function renderTreeNode(node, prefix = '') {
     const li = document.createElement('li')
     li.className = 'ft-note' + (note.path === currentPath ? ' active' : '') + (note.published ? '' : ' draft')
     li.dataset.path = note.path
-    const lock = isPublicProps(note.properties) ? '' : '<i class="fa fa-lock" title="Note privée" style="font-size:9px;color:var(--fg-4);flex-shrink:0"></i>'
+    const lock = isPublicProps(note.properties) ? '' : '<i class="fa fa-lock" title="Private note" style="font-size:9px;color:var(--fg-4);flex-shrink:0"></i>'
     li.innerHTML = `<i class="fa fa-file-lines"></i><span>${note.title}</span>${lock}<span class="del-btn" title="Supprimer"><i class="fa fa-trash"></i></span>`
     li.querySelector('.del-btn').addEventListener('click', e => { e.stopPropagation(); deleteNote(note.path) })
     li.addEventListener('click', e => { if (e.target.closest('.del-btn')) return; loadNote(note.path) })
@@ -819,7 +819,7 @@ function showInlineFolderInput(parentLi, prefix) {
   li.className = 'ft-folder-inline'
   const inp = document.createElement('input')
   inp.className = 'new-note-input'
-  inp.placeholder = 'nom-du-dossier'
+  inp.placeholder = 'folder-name'
   li.appendChild(inp)
 
   const childUl = container.querySelector('.ft-ul')
@@ -864,7 +864,7 @@ function refreshTree() {
   container.innerHTML = ''
   const notes = filteredNotes()
   if (!notes.length && !emptyFolders.size) {
-    container.innerHTML = `<div style="padding:12px 14px;font-size:12px;color:var(--fg-4)">${treeFilterQuery ? 'Aucun résultat.' : 'Aucune note.'}</div>`
+    container.innerHTML = `<div style="padding:12px 14px;font-size:12px;color:var(--fg-4)">${treeFilterQuery ? 'No results.' : 'No notes.'}</div>`
     return
   }
   container.appendChild(renderTreeNode(buildTree(notes)))
@@ -894,7 +894,7 @@ async function generateMoc(folderPath = '') {
   const notes = allNotes.filter(n =>
     (folderPath ? n.path.startsWith(folderPath + '/') : true) && n.path !== mocPath
   )
-  if (!notes.length) { toast('Aucune note dans ce dossier', 'error'); return }
+  if (!notes.length) { toast('No notes in this folder', 'error'); return }
 
   // Groupées par sous-dossier (relatif), triées
   const groups = {}
@@ -924,8 +924,8 @@ async function generateMoc(folderPath = '') {
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
     await loadNote(mocPath)
-    toast(`✓ MOC générée (${notes.length} note${notes.length > 1 ? 's' : ''})`)
-  } catch { toast('Erreur génération MOC', 'error') }
+    toast(`✓ MOC generated (${notes.length} note${notes.length > 1 ? 's' : ''})`)
+  } catch { toast('MOC generation failed', 'error') }
 }
 
 /* ════════════════════════════════════════════════
@@ -989,10 +989,10 @@ fileTreeEl.addEventListener('drop', e => {
 
 /* ── Renommage / déplacement via le panneau de droite ── */
 function renameFromPanel() {
-  if (!currentPath) { toast('Aucune note chargée', 'error'); return }
+  if (!currentPath) { toast('No note loaded', 'error'); return }
   const raw = document.getElementById('propsPathInput').value.trim()
   const cleaned = raw.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_/]/g, '').replace(/^\/+|\/+$/g, '')
-  if (!cleaned) { toast('Chemin invalide', 'error'); return }
+  if (!cleaned) { toast('Invalid path', 'error'); return }
   document.getElementById('propsPathInput').value = cleaned
   if (cleaned === currentPath) return
   moveNote(currentPath, cleaned)
@@ -1053,11 +1053,11 @@ async function loadNote(p) {
     renderProperties()
     document.getElementById('publishedToggle').checked = !!note.published
     document.getElementById('previewLink').href = `${PUBLIC_BASE}/${note.path}`
-    const upd = note.updated_at ? new Date(note.updated_at).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' }) : ''
-    document.getElementById('propsMeta').innerHTML = upd ? `Mis à jour le ${upd}<br/><code style="font-size:10px">${escHtml(note.path)}</code>` : ''
+    const upd = note.updated_at ? new Date(note.updated_at).toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' }) : ''
+    document.getElementById('propsMeta').innerHTML = upd ? `Updated ${upd}<br/><code style="font-size:10px">${escHtml(note.path)}</code>` : ''
     refreshTree()
     editor.commands.focus()
-  } catch { toast('Erreur chargement', 'error') }
+  } catch { toast('Load failed', 'error') }
 }
 
 async function saveNote() {
@@ -1069,11 +1069,11 @@ async function saveNote() {
   const content   = editor.storage.markdown.getMarkdown()
   const published = document.getElementById('publishedToggle').checked
 
-  if (!path) { toast('Chemin requis', 'error'); return }
+  if (!path) { toast('Path required', 'error'); return }
   // Check : pas d'espaces ni de caractères hors slug dans le nom de la note
-  if (/\s/.test(path)) { toast('Le chemin ne doit pas contenir d\'espaces', 'error'); return }
+  if (/\s/.test(path)) { toast('Path must not contain spaces', 'error'); return }
   if (!/^[a-zA-Z0-9\-_]+(\/[a-zA-Z0-9\-_]+)*$/.test(path)) {
-    toast('Chemin invalide (lettres, chiffres, tirets, underscores et / uniquement)', 'error'); return
+    toast('Invalid path (letters, digits, dashes, underscores and / only)', 'error'); return
   }
 
   noteProps.public = document.getElementById('publicToggle').checked
@@ -1088,14 +1088,14 @@ async function saveNote() {
     if (saved.properties) { noteProps = saved.properties; renderProperties() }
     currentPath = path
     document.getElementById('propsPathInput').value = path
-    toast(`✓ ${path} sauvegardé`)
+    toast(`✓ ${path} saved`)
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
-  } catch (e) { toast(e.message && e.message !== '401' ? e.message : 'Erreur sauvegarde', 'error') }
+  } catch (e) { toast(e.message && e.message !== '401' ? e.message : 'Save failed', 'error') }
 }
 
 async function deleteNote(p) {
-  if (!confirm(`Supprimer "${p}" ?`)) return
+  if (!confirm(`Delete "${p}"?`)) return
   try {
     await apiDel(`/api/docs/admin/note/${p}`)
     if (currentPath === p) {
@@ -1108,8 +1108,8 @@ async function deleteNote(p) {
     }
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
-    toast('Note supprimée')
-  } catch { toast('Erreur suppression', 'error') }
+    toast('Note deleted')
+  } catch { toast('Delete failed', 'error') }
 }
 
 /* ════════════════════════════════════════════════
@@ -1192,7 +1192,7 @@ function renderTplProps() {
       <span class="prop-key-label" title="${escHtml(key)}">${escHtml(key)}</span>
       <span class="prop-colon">:</span>
       <input class="prop-val-edit" value="${escHtml(String(value))}"/>
-      <button class="prop-del" title="Supprimer">×</button>
+      <button class="prop-del" title="Delete">×</button>
     `
     const valInput = row.querySelector('.prop-val-edit')
     valInput.addEventListener('input', () => { tplProps[key] = valInput.value })
@@ -1237,7 +1237,7 @@ function initTplEditor() {
       StarterKit.configure({ codeBlock: false }),
       Markdown.configure({ html: true, transformPastedText: true, transformCopiedText: true }),
       Link.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: 'Contenu du template…' }),
+      Placeholder.configure({ placeholder: 'Template content…' }),
       CodeBlockLowlight.configure({ lowlight }),
     ],
     content: '',
@@ -1318,7 +1318,7 @@ function renderTplModalList() {
   const list = document.getElementById('tplModalList')
   list.innerHTML = ''
   if (!allTemplates.length) {
-    list.innerHTML = '<div class="tpl-list-empty">Aucun template.<br/>Cliquez + pour créer.</div>'
+    list.innerHTML = '<div class="tpl-list-empty">No templates.<br/>Click + to create one.</div>'
     return
   }
   allTemplates.forEach(tpl => {
@@ -1371,11 +1371,11 @@ document.getElementById('tplFromNoteBtn').addEventListener('click', () => {
 /* ── Save ── */
 document.getElementById('tplModalSave').addEventListener('click', async () => {
   const name = document.getElementById('tplModalName').value.trim()
-  if (!name) { document.getElementById('tplModalName').focus(); toast('Donnez un nom au template', 'error'); return }
+  if (!name) { document.getElementById('tplModalName').focus(); toast('Give the template a name', 'error'); return }
 
   // Detect name conflict (different id)
   const conflict = allTemplates.find(t => t.name.toLowerCase() === name.toLowerCase() && t.id !== currentTplId)
-  if (conflict && !confirm(`Un template "${name}" existe déjà. Le remplacer ?`)) return
+  if (conflict && !confirm(`A template named "${name}" already exists. Replace it?`)) return
 
   const content = tplEditor.storage.markdown.getMarkdown()
 
@@ -1389,8 +1389,8 @@ document.getElementById('tplModalSave').addEventListener('click', async () => {
     currentTplId = saved.id
     await fetchTemplates()
     renderTplModalList()
-    toast(`Template "${name}" sauvegardé`)
-  } catch { toast('Erreur sauvegarde template', 'error') }
+    toast(`Template "${name}" saved`)
+  } catch { toast('Template save failed', 'error') }
 })
 
 /* ── Insertion dans la note (au curseur, sans remplacer le contenu) ── */
@@ -1413,13 +1413,13 @@ function applyTemplateToNote(tpl) {
     if (!(k in noteProps) || noteProps[k] === '') { noteProps[k] = v; added++ }
   })
   renderProperties()
-  toast('Template inséré' + (added ? ` · ${added} propriété${added > 1 ? 's' : ''}` : ''))
+  toast('Template inserted' + (added ? ` · ${added} propert${added > 1 ? 'ies' : 'y'}` : ''))
 }
 
 document.getElementById('tplModalApply').addEventListener('click', () => {
   if (!editor || !tplEditor) return
   const content = tplEditor.storage.markdown.getMarkdown()
-  if (!content.trim() && !Object.keys(tplProps).length) { toast('Template vide', 'error'); return }
+  if (!content.trim() && !Object.keys(tplProps).length) { toast('Empty template', 'error'); return }
   applyTemplateToNote({ content, properties: { ...tplProps } })
   closeTplModal()
   editor.commands.focus()
@@ -1427,18 +1427,18 @@ document.getElementById('tplModalApply').addEventListener('click', () => {
 
 /* ── Delete ── */
 document.getElementById('tplModalDelete').addEventListener('click', async () => {
-  if (!currentTplId) { toast('Aucun template sélectionné', 'error'); return }
+  if (!currentTplId) { toast('No template selected', 'error'); return }
   const tpl = allTemplates.find(t => t.id === currentTplId)
-  if (!confirm(`Supprimer le template "${tpl?.name}" ?`)) return
+  if (!confirm(`Delete template "${tpl?.name}"?`)) return
   try {
     await apiDel(`/api/docs/admin/templates/${currentTplId}`)
-    toast('Template supprimé')
+    toast('Template deleted')
     await fetchTemplates()
     currentTplId = null
     renderTplModalList()
     if (allTemplates.length) selectTpl(allTemplates[0])
     else newTpl()
-  } catch { toast('Erreur suppression template', 'error') }
+  } catch { toast('Template delete failed', 'error') }
 })
 
 /* ════════════════════════════════════════════════
@@ -1506,7 +1506,7 @@ async function init() {
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
   } catch (e) {
-    if (e.message !== '401') toast('Erreur chargement des notes', 'error')
+    if (e.message !== '401') toast('Failed to load notes', 'error')
   }
 }
 

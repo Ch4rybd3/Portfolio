@@ -274,11 +274,11 @@
       </div>
       <div class="docs-search-wrap">
         <i class="fa fa-magnifying-glass docs-search-icon"></i>
-        <input class="docs-search" id="searchInput" placeholder="Rechercher…" autocomplete="off"/>
+        <input class="docs-search" id="searchInput" placeholder="Search…" autocomplete="off"/>
       </div>
     </div>
     <nav class="docs-tree" id="docsTree">
-      <div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>
+      <div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Loading…</div>
     </nav>
   </aside>
 
@@ -289,7 +289,7 @@
     <div id="docsContent">
       <div class="docs-welcome" id="docsWelcome">
         <h2>Knowledge Base</h2>
-        <p>Sélectionnez une note dans le panneau de gauche, ou recherchez un sujet dans la barre de recherche.</p>
+        <p>Select a note from the left panel, or search for a topic using the search bar.</p>
       </div>
       <div id="docsArticle" style="display:none">
         <div class="docs-article">
@@ -355,7 +355,7 @@ function setupMarked() {
         if (note) {
           return `<a href="/docs/${note.path}" class="wiki-link" onclick="navigate('${note.path}');return false">${token.label}</a>`
         }
-        return `<span class="wiki-link missing" title="Note introuvable : ${token.target}">[[${token.label}]]</span>`
+        return `<span class="wiki-link missing" title="Note not found: ${token.target}">[[${token.label}]]</span>`
       }
     }]
   })
@@ -448,7 +448,7 @@ function renderTree(notes) {
   container.innerHTML = ''
 
   if (!notes.length) {
-    container.innerHTML = '<div class="tree-empty">Aucune note publiée.</div>'
+    container.innerHTML = '<div class="tree-empty">No published notes.</div>'
     return
   }
 
@@ -501,7 +501,7 @@ async function navigate(notePath) {
 
   document.getElementById('docsWelcome').style.display = 'none'
   document.getElementById('docsArticle').style.display = 'none'
-  document.getElementById('noteBody').innerHTML = '<div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>'
+  document.getElementById('noteBody').innerHTML = '<div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Loading…</div>'
   document.getElementById('docsArticle').style.display = 'block'
 
   history.pushState({ notePath }, '', `/docs/${notePath}`)
@@ -527,8 +527,8 @@ function renderNote(note) {
   ).join('')
 
   // Meta
-  const updated = note.updated_at ? new Date(note.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-  document.getElementById('noteMeta').textContent = updated ? `Mis à jour le ${updated}` : ''
+  const updated = note.updated_at ? new Date(note.updated_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  document.getElementById('noteMeta').textContent = updated ? `Updated ${updated}` : ''
 
   // Body — sanitize HTML output from marked to prevent stored XSS
   document.getElementById('noteBody').innerHTML = DOMPurify.sanitize(renderMarkdown(note.content))
@@ -548,7 +548,7 @@ function showWelcome() {
 }
 
 function showError(path) {
-  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Note introuvable : <code>${path}</code></div>`
+  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Note not found: <code>${path}</code></div>`
 }
 
 /* ════════════════════════════════════════════════

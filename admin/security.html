@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Admin — Sécurité</title>
+  <title>Admin — Security</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="./src/style.css"/>
@@ -65,59 +65,59 @@
     <div class="logo">Ch4rybd3 / Admin</div>
     <nav>
       <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
-      <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+      <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Editor</a>
       <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
       <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
       <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
       <a href="/admin/remora"><i class="fa fa-fish fa-fw"></i> Remora</a>
-      <a href="/admin/security" class="active"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
-      <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Blog public</a>
+      <a href="/admin/security" class="active"><i class="fa fa-shield-halved fa-fw"></i> Security</a>
+      <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Public blog</a>
     </nav>
     <div class="bottom">
       <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
-        <i class="fa fa-right-from-bracket"></i> Déconnexion
+        <i class="fa fa-right-from-bracket"></i> Log out
       </button>
     </div>
   </aside>
 
   <div class="main">
     <div class="topbar">
-      <h1>Sécurité</h1>
+      <h1>Security</h1>
     </div>
     <div class="content">
       <div class="security-card">
         <div class="security-card-header">
           <div class="security-card-icon"><i class="fa fa-key"></i></div>
           <div>
-            <div class="security-card-title">Changer le mot de passe</div>
-            <div class="security-card-sub">Politique : 8 car. min · maj · min · chiffre · spécial</div>
+            <div class="security-card-title">Change password</div>
+            <div class="security-card-sub">Policy: 8 chars min · upper · lower · digit · special</div>
           </div>
         </div>
         <div class="security-card-body">
           <div class="field">
-            <label for="currentPwd">Mot de passe actuel</label>
+            <label for="currentPwd">Current password</label>
             <input type="password" id="currentPwd" autocomplete="current-password" placeholder="••••••••"/>
           </div>
           <div class="field">
-            <label for="newPwd">Nouveau mot de passe</label>
+            <label for="newPwd">New password</label>
             <input type="password" id="newPwd" autocomplete="new-password" placeholder="••••••••"/>
           </div>
           <div class="policy-grid">
-            <div class="policy-rule" id="rule-len"><i class="fa fa-circle"></i> 8 caractères min.</div>
-            <div class="policy-rule" id="rule-upper"><i class="fa fa-circle"></i> Majuscule (A–Z)</div>
-            <div class="policy-rule" id="rule-lower"><i class="fa fa-circle"></i> Minuscule (a–z)</div>
-            <div class="policy-rule" id="rule-digit"><i class="fa fa-circle"></i> Chiffre (0–9)</div>
-            <div class="policy-rule" id="rule-special"><i class="fa fa-circle"></i> Caractère spécial</div>
+            <div class="policy-rule" id="rule-len"><i class="fa fa-circle"></i> 8 characters min.</div>
+            <div class="policy-rule" id="rule-upper"><i class="fa fa-circle"></i> Uppercase (A–Z)</div>
+            <div class="policy-rule" id="rule-lower"><i class="fa fa-circle"></i> Lowercase (a–z)</div>
+            <div class="policy-rule" id="rule-digit"><i class="fa fa-circle"></i> Digit (0–9)</div>
+            <div class="policy-rule" id="rule-special"><i class="fa fa-circle"></i> Special character</div>
           </div>
           <div class="field">
-            <label for="confirmPwd">Confirmer le nouveau mot de passe</label>
+            <label for="confirmPwd">Confirm new password</label>
             <input type="password" id="confirmPwd" autocomplete="new-password" placeholder="••••••••"/>
           </div>
           <div class="form-error" id="formError"></div>
         </div>
         <div class="security-card-footer">
           <button class="btn btn-primary" id="submitBtn">
-            <i class="fa fa-floppy-disk"></i> Enregistrer
+            <i class="fa fa-floppy-disk"></i> Save
           </button>
         </div>
       </div>

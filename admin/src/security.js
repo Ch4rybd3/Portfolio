@@ -31,13 +31,13 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
   const errEl   = document.getElementById('formError')
   errEl.textContent = ''
 
-  if (!current)             { errEl.textContent = 'Saisissez votre mot de passe actuel.'; return }
-  if (!policyValid(newPwd)) { errEl.textContent = 'Le nouveau mot de passe ne respecte pas la politique.'; return }
-  if (newPwd !== confirm)   { errEl.textContent = 'Les deux mots de passe ne correspondent pas.'; return }
+  if (!current)             { errEl.textContent = 'Enter your current password.'; return }
+  if (!policyValid(newPwd)) { errEl.textContent = 'The new password does not meet the policy.'; return }
+  if (newPwd !== confirm)   { errEl.textContent = 'The two passwords do not match.'; return }
 
   const btn = document.getElementById('submitBtn')
   btn.disabled = true
-  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enregistrement…'
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving…'
 
   try {
     const res = await fetch('/api/auth/change-password', {
@@ -54,14 +54,14 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
     document.getElementById('newPwd').value = ''
     document.getElementById('confirmPwd').value = ''
     updatePolicy('')
-    btn.innerHTML = '<i class="fa fa-circle-check"></i> Enregistré'
+    btn.innerHTML = '<i class="fa fa-circle-check"></i> Saved'
     btn.style.background = 'rgba(45,212,191,.15)'
     setTimeout(() => {
-      btn.innerHTML = '<i class="fa fa-floppy-disk"></i> Enregistrer'
+      btn.innerHTML = '<i class="fa fa-floppy-disk"></i> Save'
       btn.style.background = ''
     }, 2500)
   } catch {
-    errEl.textContent = 'Erreur réseau.'
+    errEl.textContent = 'Network error.'
   } finally {
     btn.disabled = false
   }

@@ -23,7 +23,7 @@ const upload = multer({
   fileFilter: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase() || '.png'
     if (!file.mimetype.startsWith('image/') || !ALLOWED_IMAGE_EXTS.has(ext)) {
-      return cb(new Error('Images uniquement (jpg, png, gif, webp, avif)'))
+      return cb(new Error('Images only (jpg, png, gif, webp, avif)'))
     }
     cb(null, true)
   }
@@ -133,7 +133,7 @@ router.patch('/admin/move-folder', requireAuth, (req, res) => {
   const err = pathError(newPath)
   if (err) return res.status(400).json({ error: err })
   if (oldPath === newPath) return res.json({ ok: true, path: newPath, moved: 0 })
-  if (newPath.startsWith(oldPath + '/')) return res.status(400).json({ error: 'Impossible de déplacer un dossier dans lui-même' })
+  if (newPath.startsWith(oldPath + '/')) return res.status(400).json({ error: 'Cannot move a folder into itself' })
 
   const moved = db.prepare(`SELECT path FROM docs_notes WHERE section = ? AND path LIKE ? ESCAPE '\\'`)
     .all(section, oldPath.replace(/[\\%_]/g, '\\$&') + '/%')
@@ -146,7 +146,7 @@ router.patch('/admin/move-folder', requireAuth, (req, res) => {
       for (const r of moved) {
         const target = newPath + r.path.slice(oldPath.length)
         if (!movedSet.has(target) && clashStmt.get(target)) {
-          const e = new Error(`Une note existe déjà à ${target}`); e.conflict = true; throw e
+          const e = new Error(`A note already exists at ${target}`); e.conflict = true; throw e
         }
       }
       const upd = db.prepare('UPDATE docs_notes SET path = ?, updated_at = CURRENT_TIMESTAMP WHERE path = ?')

@@ -10,11 +10,11 @@ const db = require('./db')
 
 function validatePassword(pwd) {
   const errors = []
-  if (!pwd || pwd.length < 8)        errors.push('8 caractères minimum')
-  if (!/[A-Z]/.test(pwd))            errors.push('Au moins une majuscule')
-  if (!/[a-z]/.test(pwd))            errors.push('Au moins une minuscule')
-  if (!/[0-9]/.test(pwd))            errors.push('Au moins un chiffre')
-  if (!/[^A-Za-z0-9]/.test(pwd))     errors.push('Au moins un caractère spécial')
+  if (!pwd || pwd.length < 8)        errors.push('At least 8 characters')
+  if (!/[A-Z]/.test(pwd))            errors.push('At least one uppercase letter')
+  if (!/[a-z]/.test(pwd))            errors.push('At least one lowercase letter')
+  if (!/[0-9]/.test(pwd))            errors.push('At least one digit')
+  if (!/[^A-Za-z0-9]/.test(pwd))     errors.push('At least one special character')
   return errors
 }
 
@@ -64,24 +64,24 @@ function ask(prompt) {
 }
 
 ;(async () => {
-  console.log('\n── Réinitialisation du mot de passe admin ──\n')
+  console.log('\n── Admin password reset ──\n')
 
   const users = db.prepare('SELECT id, username FROM users').all()
   if (users.length === 0) {
-    console.error('Aucun utilisateur trouvé en base.')
+    console.error('No user found in database.')
     process.exit(1)
   }
 
   if (users.length === 1) {
-    console.log(`Utilisateur : ${users[0].username}`)
+    console.log(`User: ${users[0].username}`)
     var targetUser = users[0]
   } else {
-    console.log('Utilisateurs disponibles :')
+    console.log('Available users:')
     users.forEach((u, i) => console.log(`  [${i + 1}] ${u.username}`))
-    const choice = await ask('Choisir un utilisateur (numéro) : ')
+    const choice = await ask('Choose a user (number): ')
     const idx = parseInt(choice, 10) - 1
     if (isNaN(idx) || idx < 0 || idx >= users.length) {
-      console.error('Choix invalide.')
+      console.error('Invalid choice.')
       process.exit(1)
     }
     var targetUser = users[idx]
@@ -89,15 +89,15 @@ function ask(prompt) {
 
   let newPassword
   while (true) {
-    newPassword = await hiddenInput('Nouveau mot de passe : ')
+    newPassword = await hiddenInput('New password: ')
     const errors = validatePassword(newPassword)
     if (errors.length) {
-      console.log(`\nMot de passe invalide :\n  - ${errors.join('\n  - ')}\n`)
+      console.log(`\nInvalid password:\n  - ${errors.join('\n  - ')}\n`)
       continue
     }
-    const confirm = await hiddenInput('Confirmer le mot de passe : ')
+    const confirm = await hiddenInput('Confirm password: ')
     if (newPassword !== confirm) {
-      console.log('\nLes mots de passe ne correspondent pas. Réessaie.\n')
+      console.log('\nPasswords do not match. Try again.\n')
       continue
     }
     break
@@ -105,6 +105,6 @@ function ask(prompt) {
 
   const hash = await bcrypt.hash(newPassword, 12)
   db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hash, targetUser.id)
-  console.log(`\n✓ Mot de passe mis à jour pour "${targetUser.username}"\n`)
+  console.log(`\n✓ Password updated for "${targetUser.username}"\n`)
   process.exit(0)
 })()

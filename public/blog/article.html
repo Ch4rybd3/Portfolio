@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Article — Ch4rybd3</title>
@@ -244,7 +244,7 @@
         <hr class="divider"/>
         <div class="article-content" id="articleContent">${DOMPurify.sanitize(article.content)}</div>
         <div class="article-end">
-          <a href="/blog" class="back-link"><i class="fa fa-arrow-left"></i> Retour au blog</a>
+          <a href="/blog" class="back-link"><i class="fa fa-arrow-left"></i> Back to blog</a>
           ${tagsHtml ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${tags.map(t => `<span class="article-tag">${esc(t)}</span>`).join('')}</div>` : ''}
         </div>
       `
@@ -262,8 +262,8 @@
       document.getElementById('articleWrap').innerHTML = `
         <div class="not-found">
           <i class="fa fa-file-circle-xmark"></i>
-          <p>${status === 404 ? 'Article introuvable.' : 'Erreur de chargement.'}</p>
-          <a href="/blog" style="color:var(--htb-green);font-size:14px;font-family:var(--font-mono);">← Retour au blog</a>
+          <p>${status === 404 ? 'Article not found.' : 'Failed to load.'}</p>
+          <a href="/blog" style="color:var(--htb-green);font-size:14px;font-family:var(--font-mono);">← Back to blog</a>
         </div>`
     })
 
@@ -272,7 +272,7 @@
     try { return JSON.parse(raw) } catch { return [] }
   }
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '' }
+  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { day:'2-digit', month:'long', year:'numeric' }) : '' }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>

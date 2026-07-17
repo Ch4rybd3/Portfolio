@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Admin — Kanban</title>
@@ -132,27 +132,27 @@
       <div class="logo">Ch4rybd3 / Admin</div>
       <nav>
         <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
-        <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+        <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Editor</a>
         <a href="/admin/kanban" class="active"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
         <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
         <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
         <a href="/admin/remora"><i class="fa fa-fish fa-fw"></i> Remora</a>
-        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
-        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Blog public</a>
+        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Security</a>
+        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Public blog</a>
       </nav>
       <div class="bottom">
         <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
-          <i class="fa fa-right-from-bracket"></i> Déconnexion
+          <i class="fa fa-right-from-bracket"></i> Log out
         </button>
       </div>
     </aside>
     <div class="main">
       <div class="topbar">
-        <h1>Planification</h1>
+        <h1>Planning</h1>
       </div>
       <div class="content">
         <div class="kanban-board" id="kanbanBoard">
-          <div style="color:var(--fg-4);padding:20px"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>
+          <div style="color:var(--fg-4);padding:20px"><i class="fa fa-spinner fa-spin"></i> Loading…</div>
         </div>
       </div>
     </div>
@@ -162,20 +162,20 @@
   <div class="modal-backdrop" id="cardModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="modalTitle">Nouvelle carte</h3>
+        <h3 id="modalTitle">New card</h3>
         <button class="modal-close" id="modalClose">&times;</button>
       </div>
       <div class="form-group">
-        <label>Titre</label>
-        <input type="text" id="cardTitle" placeholder="Ex: Article sur Wireshark…"/>
+        <label>Title</label>
+        <input type="text" id="cardTitle" placeholder="e.g. Article about Wireshark…"/>
       </div>
       <div class="form-group">
         <label>Notes</label>
-        <textarea id="cardNotes" rows="5" placeholder="Idées, ressources, TODO…"></textarea>
+        <textarea id="cardNotes" rows="5" placeholder="Ideas, resources, TODO…"></textarea>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;">
-        <button class="btn btn-ghost" id="modalCancel">Annuler</button>
-        <button class="btn btn-primary" id="modalSave">Enregistrer</button>
+        <button class="btn btn-ghost" id="modalCancel">Cancel</button>
+        <button class="btn btn-primary" id="modalSave">Save</button>
       </div>
     </div>
   </div>

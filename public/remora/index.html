@@ -261,11 +261,11 @@
       </div>
       <div class="docs-search-wrap">
         <i class="fa fa-magnifying-glass docs-search-icon"></i>
-        <input class="docs-search" id="searchInput" placeholder="Rechercher…" autocomplete="off"/>
+        <input class="docs-search" id="searchInput" placeholder="Search…" autocomplete="off"/>
       </div>
     </div>
     <nav class="docs-tree" id="docsTree">
-      <div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>
+      <div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Loading…</div>
     </nav>
   </aside>
 
@@ -277,7 +277,7 @@
       <div class="docs-welcome" id="docsWelcome">
         <div class="remora-badge"><i class="fa fa-fish"></i> Remora · DFIR Case Management</div>
         <h2>Documentation</h2>
-        <p>Sélectionnez une page dans le panneau de gauche pour naviguer dans la documentation Remora.</p>
+        <p>Select a page from the left panel to browse the Remora documentation.</p>
       </div>
       <div id="docsArticle" style="display:none">
         <div class="docs-article">
@@ -411,7 +411,7 @@ function renderTree(notes) {
   container.innerHTML = ''
 
   if (!notes.length) {
-    container.innerHTML = '<div class="tree-empty">Aucune page publiée.</div>'
+    container.innerHTML = '<div class="tree-empty">No published pages.</div>'
     return
   }
 
@@ -462,7 +462,7 @@ async function navigate(notePath) {
 
   document.getElementById('docsWelcome').style.display = 'none'
   document.getElementById('docsArticle').style.display = 'none'
-  document.getElementById('noteBody').innerHTML = '<div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Chargement…</div>'
+  document.getElementById('noteBody').innerHTML = '<div class="docs-loading"><i class="fa fa-spinner fa-spin"></i> Loading…</div>'
   document.getElementById('docsArticle').style.display = 'block'
 
   history.pushState({ notePath }, '', `/remora/${notePath}`)
@@ -486,8 +486,8 @@ function renderNote(note) {
     `<span class="note-tag">${esc(t)}</span>`
   ).join('')
 
-  const updated = note.updated_at ? new Date(note.updated_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
-  document.getElementById('noteMeta').textContent = updated ? `Mis à jour le ${updated}` : ''
+  const updated = note.updated_at ? new Date(note.updated_at).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  document.getElementById('noteMeta').textContent = updated ? `Updated ${updated}` : ''
 
   document.getElementById('noteBody').innerHTML = DOMPurify.sanitize(renderMarkdown(note.content))
   document.getElementById('docsWelcome').style.display = 'none'
@@ -505,7 +505,7 @@ function showWelcome() {
 }
 
 function showError(path) {
-  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Page introuvable : <code>${path}</code></div>`
+  document.getElementById('noteBody').innerHTML = `<div style="color:var(--htb-fg-3);font-family:var(--font-mono);font-size:13px;padding:16px 0"><i class="fa fa-triangle-exclamation" style="color:var(--htb-warning);margin-right:8px"></i>Page not found: <code>${path}</code></div>`
 }
 
 /* ════════════════════════════════════════════════

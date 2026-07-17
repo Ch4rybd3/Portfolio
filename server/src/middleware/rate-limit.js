@@ -22,7 +22,7 @@ function loginRateLimit(req, res, next) {
   if (rec && rec.count >= MAX_FAILURES) {
     const retryAfter = Math.max(1, Math.ceil((rec.first + WINDOW_MS - Date.now()) / 1000))
     res.setHeader('Retry-After', retryAfter)
-    return res.status(429).json({ error: `Trop de tentatives. Réessayez dans ${Math.ceil(retryAfter / 60)} min.` })
+    return res.status(429).json({ error: `Too many attempts. Try again in ${Math.ceil(retryAfter / 60)} min.` })
   }
   next()
 }

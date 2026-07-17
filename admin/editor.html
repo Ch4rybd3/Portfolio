@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <title>Admin — Éditeur</title>
+  <title>Admin — Editor</title>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css"/>
@@ -97,89 +97,89 @@
       <div class="logo">Ch4rybd3 / Admin</div>
       <nav>
         <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
-        <a href="/admin/editor" class="active"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+        <a href="/admin/editor" class="active"><i class="fa fa-pen-to-square fa-fw"></i> Editor</a>
         <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
         <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
         <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
         <a href="/admin/remora"><i class="fa fa-fish fa-fw"></i> Remora</a>
-        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
-        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Blog public</a>
+        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Security</a>
+        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Public blog</a>
       </nav>
       <div class="bottom">
         <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
-          <i class="fa fa-right-from-bracket"></i> Déconnexion
+          <i class="fa fa-right-from-bracket"></i> Log out
         </button>
       </div>
     </aside>
     <div class="main">
       <div class="topbar">
-        <h1 id="pageTitle">Nouvel article</h1>
+        <h1 id="pageTitle">New article</h1>
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-ghost" id="saveBtn"><i class="fa fa-floppy-disk"></i> Enregistrer</button>
-          <a href="/admin" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Retour</a>
+          <button class="btn btn-ghost" id="saveBtn"><i class="fa fa-floppy-disk"></i> Save</button>
+          <a href="/admin" class="btn btn-ghost"><i class="fa fa-arrow-left"></i> Back</a>
         </div>
       </div>
       <div class="content">
         <div class="editor-layout">
           <div class="editor-wrap">
             <div class="form-group" style="margin:0">
-              <input id="titleInput" type="text" placeholder="Titre de l'article…" style="font-size:20px;font-weight:700;padding:12px 14px;"/>
+              <input id="titleInput" type="text" placeholder="Article title…" style="font-size:20px;font-weight:700;padding:12px 14px;"/>
             </div>
             <div class="toolbar" id="toolbar">
-              <button data-cmd="bold" title="Gras"><b>B</b></button>
-              <button data-cmd="italic" title="Italique"><i>I</i></button>
-              <button data-cmd="underline" title="Souligné"><u>U</u></button>
-              <button data-cmd="strike" title="Barré"><s>S</s></button>
+              <button data-cmd="bold" title="Bold"><b>B</b></button>
+              <button data-cmd="italic" title="Italic"><i>I</i></button>
+              <button data-cmd="underline" title="Underline"><u>U</u></button>
+              <button data-cmd="strike" title="Strikethrough"><s>S</s></button>
               <div class="sep"></div>
               <button data-cmd="h1" title="H1">H1</button>
               <button data-cmd="h2" title="H2">H2</button>
               <button data-cmd="h3" title="H3">H3</button>
               <div class="sep"></div>
-              <button data-cmd="bulletList" title="Liste à puces"><i class="fa fa-list-ul"></i></button>
-              <button data-cmd="orderedList" title="Liste numérotée"><i class="fa fa-list-ol"></i></button>
+              <button data-cmd="bulletList" title="Bullet list"><i class="fa fa-list-ul"></i></button>
+              <button data-cmd="orderedList" title="Numbered list"><i class="fa fa-list-ol"></i></button>
               <div class="sep"></div>
-              <button data-cmd="blockquote" title="Citation"><i class="fa fa-quote-left"></i></button>
-              <button data-cmd="codeBlock" title="Bloc de code"><i class="fa fa-code"></i></button>
-              <button data-cmd="code" title="Code inline">`</button>
+              <button data-cmd="blockquote" title="Quote"><i class="fa fa-quote-left"></i></button>
+              <button data-cmd="codeBlock" title="Code block"><i class="fa fa-code"></i></button>
+              <button data-cmd="code" title="Inline code">`</button>
               <div class="sep"></div>
-              <button data-cmd="link" title="Lien"><i class="fa fa-link"></i></button>
-              <button data-cmd="image" title="Insérer image"><i class="fa fa-image"></i></button>
-              <button data-cmd="table" title="Tableau"><i class="fa fa-table"></i></button>
-              <button data-cmd="hr" title="Séparateur">—</button>
+              <button data-cmd="link" title="Link"><i class="fa fa-link"></i></button>
+              <button data-cmd="image" title="Insert image"><i class="fa fa-image"></i></button>
+              <button data-cmd="table" title="Table"><i class="fa fa-table"></i></button>
+              <button data-cmd="hr" title="Horizontal rule">—</button>
               <div class="sep"></div>
-              <button data-cmd="undo" title="Annuler"><i class="fa fa-rotate-left"></i></button>
-              <button data-cmd="redo" title="Rétablir"><i class="fa fa-rotate-right"></i></button>
+              <button data-cmd="undo" title="Undo"><i class="fa fa-rotate-left"></i></button>
+              <button data-cmd="redo" title="Redo"><i class="fa fa-rotate-right"></i></button>
             </div>
             <div id="editor"></div>
             <input type="file" id="imageFileInput" accept="image/*" style="display:none"/>
           </div>
           <div class="editor-sidebar">
             <div class="sidebar-card">
-              <h3>Statut</h3>
+              <h3>Status</h3>
               <div class="status-toggle">
-                <button class="status-btn active-draft" id="btnDraft">Brouillon</button>
-                <button class="status-btn" id="btnPublish">Publier</button>
+                <button class="status-btn active-draft" id="btnDraft">Draft</button>
+                <button class="status-btn" id="btnPublish">Publish</button>
               </div>
             </div>
             <div class="sidebar-card">
               <h3>Tags</h3>
               <div id="tagsDisplay" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:24px;"></div>
               <div style="display:flex;gap:6px;">
-                <input id="tagInput" type="text" placeholder="Ajouter un tag…" style="flex:1;font-size:12px;padding:6px 8px;" onkeydown="handleTagKey(event)"/>
+                <input id="tagInput" type="text" placeholder="Add a tag…" style="flex:1;font-size:12px;padding:6px 8px;" onkeydown="handleTagKey(event)"/>
                 <button class="btn btn-ghost btn-sm" onclick="addTagFromInput()" style="padding:6px 10px;" type="button"><i class="fa fa-plus"></i></button>
               </div>
-              <p style="font-size:11px;color:var(--fg-4);margin-top:8px;">Entrée ou virgule pour valider. Ex : dfir, ctf, soc</p>
+              <p style="font-size:11px;color:var(--fg-4);margin-top:8px;">Enter or comma to confirm. e.g. dfir, ctf, soc</p>
             </div>
             <div class="sidebar-card">
-              <h3>Extrait</h3>
-              <textarea id="excerptInput" rows="4" placeholder="Résumé affiché dans la liste des articles…"></textarea>
+              <h3>Excerpt</h3>
+              <textarea id="excerptInput" rows="4" placeholder="Summary shown in the article list…"></textarea>
             </div>
             <div class="sidebar-card">
-              <h3>Image de couverture</h3>
+              <h3>Cover image</h3>
               <img id="coverPreview" class="cover-preview"/>
               <input type="file" id="coverFileInput" accept="image/*" style="display:none"/>
               <button class="btn btn-ghost btn-sm" id="coverPickBtn" style="width:100%;justify-content:center;">
-                <i class="fa fa-upload"></i> Choisir une image
+                <i class="fa fa-upload"></i> Choose an image
               </button>
             </div>
           </div>

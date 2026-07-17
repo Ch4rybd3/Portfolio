@@ -52,7 +52,7 @@ db.exec(`
 const { count } = db.prepare('SELECT COUNT(*) as count FROM kanban_columns').get()
 if (count === 0) {
   const ins = db.prepare('INSERT INTO kanban_columns (title, position) VALUES (?, ?)')
-  ;[['Idées', 0], ['En cours', 1], ['À réviser', 2], ['Publié', 3]].forEach(([t, p]) => ins.run(t, p))
+  ;[['Ideas', 0], ['In progress', 1], ['To review', 2], ['Published', 3]].forEach(([t, p]) => ins.run(t, p))
 }
 
 // Migration: add tags column if it doesn't exist yet

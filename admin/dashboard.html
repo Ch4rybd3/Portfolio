@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Admin — Articles</title>
@@ -97,41 +97,41 @@
       <div class="logo">Ch4rybd3 / Admin</div>
       <nav>
         <a href="/admin" class="active"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
-        <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+        <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Editor</a>
         <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
         <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
         <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
         <a href="/admin/remora"><i class="fa fa-fish fa-fw"></i> Remora</a>
-        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
-        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Blog public</a>
+        <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Security</a>
+        <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Public blog</a>
       </nav>
       <div class="bottom">
         <button class="btn btn-ghost btn-sm" id="changePwdBtn" style="width:100%;justify-content:center;margin-bottom:6px">
-          <i class="fa fa-key"></i> Mot de passe
+          <i class="fa fa-key"></i> Password
         </button>
         <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
-          <i class="fa fa-right-from-bracket"></i> Déconnexion
+          <i class="fa fa-right-from-bracket"></i> Log out
         </button>
       </div>
     </aside>
     <div class="main">
       <div class="topbar">
         <h1>Articles</h1>
-        <a href="/admin/editor" class="btn btn-primary"><i class="fa fa-plus"></i> Nouvel article</a>
+        <a href="/admin/editor" class="btn btn-primary"><i class="fa fa-plus"></i> New article</a>
       </div>
       <div class="content">
         <div class="filter-tabs">
-          <button class="filter-tab active" data-filter="all">Tous</button>
-          <button class="filter-tab" data-filter="published">Publiés</button>
-          <button class="filter-tab" data-filter="draft">Brouillons</button>
+          <button class="filter-tab active" data-filter="all">All</button>
+          <button class="filter-tab" data-filter="published">Published</button>
+          <button class="filter-tab" data-filter="draft">Drafts</button>
         </div>
         <div class="articles-grid" id="articlesList">
-          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i>Chargement…</div>
+          <div class="empty-state"><i class="fa fa-spinner fa-spin"></i>Loading…</div>
         </div>
 
         <!-- Export -->
         <div class="export-section">
-          <div class="export-label"><i class="fa fa-download" style="margin-right:5px"></i>Exporter les données</div>
+          <div class="export-label"><i class="fa fa-download" style="margin-right:5px"></i>Export data</div>
           <div class="export-btns">
             <button class="btn btn-ghost btn-sm" id="exportArticlesBtn">
               <i class="fa fa-newspaper"></i> Articles (JSON)
@@ -143,13 +143,13 @@
               <i class="fa fa-fish"></i> Remora Docs (JSON)
             </button>
           </div>
-          <div class="export-label" style="margin-top:18px"><i class="fa fa-upload" style="margin-right:5px"></i>Restaurer une sauvegarde docs (KB / Remora)</div>
+          <div class="export-label" style="margin-top:18px"><i class="fa fa-upload" style="margin-right:5px"></i>Restore a docs backup (KB / Remora)</div>
           <div class="export-btns">
-            <button class="btn btn-ghost btn-sm" id="importMergeBtn" title="Ajoute les notes du fichier ; les notes existantes au même chemin sont écrasées, le reste est conservé">
-              <i class="fa fa-file-import"></i> Importer (fusionner)
+            <button class="btn btn-ghost btn-sm" id="importMergeBtn" title="Adds the notes from the file; existing notes at the same path are overwritten, everything else is kept">
+              <i class="fa fa-file-import"></i> Import (merge)
             </button>
-            <button class="btn btn-ghost btn-sm" id="importReplaceBtn" title="Vide les sections concernées puis les remplace par le contenu du fichier" style="color:var(--danger);border-color:rgba(255,62,62,.35)">
-              <i class="fa fa-rotate-left"></i> Restaurer (remplacer tout)
+            <button class="btn btn-ghost btn-sm" id="importReplaceBtn" title="Empties the affected sections then replaces them with the file contents" style="color:var(--danger);border-color:rgba(255,62,62,.35)">
+              <i class="fa fa-rotate-left"></i> Restore (replace all)
             </button>
           </div>
           <input type="file" id="importFileInput" accept="application/json,.json" style="display:none"/>
@@ -162,34 +162,34 @@
   <div class="pwd-modal-overlay" id="pwdModalOverlay">
     <div class="pwd-modal">
       <div class="pwd-modal-header">
-        <span class="pwd-modal-title"><i class="fa fa-key"></i> &nbsp;Changer le mot de passe</span>
+        <span class="pwd-modal-title"><i class="fa fa-key"></i> &nbsp;Change password</span>
         <button class="pwd-modal-close" id="pwdModalClose">×</button>
       </div>
       <div class="pwd-modal-body">
         <div class="pwd-field">
-          <label class="pwd-label" for="currentPwd">Mot de passe actuel</label>
+          <label class="pwd-label" for="currentPwd">Current password</label>
           <input class="pwd-input" type="password" id="currentPwd" autocomplete="current-password" placeholder="••••••••"/>
         </div>
         <div class="pwd-field">
-          <label class="pwd-label" for="newPwd">Nouveau mot de passe</label>
+          <label class="pwd-label" for="newPwd">New password</label>
           <input class="pwd-input" type="password" id="newPwd" autocomplete="new-password" placeholder="••••••••"/>
         </div>
         <div class="pwd-policy">
-          <div class="pwd-rule" id="rule-len"><i class="fa fa-circle"></i> 8 caractères minimum</div>
-          <div class="pwd-rule" id="rule-upper"><i class="fa fa-circle"></i> Une majuscule (A–Z)</div>
-          <div class="pwd-rule" id="rule-lower"><i class="fa fa-circle"></i> Une minuscule (a–z)</div>
-          <div class="pwd-rule" id="rule-digit"><i class="fa fa-circle"></i> Un chiffre (0–9)</div>
-          <div class="pwd-rule" id="rule-special"><i class="fa fa-circle"></i> Un caractère spécial (!@#…)</div>
+          <div class="pwd-rule" id="rule-len"><i class="fa fa-circle"></i> At least 8 characters</div>
+          <div class="pwd-rule" id="rule-upper"><i class="fa fa-circle"></i> One uppercase letter (A–Z)</div>
+          <div class="pwd-rule" id="rule-lower"><i class="fa fa-circle"></i> One lowercase letter (a–z)</div>
+          <div class="pwd-rule" id="rule-digit"><i class="fa fa-circle"></i> One digit (0–9)</div>
+          <div class="pwd-rule" id="rule-special"><i class="fa fa-circle"></i> One special character (!@#…)</div>
         </div>
         <div class="pwd-field">
-          <label class="pwd-label" for="confirmPwd">Confirmer le nouveau mot de passe</label>
+          <label class="pwd-label" for="confirmPwd">Confirm new password</label>
           <input class="pwd-input" type="password" id="confirmPwd" autocomplete="new-password" placeholder="••••••••"/>
         </div>
         <div class="pwd-error" id="pwdError"></div>
       </div>
       <div class="pwd-modal-footer">
-        <button class="btn btn-ghost btn-sm" id="pwdCancelBtn">Annuler</button>
-        <button class="btn btn-primary btn-sm" id="pwdSubmitBtn"><i class="fa fa-check"></i> Valider</button>
+        <button class="btn btn-ghost btn-sm" id="pwdCancelBtn">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="pwdSubmitBtn"><i class="fa fa-check"></i> Confirm</button>
       </div>
     </div>
   </div>

@@ -21,7 +21,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     if (!res.ok) { err.textContent = data.error; btn.disabled = false; return }
     window.location.href = '/admin'
   } catch {
-    err.textContent = 'Erreur réseau'
+    err.textContent = 'Network error'
     btn.disabled = false
   }
 })

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Blog — Ch4rybd3</title>
@@ -212,7 +212,7 @@
 <!-- =================== Articles =================== -->
 <div class="blog-content">
   <div class="blog-grid" id="blogGrid">
-    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Chargement…</p></div>
+    <div class="empty-state"><i class="fa fa-spinner fa-spin"></i><p>Loading…</p></div>
   </div>
 </div>
 
@@ -286,7 +286,7 @@
     buildTagFilter(articles)
     renderGrid(articles)
   }).catch(() => {
-    document.getElementById('blogGrid').innerHTML = '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i><p>Erreur de chargement.</p></div>'
+    document.getElementById('blogGrid').innerHTML = '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i><p>Failed to load.</p></div>'
   })
 
   function updateStats(articles) {
@@ -301,7 +301,7 @@
     const el = document.getElementById('tagFilter')
     el.style.display = 'flex'
     el.innerHTML = `<span class="filter-label">// Filter</span>
-      <span class="tag-chip active" data-tag="all">Tous</span>
+      <span class="tag-chip active" data-tag="all">All</span>
       ${tags.map(t => `<span class="tag-chip" data-tag="${esc(t)}">${esc(t)}</span>`).join('')}`
     el.querySelectorAll('.tag-chip').forEach(chip => {
       chip.addEventListener('click', () => setTag(chip.dataset.tag))
@@ -322,7 +322,7 @@
   function renderGrid(articles) {
     const grid = document.getElementById('blogGrid')
     if (!articles.length) {
-      grid.innerHTML = '<div class="empty-state"><i class="fa fa-pen-nib"></i><p>Aucun article pour le moment.</p></div>'
+      grid.innerHTML = '<div class="empty-state"><i class="fa fa-pen-nib"></i><p>No articles yet.</p></div>'
       return
     }
     grid.innerHTML = articles.map(a => {
@@ -352,7 +352,7 @@
     try { return JSON.parse(raw) } catch { return [] }
   }
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' }) : '' }
+  function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { day:'2-digit', month:'long', year:'numeric' }) : '' }
 </script>
 </body>
 </html>

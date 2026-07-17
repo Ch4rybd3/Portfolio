@@ -15,15 +15,15 @@ function render() {
         <input class="col-title" value="${escHtml(col.title)}" data-col-title="${col.id}" title="Cliquer pour renommer"/>
         <span class="col-count">${col.cards.length}</span>
         <div class="col-actions">
-          <button data-del-col="${col.id}" title="Supprimer la colonne"><i class="fa fa-trash-can"></i></button>
+          <button data-del-col="${col.id}" title="Delete column"><i class="fa fa-trash-can"></i></button>
         </div>
       </div>
       <div class="col-cards" data-cards="${col.id}">
         ${col.cards.map(card => renderCard(card)).join('')}
       </div>
-      <button class="add-card-btn" data-add-card="${col.id}"><i class="fa fa-plus"></i> Ajouter une carte</button>
+      <button class="add-card-btn" data-add-card="${col.id}"><i class="fa fa-plus"></i> Add a card</button>
     </div>
-  `).join('') + `<button class="add-col-btn" id="addColBtn"><i class="fa fa-plus"></i> Ajouter une colonne</button>`
+  `).join('') + `<button class="add-col-btn" id="addColBtn"><i class="fa fa-plus"></i> Add a column</button>`
 
   bindEvents()
 }
@@ -35,7 +35,7 @@ function renderCard(card) {
       ${card.notes ? `<div class="card-notes">${escHtml(card.notes).replace(/\n/g,'<br/>')}</div>` : ''}
       <div class="card-footer">
         <button data-edit-card="${card.id}" title="Modifier"><i class="fa fa-pen"></i> Éditer</button>
-        <button class="del-btn" data-del-card="${card.id}" title="Supprimer"><i class="fa fa-trash"></i></button>
+        <button class="del-btn" data-del-card="${card.id}" title="Delete"><i class="fa fa-trash"></i></button>
       </div>
     </div>
   `
@@ -46,7 +46,7 @@ function renderCard(card) {
 function bindEvents() {
   // Add column
   document.getElementById('addColBtn').addEventListener('click', async () => {
-    const title = prompt('Nom de la colonne :')
+    const title = prompt('Column name:')
     if (!title?.trim()) return
     try {
       const col = await api.post('/api/kanban/columns', { title: title.trim() })
@@ -75,7 +75,7 @@ function bindEvents() {
     btn.addEventListener('click', async () => {
       const colId = Number(btn.dataset.delCol)
       const col = board.find(c => c.id === colId)
-      if (!confirm(`Supprimer la colonne « ${col.title} » et toutes ses cartes ?`)) return
+      if (!confirm(`Delete column "${col.title}" and all its cards?`)) return
       try {
         await api.delete(`/api/kanban/columns/${colId}`)
         board = board.filter(c => c.id !== colId)
@@ -149,7 +149,7 @@ function bindEvents() {
 function openModal(ctx) {
   modalCtx = ctx
   const modal = document.getElementById('cardModal')
-  document.getElementById('modalTitle').textContent = ctx.mode === 'create' ? 'Nouvelle carte' : 'Modifier la carte'
+  document.getElementById('modalTitle').textContent = ctx.mode === 'create' ? 'New card' : 'Edit card'
   document.getElementById('cardTitle').value = ''
   document.getElementById('cardNotes').value = ''
 
@@ -177,7 +177,7 @@ document.getElementById('cardModal').addEventListener('click', e => { if (e.targ
 document.getElementById('modalSave').addEventListener('click', async () => {
   const title = document.getElementById('cardTitle').value.trim()
   const notes = document.getElementById('cardNotes').value.trim()
-  if (!title) { toast('Le titre est requis', 'error'); return }
+  if (!title) { toast('Title is required', 'error'); return }
 
   try {
     if (modalCtx.mode === 'create') {
@@ -190,7 +190,7 @@ document.getElementById('modalSave').addEventListener('click', async () => {
         if (i !== -1) col.cards[i] = updated
       })
     }
-    toast(modalCtx.mode === 'create' ? 'Carte créée' : 'Carte mise à jour')
+    toast(modalCtx.mode === 'create' ? 'Card created' : 'Card updated')
     closeModal()
     render()
   } catch (e) { toast(e.message, 'error') }
@@ -209,7 +209,7 @@ async function load() {
     render()
   } catch {
     document.getElementById('kanbanBoard').innerHTML =
-      '<div style="color:var(--danger);padding:20px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement</div>'
+      '<div style="color:var(--danger);padding:20px"><i class="fa fa-triangle-exclamation"></i> Failed to load</div>'
   }
 }
 

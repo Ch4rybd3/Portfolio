@@ -10,9 +10,9 @@ function parseNote(n) {
 // Chemins valides : segments a-z 0-9 - _ séparés par / (jamais d'espace)
 const PATH_RE = /^[a-zA-Z0-9\-_]+(\/[a-zA-Z0-9\-_]+)*$/
 function pathError(p) {
-  if (!p) return 'Chemin requis'
-  if (/\s/.test(p)) return 'Le chemin ne doit pas contenir d\'espaces'
-  if (!PATH_RE.test(p)) return 'Chemin invalide (lettres, chiffres, tirets, underscores et / uniquement)'
+  if (!p) return 'Path required'
+  if (/\s/.test(p)) return 'Path must not contain spaces'
+  if (!PATH_RE.test(p)) return 'Invalid path (letters, digits, dashes, underscores and / only)'
   return null
 }
 

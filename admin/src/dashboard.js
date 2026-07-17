@@ -10,7 +10,7 @@ async function load() {
     render()
   } catch {
     document.getElementById('articlesList').innerHTML =
-      '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i>Erreur de chargement</div>'
+      '<div class="empty-state"><i class="fa fa-triangle-exclamation"></i>Failed to load</div>'
   }
 }
 
@@ -19,7 +19,7 @@ function render() {
   const items = activeFilter === 'all' ? allArticles : allArticles.filter(a => a.status === activeFilter)
 
   if (!items.length) {
-    list.innerHTML = '<div class="empty-state"><i class="fa fa-file-circle-plus"></i>Aucun article — créez-en un !</div>'
+    list.innerHTML = '<div class="empty-state"><i class="fa fa-file-circle-plus"></i>No articles — create one!</div>'
     return
   }
 
@@ -29,12 +29,12 @@ function render() {
         <div class="article-title">${escHtml(a.title)}</div>
         <div class="article-meta">
           ${formatDate(a.updated_at)} &bull;
-          ${a.status === 'published' ? `publié le ${formatDate(a.published_at)}` : 'brouillon'}
+          ${a.status === 'published' ? `published ${formatDate(a.published_at)}` : 'draft'}
         </div>
       </div>
-      <span class="badge badge-${a.status}">${a.status === 'published' ? 'Publié' : 'Brouillon'}</span>
+      <span class="badge badge-${a.status}">${a.status === 'published' ? 'Published' : 'Draft'}</span>
       <div class="article-actions">
-        <a href="/admin/editor?id=${a.id}" class="btn btn-ghost btn-sm"><i class="fa fa-pen"></i> Éditer</a>
+        <a href="/admin/editor?id=${a.id}" class="btn btn-ghost btn-sm"><i class="fa fa-pen"></i> Edit</a>
         ${a.status === 'published' ? `<a href="/blog/${a.slug}" target="_blank" class="btn btn-ghost btn-sm"><i class="fa fa-eye"></i></a>` : ''}
       </div>
       <button class="btn btn-danger btn-sm" data-del="${a.id}"><i class="fa fa-trash"></i></button>
@@ -48,10 +48,10 @@ function render() {
 
 async function confirmDelete(id) {
   const article = allArticles.find(a => a.id === id)
-  if (!confirm(`Supprimer « ${article.title} » ? Cette action est irréversible.`)) return
+  if (!confirm(`Delete "${article.title}"? This cannot be undone.`)) return
   try {
     await api.delete(`/api/articles/${id}`)
-    toast('Article supprimé')
+    toast('Article deleted')
     allArticles = allArticles.filter(a => a.id !== id)
     render()
   } catch (e) { toast(e.message, 'error') }
@@ -72,17 +72,17 @@ document.getElementById('logoutBtn').addEventListener('click', async () => {
 })
 
 function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
-function formatDate(d) { return d ? new Date(d).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' }) : '—' }
+function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-US', { day:'2-digit', month:'short', year:'numeric' }) : '—' }
 
 /* ════════════════════════════════════════════════
    CHANGE PASSWORD MODAL
 ════════════════════════════════════════════════ */
 const RULES = [
-  { id: 'rule-len',     test: p => p.length >= 8,           label: '8 caractères minimum' },
-  { id: 'rule-upper',   test: p => /[A-Z]/.test(p),         label: 'Une majuscule' },
-  { id: 'rule-lower',   test: p => /[a-z]/.test(p),         label: 'Une minuscule' },
-  { id: 'rule-digit',   test: p => /[0-9]/.test(p),         label: 'Un chiffre' },
-  { id: 'rule-special', test: p => /[^A-Za-z0-9]/.test(p),  label: 'Un caractère spécial' },
+  { id: 'rule-len',     test: p => p.length >= 8,           label: 'At least 8 characters' },
+  { id: 'rule-upper',   test: p => /[A-Z]/.test(p),         label: 'One uppercase letter' },
+  { id: 'rule-lower',   test: p => /[a-z]/.test(p),         label: 'One lowercase letter' },
+  { id: 'rule-digit',   test: p => /[0-9]/.test(p),         label: 'One digit' },
+  { id: 'rule-special', test: p => /[^A-Za-z0-9]/.test(p),  label: 'One special character' },
 ]
 
 function policyValid(pwd) { return RULES.every(r => r.test(pwd)) }
@@ -146,17 +146,17 @@ importInput.addEventListener('change', async e => {
   out.textContent = ''
 
   let data
-  try { data = JSON.parse(await file.text()) } catch { out.textContent = '✗ Fichier JSON invalide'; return }
+  try { data = JSON.parse(await file.text()) } catch { out.textContent = '✗ Invalid JSON file'; return }
   const notes = Array.isArray(data?.notes) ? data.notes : (Array.isArray(data) ? data : null)
-  if (!notes || !notes.length) { out.textContent = '✗ Aucune note trouvée dans ce fichier'; return }
+  if (!notes || !notes.length) { out.textContent = '✗ No notes found in this file'; return }
 
   const sections = [...new Set(notes.map(n => n?.section === 'remora' ? 'remora' : 'kb'))].join(', ')
   const msg = importMode === 'replace'
-    ? `⚠ RESTAURATION COMPLÈTE\n\nToutes les notes actuelles des sections [${sections}] seront SUPPRIMÉES, puis remplacées par les ${notes.length} notes de "${file.name}".\n\nContinuer ?`
-    : `Fusionner les ${notes.length} notes de "${file.name}" (sections : ${sections}) avec l'existant ?\n\nLes notes de même chemin seront écrasées, le reste est conservé.`
+    ? `⚠ FULL RESTORE\n\nAll current notes in sections [${sections}] will be DELETED, then replaced by the ${notes.length} notes from "${file.name}".\n\nContinue?`
+    : `Merge the ${notes.length} notes from "${file.name}" (sections: ${sections}) with existing content?\n\nNotes at the same path will be overwritten, everything else is kept.`
   if (!confirm(msg)) return
 
-  out.textContent = 'Import en cours…'
+  out.textContent = 'Importing…'
   try {
     const r = await fetch('/api/export/docs/import', {
       method: 'POST', credentials: 'include',
@@ -165,11 +165,11 @@ importInput.addEventListener('change', async e => {
     })
     if (r.status === 401) { location.href = '/admin/login'; return }
     const j = await r.json().catch(() => ({}))
-    if (!r.ok) { out.textContent = `✗ ${j.error || 'Erreur pendant l\'import'}`; return }
-    out.textContent = `✓ ${j.imported} note${j.imported > 1 ? 's' : ''} importée${j.imported > 1 ? 's' : ''} (${j.mode === 'replace' ? 'remplacement' : 'fusion'})`
-      + (j.removed ? ` · ${j.removed} supprimée${j.removed > 1 ? 's' : ''}` : '')
-      + (j.skipped ? `\n⚠ ${j.skipped} ignorée${j.skipped > 1 ? 's' : ''} : ${j.errors.join(' ; ')}` : '')
-  } catch { out.textContent = '✗ Erreur réseau pendant l\'import' }
+    if (!r.ok) { out.textContent = `✗ ${j.error || 'Import failed'}`; return }
+    out.textContent = `✓ ${j.imported} note${j.imported > 1 ? 's' : ''} imported (${j.mode === 'replace' ? 'replace' : 'merge'})`
+      + (j.removed ? ` · ${j.removed} removed` : '')
+      + (j.skipped ? `\n⚠ ${j.skipped} skipped: ${j.errors.join('; ')}` : '')
+  } catch { out.textContent = '✗ Network error during import' }
 })
 
 document.getElementById('newPwd').addEventListener('input', function () {
@@ -185,9 +185,9 @@ document.getElementById('pwdSubmitBtn').addEventListener('click', async () => {
 
   errEl.textContent = ''
 
-  if (!current)            { errEl.textContent = 'Saisissez votre mot de passe actuel.'; return }
-  if (!policyValid(newPwd)){ errEl.textContent = 'Le nouveau mot de passe ne respecte pas la politique.'; return }
-  if (newPwd !== confirm)  { errEl.textContent = 'Les deux mots de passe ne correspondent pas.'; return }
+  if (!current)            { errEl.textContent = 'Enter your current password.'; return }
+  if (!policyValid(newPwd)){ errEl.textContent = 'The new password does not meet the policy.'; return }
+  if (newPwd !== confirm)  { errEl.textContent = 'The two passwords do not match.'; return }
 
   const btn = document.getElementById('pwdSubmitBtn')
   btn.disabled = true
@@ -200,8 +200,8 @@ document.getElementById('pwdSubmitBtn').addEventListener('click', async () => {
     const data = await res.json()
     if (!res.ok) { errEl.textContent = data.error; return }
     closePwdModal()
-    toast('Mot de passe mis à jour ✓')
-  } catch { errEl.textContent = 'Erreur réseau.' }
+    toast('Password updated ✓')
+  } catch { errEl.textContent = 'Network error.' }
   finally { btn.disabled = false }
 })
 

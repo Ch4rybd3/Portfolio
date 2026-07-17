@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="utf-8"/>
   <title>Admin — Remora Docs</title>
@@ -470,17 +470,17 @@
     <div class="logo">Ch4rybd3 / Admin</div>
     <nav>
       <a href="/admin"><i class="fa fa-newspaper fa-fw"></i> Articles</a>
-      <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Éditeur</a>
+      <a href="/admin/editor"><i class="fa fa-pen-to-square fa-fw"></i> Editor</a>
       <a href="/admin/kanban"><i class="fa fa-table-columns fa-fw"></i> Kanban</a>
       <a href="/admin/config"><i class="fa fa-sliders fa-fw"></i> Site Config</a>
       <a href="/admin/docs"><i class="fa fa-book fa-fw"></i> Knowledge Base</a>
       <a href="/admin/remora" class="active"><i class="fa fa-fish fa-fw"></i> Remora</a>
-      <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Sécurité</a>
-      <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Blog public</a>
+      <a href="/admin/security"><i class="fa fa-shield-halved fa-fw"></i> Security</a>
+      <a href="/blog" target="_blank"><i class="fa fa-arrow-up-right-from-square fa-fw"></i> Public blog</a>
     </nav>
     <div class="bottom">
       <button class="btn btn-ghost btn-sm" id="logoutBtn" style="width:100%;justify-content:center;">
-        <i class="fa fa-right-from-bracket"></i> Déconnexion
+        <i class="fa fa-right-from-bracket"></i> Log out
       </button>
     </div>
   </aside>
@@ -490,21 +490,21 @@
     <div class="ft-head">
       <span class="ft-head-title">Remora Docs</span>
       <div class="ft-actions">
-        <button class="btn btn-ghost btn-sm" id="btnNewNote" title="Nouvelle note"><i class="fa fa-file-circle-plus"></i></button>
-        <button class="btn btn-ghost btn-sm" id="btnNewFolder" title="Nouveau dossier"><i class="fa fa-folder-plus"></i></button>
-        <button class="btn btn-ghost btn-sm" id="btnToggleAll" title="Déplier / replier tout"><i class="fa fa-angles-down"></i></button>
-        <button class="btn btn-ghost btn-sm" id="btnRootMoc" title="Générer la MOC globale"><i class="fa fa-sitemap"></i></button>
-        <a href="/remora" target="_blank" class="btn btn-ghost btn-sm" title="Voir le site public"><i class="fa fa-arrow-up-right-from-square"></i></a>
+        <button class="btn btn-ghost btn-sm" id="btnNewNote" title="New note"><i class="fa fa-file-circle-plus"></i></button>
+        <button class="btn btn-ghost btn-sm" id="btnNewFolder" title="New folder"><i class="fa fa-folder-plus"></i></button>
+        <button class="btn btn-ghost btn-sm" id="btnToggleAll" title="Expand / collapse all"><i class="fa fa-angles-down"></i></button>
+        <button class="btn btn-ghost btn-sm" id="btnRootMoc" title="Generate global MOC"><i class="fa fa-sitemap"></i></button>
+        <a href="/remora" target="_blank" class="btn btn-ghost btn-sm" title="View public site"><i class="fa fa-arrow-up-right-from-square"></i></a>
       </div>
     </div>
     <div class="ft-filter">
       <i class="fa fa-filter"></i>
-      <input id="treeFilter" placeholder="Filtrer… (texte ou clé:valeur)" autocomplete="off"/>
-      <span id="treeFilterClear" title="Effacer le filtre">×</span>
+      <input id="treeFilter" placeholder="Filter… (text or key:value)" autocomplete="off"/>
+      <span id="treeFilterClear" title="Clear filter">×</span>
     </div>
     <div class="ft-scroll" id="fileTree"></div>
     <div class="new-note-bar" id="newNoteBar">
-      <input class="new-note-input" id="newNotePath" placeholder="dossier/nom-note" autocomplete="off"/>
+      <input class="new-note-input" id="newNotePath" placeholder="folder/note-name" autocomplete="off"/>
       <button class="btn btn-primary btn-sm" id="btnCreate"><i class="fa fa-check"></i></button>
       <button class="btn btn-ghost btn-sm" id="btnCancelNew"><i class="fa fa-times"></i></button>
     </div>
@@ -514,35 +514,35 @@
   <div class="editor-area">
     <div class="editor-topbar">
       <span class="path-label">PATH</span>
-      <input id="notePath" placeholder="dossier/slug" autocomplete="off"/>
-      <input id="noteTitle" placeholder="Titre de la note…"/>
-      <button class="btn btn-primary btn-sm" id="saveBtn"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
-      <a id="previewLink" href="#" target="_blank" class="btn btn-ghost btn-sm" title="Voir sur le site"><i class="fa fa-external-link-alt"></i></a>
+      <input id="notePath" placeholder="folder/slug" autocomplete="off"/>
+      <input id="noteTitle" placeholder="Note title…"/>
+      <button class="btn btn-primary btn-sm" id="saveBtn"><i class="fa fa-floppy-disk"></i> Save</button>
+      <a id="previewLink" href="#" target="_blank" class="btn btn-ghost btn-sm" title="View on site"><i class="fa fa-external-link-alt"></i></a>
     </div>
     <div class="tiptap-toolbar" id="toolbar">
-      <button data-cmd="bold" title="Gras"><b>B</b></button>
-      <button data-cmd="italic" title="Italique"><i>I</i></button>
-      <button data-cmd="strike" title="Barré"><s>S</s></button>
-      <button data-cmd="code" title="Code inline"><code>`c`</code></button>
+      <button data-cmd="bold" title="Bold"><b>B</b></button>
+      <button data-cmd="italic" title="Italic"><i>I</i></button>
+      <button data-cmd="strike" title="Strikethrough"><s>S</s></button>
+      <button data-cmd="code" title="Inline code"><code>`c`</code></button>
       <div class="sep"></div>
       <button data-cmd="h1">H1</button>
       <button data-cmd="h2">H2</button>
       <button data-cmd="h3">H3</button>
       <div class="sep"></div>
-      <button data-cmd="bulletList" title="Liste à puces"><i class="fa fa-list-ul"></i></button>
-      <button data-cmd="orderedList" title="Liste numérotée"><i class="fa fa-list-ol"></i></button>
+      <button data-cmd="bulletList" title="Bullet list"><i class="fa fa-list-ul"></i></button>
+      <button data-cmd="orderedList" title="Numbered list"><i class="fa fa-list-ol"></i></button>
       <div class="sep"></div>
-      <button data-cmd="blockquote" title="Citation"><i class="fa fa-quote-left"></i></button>
-      <button data-cmd="codeBlock" title="Bloc de code"><i class="fa fa-code"></i></button>
-      <button data-cmd="hr" title="Séparateur">—</button>
+      <button data-cmd="blockquote" title="Quote"><i class="fa fa-quote-left"></i></button>
+      <button data-cmd="codeBlock" title="Code block"><i class="fa fa-code"></i></button>
+      <button data-cmd="hr" title="Horizontal rule">—</button>
       <div class="sep"></div>
-      <button data-cmd="link" title="Lien"><i class="fa fa-link"></i></button>
+      <button data-cmd="link" title="Link"><i class="fa fa-link"></i></button>
       <button data-cmd="image" title="Image"><i class="fa fa-image"></i></button>
       <button data-cmd="wikilink" title="WikiLink">[[…]]</button>
       <div class="sep"></div>
-      <button data-cmd="undo" title="Annuler"><i class="fa fa-rotate-left"></i></button>
-      <button data-cmd="redo" title="Rétablir"><i class="fa fa-rotate-right"></i></button>
-      <span class="hint">Coller ou déposer une image pour l'insérer · Ctrl+S pour sauvegarder</span>
+      <button data-cmd="undo" title="Undo"><i class="fa fa-rotate-left"></i></button>
+      <button data-cmd="redo" title="Redo"><i class="fa fa-rotate-right"></i></button>
+      <span class="hint">Paste or drop an image to insert it · Ctrl+S to save</span>
     </div>
     <div class="editor-scroll">
       <div id="docsEditor"></div>
@@ -553,28 +553,28 @@
   <!-- Properties panel -->
   <div class="props-panel">
     <div class="props-group">
-      <div class="props-group-label">Chemin</div>
+      <div class="props-group-label">Path</div>
       <div class="path-edit-row">
-        <input class="new-note-input" id="propsPathInput" placeholder="dossier/slug" autocomplete="off"/>
-        <button class="btn btn-ghost btn-sm" id="renameBtn" title="Déplacer / renommer la note"><i class="fa fa-arrow-right"></i></button>
+        <input class="new-note-input" id="propsPathInput" placeholder="folder/slug" autocomplete="off"/>
+        <button class="btn btn-ghost btn-sm" id="renameBtn" title="Move / rename note"><i class="fa fa-arrow-right"></i></button>
       </div>
-      <div class="path-edit-hint">Entrée ou → pour déplacer la note.</div>
+      <div class="path-edit-hint">Enter or → to move the note.</div>
     </div>
     <div class="props-group">
-      <div class="props-group-label">Propriétés</div>
+      <div class="props-group-label">Properties</div>
       <div id="propsRows"></div>
       <div class="prop-add-row">
-        <input class="prop-key-input" id="propKeyInput" placeholder="clé" autocomplete="off"/>
+        <input class="prop-key-input" id="propKeyInput" placeholder="key" autocomplete="off"/>
         <span class="prop-sep">:</span>
-        <input class="prop-val-input" id="propValInput" placeholder="valeur" autocomplete="off" list="propValSuggestions"/>
+        <input class="prop-val-input" id="propValInput" placeholder="value" autocomplete="off" list="propValSuggestions"/>
         <datalist id="propValSuggestions"></datalist>
-        <button class="btn btn-ghost btn-sm" id="propAddBtn" title="Ajouter la propriété"><i class="fa fa-plus"></i></button>
+        <button class="btn btn-ghost btn-sm" id="propAddBtn" title="Add property"><i class="fa fa-plus"></i></button>
       </div>
     </div>
     <div class="props-group">
-      <div class="props-group-label">Statut</div>
+      <div class="props-group-label">Status</div>
       <div class="toggle-row">
-        <span class="toggle-label">Publié</span>
+        <span class="toggle-label">Published</span>
         <label class="toggle">
           <input type="checkbox" id="publishedToggle" checked/>
           <div class="toggle-track"></div>
@@ -587,18 +587,18 @@
           <div class="toggle-track"></div>
         </label>
       </div>
-      <div class="path-edit-hint">Publié = fini (vs brouillon) · Public = visible sur le site</div>
+      <div class="path-edit-hint">Published = finished (vs draft) · Public = visible on the site</div>
     </div>
     <div class="props-group" style="border-top:1px solid var(--line);padding-top:14px">
-      <button class="btn btn-primary btn-sm" id="saveBtnProps" style="width:100%;justify-content:center;margin-bottom:8px"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
-      <button class="btn btn-danger btn-sm" id="deleteBtn" style="width:100%;justify-content:center"><i class="fa fa-trash"></i> Supprimer</button>
+      <button class="btn btn-primary btn-sm" id="saveBtnProps" style="width:100%;justify-content:center;margin-bottom:8px"><i class="fa fa-floppy-disk"></i> Save</button>
+      <button class="btn btn-danger btn-sm" id="deleteBtn" style="width:100%;justify-content:center"><i class="fa fa-trash"></i> Delete</button>
     </div>
     <div id="propsMeta" style="margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--fg-4);line-height:1.7"></div>
 
     <!-- Templates button -->
     <div class="props-group" style="border-top:1px solid var(--line);padding-top:14px;margin-top:6px">
       <button class="tpl-open-btn" id="openTplModal">
-        <i class="fa fa-puzzle-piece"></i> Gérer les templates
+        <i class="fa fa-puzzle-piece"></i> Manage templates
       </button>
     </div>
   </div>
@@ -613,18 +613,18 @@
     <!-- Header -->
     <div class="tpl-modal-header">
       <span class="tpl-modal-header-title"><i class="fa fa-puzzle-piece"></i> &nbsp;Templates</span>
-      <button class="btn btn-ghost btn-sm" id="tplFromNoteBtn" title="Créer un template depuis la note active" style="font-size:11px">
-        <i class="fa fa-arrow-up-from-bracket"></i> Depuis la note
+      <button class="btn btn-ghost btn-sm" id="tplFromNoteBtn" title="Create a template from the current note" style="font-size:11px">
+        <i class="fa fa-arrow-up-from-bracket"></i> From note
       </button>
-      <button class="tpl-modal-close" id="tplModalClose" title="Fermer">×</button>
+      <button class="tpl-modal-close" id="tplModalClose" title="Close">×</button>
     </div>
 
     <div class="tpl-modal-body">
       <!-- Left: list -->
       <div class="tpl-modal-list-panel">
         <div class="tpl-modal-list-head">
-          <span class="tpl-modal-list-label">Mes templates</span>
-          <button class="btn btn-ghost btn-sm" id="tplNewBtn" title="Nouveau template"><i class="fa fa-plus"></i></button>
+          <span class="tpl-modal-list-label">My templates</span>
+          <button class="btn btn-ghost btn-sm" id="tplNewBtn" title="New template"><i class="fa fa-plus"></i></button>
         </div>
         <div class="tpl-modal-list-scroll" id="tplModalList"></div>
       </div>
@@ -632,16 +632,16 @@
       <!-- Right: editor -->
       <div class="tpl-modal-editor-pane">
         <div class="tpl-modal-topbar">
-          <input id="tplModalName" placeholder="Nom du template…" autocomplete="off"/>
+          <input id="tplModalName" placeholder="Template name…" autocomplete="off"/>
         </div>
         <div class="tpl-props">
-          <div class="tpl-props-label"><i class="fa fa-tags"></i> Métadonnées du template</div>
+          <div class="tpl-props-label"><i class="fa fa-tags"></i> Template metadata</div>
           <div id="tplPropsRows"></div>
           <div class="prop-add-row">
-            <input class="prop-key-input" id="tplPropKeyInput" placeholder="clé" autocomplete="off"/>
+            <input class="prop-key-input" id="tplPropKeyInput" placeholder="key" autocomplete="off"/>
             <span class="prop-sep">:</span>
-            <input class="prop-val-input" id="tplPropValInput" placeholder="valeur" autocomplete="off"/>
-            <button class="btn btn-ghost btn-sm" id="tplPropAddBtn" title="Ajouter la propriété"><i class="fa fa-plus"></i></button>
+            <input class="prop-val-input" id="tplPropValInput" placeholder="value" autocomplete="off"/>
+            <button class="btn btn-ghost btn-sm" id="tplPropAddBtn" title="Add property"><i class="fa fa-plus"></i></button>
           </div>
         </div>
         <div class="tpl-modal-toolbar" id="tplToolbar">
@@ -668,9 +668,9 @@
           <div id="tplEditorEl"></div>
         </div>
         <div class="tpl-modal-footer">
-          <button class="btn btn-danger btn-sm" id="tplModalDelete" style="margin-right:auto"><i class="fa fa-trash"></i> Supprimer</button>
-          <button class="btn btn-ghost btn-sm" id="tplModalApply" title="Insère le contenu au curseur et fusionne les métadonnées"><i class="fa fa-arrow-down-to-line"></i> Insérer dans la note</button>
-          <button class="btn btn-primary btn-sm" id="tplModalSave"><i class="fa fa-floppy-disk"></i> Sauvegarder</button>
+          <button class="btn btn-danger btn-sm" id="tplModalDelete" style="margin-right:auto"><i class="fa fa-trash"></i> Delete</button>
+          <button class="btn btn-ghost btn-sm" id="tplModalApply" title="Inserts content at the cursor and merges metadata"><i class="fa fa-arrow-down-to-line"></i> Insert into note</button>
+          <button class="btn btn-primary btn-sm" id="tplModalSave"><i class="fa fa-floppy-disk"></i> Save</button>
         </div>
       </div>
     </div>
@@ -680,10 +680,10 @@
 <!-- Template picker (à la création d'une note) -->
 <div class="tpl-pick-overlay" id="tplPickOverlay">
   <div class="tpl-pick">
-    <div class="tpl-pick-title"><i class="fa fa-puzzle-piece"></i> Appliquer un template ?</div>
+    <div class="tpl-pick-title"><i class="fa fa-puzzle-piece"></i> Apply a template?</div>
     <div class="tpl-pick-list" id="tplPickList"></div>
     <div class="tpl-pick-footer">
-      <button class="btn btn-ghost btn-sm" id="tplPickNone">Sans template</button>
+      <button class="btn btn-ghost btn-sm" id="tplPickNone">No template</button>
     </div>
   </div>
 </div>

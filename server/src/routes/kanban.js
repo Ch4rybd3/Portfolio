@@ -11,7 +11,7 @@ router.get('/', (req, res) => {
 
 router.post('/columns', (req, res) => {
   const { title } = req.body
-  if (!title) return res.status(400).json({ error: 'Titre requis' })
+  if (!title) return res.status(400).json({ error: 'Title required' })
   const maxPos = db.prepare('SELECT MAX(position) as m FROM kanban_columns').get().m ?? -1
   const r = db.prepare('INSERT INTO kanban_columns (title, position) VALUES (?, ?)').run(title, maxPos + 1)
   res.status(201).json(db.prepare('SELECT * FROM kanban_columns WHERE id = ?').get(r.lastInsertRowid))
@@ -30,7 +30,7 @@ router.delete('/columns/:id', (req, res) => {
 
 router.post('/cards', (req, res) => {
   const { column_id, title, notes } = req.body
-  if (!column_id || !title) return res.status(400).json({ error: 'Champs requis' })
+  if (!column_id || !title) return res.status(400).json({ error: 'Missing fields' })
   const maxPos = db.prepare('SELECT MAX(position) as m FROM kanban_cards WHERE column_id = ?').get(column_id).m ?? -1
   const r = db.prepare(
     'INSERT INTO kanban_cards (column_id, title, notes, position) VALUES (?, ?, ?, ?)'
