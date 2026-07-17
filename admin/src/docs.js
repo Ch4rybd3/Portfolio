@@ -1600,6 +1600,59 @@ document.addEventListener('keydown', e => {
 }, true)  // capture : prioritaire sur les raccourcis de l'éditeur
 
 /* ════════════════════════════════════════════════
+   RESIZABLE FILE-TREE PANEL
+   Poignée sur le bord droit du panneau : glisser pour
+   redimensionner, double-clic pour revenir à 240px.
+   Largeur persistée par section dans localStorage.
+════════════════════════════════════════════════ */
+const FT_WIDTH_KEY = `docsTreeWidth:${window.DOCS_SECTION || 'kb'}`
+const FT_WIDTH_MIN = 180
+const FT_WIDTH_MAX = 560
+const FT_WIDTH_DEFAULT = 240
+
+;(function initTreeResize() {
+  const panel = document.querySelector('.file-tree-panel')
+  if (!panel) return
+
+  const clamp = w => Math.min(FT_WIDTH_MAX, Math.max(FT_WIDTH_MIN, w))
+  const saved = parseInt(localStorage.getItem(FT_WIDTH_KEY), 10)
+  if (saved) panel.style.width = clamp(saved) + 'px'
+
+  panel.style.position = 'relative'
+  const grip = document.createElement('div')
+  grip.title = 'Drag to resize · double-click to reset'
+  grip.style.cssText = 'position:absolute;top:0;right:-3px;width:7px;height:100%;cursor:col-resize;z-index:60;transition:background .15s'
+  grip.addEventListener('mouseenter', () => { grip.style.background = 'rgba(45,212,191,.28)' })
+  grip.addEventListener('mouseleave', () => { grip.style.background = '' })
+  panel.appendChild(grip)
+
+  grip.addEventListener('dblclick', () => {
+    panel.style.width = FT_WIDTH_DEFAULT + 'px'
+    localStorage.setItem(FT_WIDTH_KEY, FT_WIDTH_DEFAULT)
+  })
+
+  grip.addEventListener('mousedown', e => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startW = panel.offsetWidth
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+    grip.style.background = 'rgba(45,212,191,.4)'
+    const onMove = ev => { panel.style.width = clamp(startW + ev.clientX - startX) + 'px' }
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      grip.style.background = ''
+      localStorage.setItem(FT_WIDTH_KEY, panel.offsetWidth)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  })
+})()
+
+/* ════════════════════════════════════════════════
    WIKILINK "CREATE NOTE" MODAL
    Ouvert au clic sur un [[wikilink]] qui ne résout
    vers aucune note : titre pré-rempli, choix du
