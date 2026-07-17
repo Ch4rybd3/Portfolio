@@ -499,12 +499,25 @@ document.getElementById('imageFileInput').addEventListener('change', async e => 
 /* ════════════════════════════════════════════════
    KEY / VALUE PROPERTIES
 ════════════════════════════════════════════════ */
+// Propriétés gérées par le serveur (injectées à la sauvegarde) : lecture seule
+const AUTO_PROPS = ['created', 'updated', 'creator']
+
 function renderProperties() {
   const wrap = document.getElementById('propsRows')
   wrap.innerHTML = ''
   // La propriété `public` est pilotée par le toggle dédié, pas par les lignes clé:valeur
   document.getElementById('publicToggle').checked = isPublicProps(noteProps)
-  Object.entries(noteProps).filter(([key]) => key !== 'public').forEach(([key, value]) => {
+  AUTO_PROPS.filter(k => noteProps[k] !== undefined && noteProps[k] !== '').forEach(key => {
+    const row = document.createElement('div')
+    row.className = 'prop-row'
+    row.innerHTML = `
+      <span class="prop-key-label" title="${escHtml(key)}">${escHtml(key)}</span>
+      <span class="prop-colon">:</span>
+      <input class="prop-val-edit" value="${escHtml(String(noteProps[key]))}" readonly tabindex="-1" style="opacity:.6;cursor:default" title="Propriété gérée automatiquement"/>
+    `
+    wrap.appendChild(row)
+  })
+  Object.entries(noteProps).filter(([key]) => key !== 'public' && !AUTO_PROPS.includes(key)).forEach(([key, value]) => {
     const row = document.createElement('div')
     row.className = 'prop-row'
     row.innerHTML = `
@@ -544,6 +557,7 @@ function addProp() {
   const key = document.getElementById('propKeyInput').value.trim()
   const val = document.getElementById('propValInput').value.trim()
   if (!key) { document.getElementById('propKeyInput').focus(); return }
+  if (AUTO_PROPS.includes(key)) { toast(`"${key}" est gérée automatiquement`, 'error'); return }
   noteProps[key] = val
   document.getElementById('propKeyInput').value = ''
   document.getElementById('propValInput').value = ''
@@ -1070,7 +1084,8 @@ async function saveNote() {
   }
 
   try {
-    await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: noteProps, published, section: SECTION })
+    const saved = await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: noteProps, published, section: SECTION })
+    if (saved.properties) { noteProps = saved.properties; renderProperties() }
     currentPath = path
     document.getElementById('propsPathInput').value = path
     toast(`✓ ${path} sauvegardé`)

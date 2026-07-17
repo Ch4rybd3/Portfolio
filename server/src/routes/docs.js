@@ -82,6 +82,19 @@ router.put('/admin/note/*', requireAuth, (req, res) => {
   const err = pathError(p)
   if (err) return res.status(400).json({ error: err })
   const { title = 'Untitled', content = '', properties = {}, published = true, section = 'kb' } = req.body
+
+  // Métadonnées automatiques : `created`/`creator` figés à la création,
+  // `updated` réécrit à chaque sauvegarde. Le serveur fait autorité sur ces clés.
+  const existing = db.prepare('SELECT properties, created_at FROM docs_notes WHERE path = ?').get(p)
+  const prevProps = existing ? JSON.parse(existing.properties || '{}') : {}
+  const today = new Date().toISOString().slice(0, 10)
+  const props = {
+    ...properties,
+    created: prevProps.created || (existing?.created_at || '').slice(0, 10) || today,
+    creator: prevProps.creator || req.session.username || 'admin',
+    updated: today,
+  }
+
   db.prepare(`
     INSERT INTO docs_notes (path, title, content, properties, published, section, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
@@ -92,9 +105,9 @@ router.put('/admin/note/*', requireAuth, (req, res) => {
       published = excluded.published,
       section = excluded.section,
       updated_at = CURRENT_TIMESTAMP
-  `).run(p, title, content, JSON.stringify(properties), published ? 1 : 0, section)
+  `).run(p, title, content, JSON.stringify(props), published ? 1 : 0, section)
   if (p !== 'moc') regenerateRootMoc(section)
-  res.json({ ok: true, path: p })
+  res.json({ ok: true, path: p, properties: props })
 })
 
 // PATCH /api/docs/admin/move/*  — rename/move (change path)
