@@ -103,6 +103,31 @@
 
     .tree-empty { padding: 16px 16px; font-size: 12px; color: var(--htb-fg-4); font-family: var(--font-mono); }
 
+    /* ── Image lightbox ── */
+    .docs-body img { cursor: zoom-in; }
+    .img-lightbox {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(4, 9, 16, .93);
+      display: none; align-items: center; justify-content: center;
+      overflow: auto; cursor: zoom-out; padding: 24px;
+    }
+    .img-lightbox.open { display: flex; }
+    .img-lightbox img {
+      max-width: 94vw; max-height: 92vh; margin: auto;
+      border-radius: 8px; box-shadow: 0 24px 80px rgba(0,0,0,.6);
+      display: block;
+    }
+    .img-lightbox.zoomed { align-items: flex-start; justify-content: flex-start; }
+    .img-lightbox.zoomed img { max-width: none; max-height: none; cursor: zoom-out; }
+    .img-lightbox img.zoomable { cursor: zoom-in; }
+    .img-lightbox.zoomed img.zoomable { cursor: zoom-out; }
+    .img-lightbox-hint {
+      position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-mono); font-size: 10px; color: rgba(255,255,255,.45);
+      letter-spacing: .08em; pointer-events: none;
+    }
+
+
     /* ── Main content ── */
     .docs-main {
       margin-left: var(--docs-sidebar);
@@ -607,6 +632,45 @@ window.addEventListener('popstate', () => {
 })
 
 init()
+
+/* ════════ Image lightbox ════════ */
+const lightbox = document.createElement('div')
+lightbox.className = 'img-lightbox'
+lightbox.innerHTML = '<img alt=""/><div class="img-lightbox-hint">click image to zoom · click outside or Esc to close</div>'
+document.body.appendChild(lightbox)
+const lightboxImg = lightbox.querySelector('img')
+
+function closeLightbox() {
+  lightbox.classList.remove('open', 'zoomed')
+  document.body.style.overflow = ''
+}
+
+document.getElementById('noteBody').addEventListener('click', e => {
+  const img = e.target.closest('img')
+  if (!img || !img.src) return
+  lightboxImg.src = img.src
+  lightboxImg.alt = img.alt || ''
+  lightbox.classList.add('open')
+  lightbox.classList.remove('zoomed')
+  document.body.style.overflow = 'hidden'
+  // Le zoom 1:1 n'a d'intérêt que si l'image dépasse la taille affichée
+  const updateZoomable = () => lightboxImg.classList.toggle('zoomable', lightboxImg.naturalWidth > lightboxImg.clientWidth + 8)
+  if (lightboxImg.complete) updateZoomable()
+  else lightboxImg.addEventListener('load', updateZoomable, { once: true })
+})
+
+lightbox.addEventListener('click', e => {
+  if (e.target === lightboxImg && lightboxImg.classList.contains('zoomable')) {
+    lightbox.classList.toggle('zoomed')
+    return
+  }
+  closeLightbox()
+})
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox()
+})
+
 </script>
 </body>
 </html>

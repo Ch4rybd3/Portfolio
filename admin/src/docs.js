@@ -257,7 +257,7 @@ const WikiLinkExtension = Extension.create({
               n.title.toLowerCase() === target.toLowerCase() || n.path === target || n.path.toLowerCase() === target.toLowerCase()
             )
             if (note) { loadNote(note.path); return true }
-            toast(`Note not found: ${target}`, 'error')
+            openWikiCreateModal(target)
             return true
           }
         }
@@ -1161,14 +1161,10 @@ async function saveNote(opts = {}) {
   try {
     const saved = await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: propsSnapshot, published, section: SECTION })
     if (auto) {
-      // Maj légère : pas de re-fetch complet, on met à jour l'entrée locale.
-      // L'UI n'est rafraîchie que si la note affichée est toujours celle-ci
-      // (une autre note a pu être chargée pendant le PUT).
+      // Maj légère : pas de re-fetch complet, on met à jour l'entrée locale
+      // puis on re-render l'arbre pour garder titres / tri / verrous en phase.
       const entry = allNotes.find(n => n.path === path)
-      let treeChanged = false
       if (entry) {
-        treeChanged = entry.title !== title || !!entry.published !== published ||
-                      isPublicProps(entry.properties) !== isPublicProps(saved.properties || propsSnapshot)
         entry.title = title
         entry.published = published ? 1 : 0
         entry.properties = saved.properties || propsSnapshot
@@ -1185,7 +1181,7 @@ async function saveNote(opts = {}) {
         }
         setAutosaveStatus('saved')
       }
-      if (treeChanged) refreshTree()
+      refreshTree()
       return
     }
     if (saved.properties) { noteProps = saved.properties; renderProperties() }
@@ -1602,6 +1598,123 @@ document.addEventListener('keydown', e => {
     if (tpl) applyTemplateToNote(tpl)
   }
 }, true)  // capture : prioritaire sur les raccourcis de l'éditeur
+
+/* ════════════════════════════════════════════════
+   WIKILINK "CREATE NOTE" MODAL
+   Ouvert au clic sur un [[wikilink]] qui ne résout
+   vers aucune note : titre pré-rempli, choix du
+   dossier et d'un template, puis création + ouverture.
+════════════════════════════════════════════════ */
+let wikiCreateOverlay = null
+
+function allFolderPaths() {
+  const set = new Set()
+  allNotes.forEach(n => {
+    const parts = n.path.split('/')
+    for (let i = 1; i < parts.length; i++) set.add(parts.slice(0, i).join('/'))
+  })
+  emptyFolders.forEach(f => {
+    f.split('/').reduce((acc, seg) => { const p = acc ? `${acc}/${seg}` : seg; set.add(p); return p }, '')
+  })
+  return [...set].sort((a, b) => a.localeCompare(b))
+}
+
+function slugify(s) {
+  return s.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-_]/g, '')
+}
+
+function closeWikiCreateModal() {
+  wikiCreateOverlay?.remove()
+  wikiCreateOverlay = null
+}
+
+function openWikiCreateModal(target) {
+  closeWikiCreateModal()
+  const folders = allFolderPaths()
+  // Pré-sélectionne le dossier de la note en cours d'édition
+  const currentFolder = currentPath && currentPath.includes('/')
+    ? currentPath.slice(0, currentPath.lastIndexOf('/')) : ''
+
+  const fieldStyle = 'width:100%;background:var(--card-3);border:1px solid var(--line-2);border-radius:4px;color:var(--fg);font-family:var(--mono);font-size:12px;padding:7px 9px;outline:none'
+  const labelStyle = 'display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:10px;color:var(--fg-3);letter-spacing:.06em;text-transform:uppercase'
+
+  const overlay = document.createElement('div')
+  overlay.className = 'tpl-pick-overlay open'
+  overlay.innerHTML = `
+    <div class="tpl-pick" style="max-height:none">
+      <div class="tpl-pick-title"><i class="fa fa-file-circle-plus"></i> Create linked note</div>
+      <div style="display:flex;flex-direction:column;gap:12px;padding:16px">
+        <label style="${labelStyle}">Title
+          <input id="wikiCreateTitle" style="${fieldStyle}" value="${escHtml(target)}" autocomplete="off"/>
+        </label>
+        <label style="${labelStyle}">Folder
+          <select id="wikiCreateFolder" style="${fieldStyle}">
+            <option value="">/ (root)</option>
+            ${folders.map(f => `<option value="${escHtml(f)}"${f === currentFolder ? ' selected' : ''}>${escHtml(f)}</option>`).join('')}
+          </select>
+        </label>
+        <label style="${labelStyle}">Template
+          <select id="wikiCreateTpl" style="${fieldStyle}">
+            <option value="">None</option>
+            ${allTemplates.map(t => `<option value="${escHtml(t.name)}">${escHtml(t.name)}</option>`).join('')}
+          </select>
+        </label>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--fg-4)">→ <code id="wikiCreatePath"></code></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line);background:var(--deep)">
+        <button class="btn btn-ghost btn-sm" id="wikiCreateCancel">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="wikiCreateOk"><i class="fa fa-check"></i> Create</button>
+      </div>
+    </div>`
+  document.body.appendChild(overlay)
+  wikiCreateOverlay = overlay
+
+  const titleInput = overlay.querySelector('#wikiCreateTitle')
+  const folderSel  = overlay.querySelector('#wikiCreateFolder')
+  const pathEl     = overlay.querySelector('#wikiCreatePath')
+
+  const computedPath = () => {
+    const slug = slugify(titleInput.value) || '…'
+    return folderSel.value ? `${folderSel.value}/${slug}` : slug
+  }
+  const updatePath = () => { pathEl.textContent = computedPath() }
+  updatePath()
+  titleInput.addEventListener('input', updatePath)
+  folderSel.addEventListener('change', updatePath)
+
+  const confirm = async () => {
+    const title = titleInput.value.trim() || 'Untitled'
+    const slug  = slugify(title)
+    if (!slug) { toast('Invalid title', 'error'); titleInput.focus(); return }
+    const path = folderSel.value ? `${folderSel.value}/${slug}` : slug
+    if (allNotes.some(n => n.path === path)) { toast('A note already exists at this path', 'error'); return }
+
+    const tpl = allTemplates.find(t => t.name === overlay.querySelector('#wikiCreateTpl').value)
+    const content = `# ${title}\n\n` + (tpl?.content || '')
+    const props   = { ...(tpl?.properties || {}) }
+
+    try {
+      await apiPut(`/api/docs/admin/note/${path}`, { title, content, properties: props, published: true, section: SECTION })
+      allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
+      closeWikiCreateModal()
+      refreshTree()
+      await loadNote(path)
+      toast(`✓ ${path} created`)
+    } catch { toast('Create failed', 'error') }
+  }
+
+  overlay.querySelector('#wikiCreateOk').addEventListener('click', confirm)
+  overlay.querySelector('#wikiCreateCancel').addEventListener('click', closeWikiCreateModal)
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeWikiCreateModal() })
+  overlay.addEventListener('keydown', e => {
+    e.stopPropagation()
+    if (e.key === 'Enter' && e.target !== folderSel && e.target.id !== 'wikiCreateTpl') { e.preventDefault(); confirm() }
+    if (e.key === 'Escape') closeWikiCreateModal()
+  })
+
+  titleInput.focus()
+  titleInput.select()
+}
 
 /* ════════════════════════════════════════════════
    INIT
