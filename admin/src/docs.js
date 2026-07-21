@@ -5,10 +5,17 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableHeader from '@tiptap/extension-table-header'
+import TableCell from '@tiptap/extension-table-cell'
 import { Markdown } from 'tiptap-markdown'
 import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import { DecorationSet, Decoration } from '@tiptap/pm/view'
 import { common, createLowlight } from 'lowlight'
+import { initTableContextMenu } from './docs/table-context-menu.js'
+import { loadGraphData, renderAdminGraphPanel } from './docs/graph-panel.js'
+import { createExcalidrawExtension } from './docs/excalidraw-node.js'
 
 const lowlight = createLowlight(common)
 
@@ -375,6 +382,16 @@ async function uploadDocImage(file) {
 }
 
 /* ════════════════════════════════════════════════
+   EXCALIDRAW DIAGRAMS — modal lazy-loaded on demand
+════════════════════════════════════════════════ */
+async function openDiagramEditor(initial, onSave) {
+  const { openExcalidrawModal } = await import('./docs/excalidraw-modal.js')
+  openExcalidrawModal(initial, onSave)
+}
+
+const ExcalidrawDiagram = createExcalidrawExtension((initial, onSave) => openDiagramEditor(initial, onSave))
+
+/* ════════════════════════════════════════════════
    TIPTAP EDITOR INIT
 ════════════════════════════════════════════════ */
 let editor = null
@@ -390,6 +407,11 @@ function initEditor() {
       Placeholder.configure({ placeholder: '# Note title\n\nStart writing…' }),
       CodeBlockLowlight.configure({ lowlight }),
       WikiLinkExtension,
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      ExcalidrawDiagram,
     ],
     content: '',
     editorProps: {
@@ -424,6 +446,7 @@ function initEditor() {
     onUpdate: () => { updateToolbar(); checkWikiSuggest(); scheduleAutosave() },
     onSelectionUpdate: () => { updateToolbar(); checkWikiSuggest() },
   })
+  initTableContextMenu(editor, document.getElementById('docsEditor'))
 }
 
 /* ════════════════════════════════════════════════
@@ -482,6 +505,12 @@ document.getElementById('toolbar').addEventListener('mousedown', e => {
     const sel = editor.state.selection
     const selectedText = editor.state.doc.textBetween(sel.from, sel.to)
     c.insertContent(`[[${selectedText || 'Note Title'}]]`).run()
+  }
+  else if (cmd === 'table') c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  else if (cmd === 'diagram') {
+    openDiagramEditor(null, ({ sceneUrl, svg }) => {
+      editor.chain().focus().insertContent({ type: 'excalidrawDiagram', attrs: { sceneUrl, svg } }).run()
+    })
   }
 })
 
@@ -1123,6 +1152,7 @@ async function loadNote(p) {
     const upd = note.updated_at ? new Date(note.updated_at).toLocaleDateString('en-US', { day:'numeric', month:'short', year:'numeric' }) : ''
     document.getElementById('propsMeta').innerHTML = upd ? `Updated ${upd}<br/><code style="font-size:10px">${escHtml(note.path)}</code>` : ''
     refreshTree()
+    renderAdminGraphPanel(note.path, loadNote)
     editor.commands.focus()
   } catch { toast('Load failed', 'error') }
 }
@@ -1191,6 +1221,7 @@ async function saveNote(opts = {}) {
     setAutosaveStatus('saved')
     allNotes = await apiGet(`/api/docs/admin/all?section=${SECTION}`)
     refreshTree()
+    loadGraphData(SECTION).then(() => renderAdminGraphPanel(currentPath, loadNote))
   } catch (e) {
     if (auto) { setAutosaveStatus('error'); return }
     toast(e.message && e.message !== '401' ? e.message : 'Save failed', 'error')
@@ -1230,8 +1261,8 @@ document.addEventListener('keydown', e => {
   // Only intercept Alt shortcuts when focus is in the editor
   if (!editor || !editor.isFocused) return
 
-  // Alt+& → inline code  (AZERTY: & = Digit1)
-  if (e.altKey && e.key === '&') {
+  // Alt+1 → inline code  (e.code = physical key, layout-independent)
+  if (e.altKey && e.code === 'Digit1') {
     e.preventDefault()
     const { state } = editor
     const { selection } = state
@@ -1253,8 +1284,8 @@ document.addEventListener('keydown', e => {
     return
   }
 
-  // Alt+é → code block  (AZERTY: é = Digit2)
-  if (e.altKey && e.key === 'é') {
+  // Alt+2 → code block  (e.code = physical key, layout-independent)
+  if (e.altKey && e.code === 'Digit2') {
     e.preventDefault()
     const { state } = editor
     const { selection } = state
@@ -1785,6 +1816,7 @@ async function init() {
   } catch (e) {
     if (e.message !== '401') toast('Failed to load notes', 'error')
   }
+  loadGraphData(SECTION)   // preload, re-fetched after each manual save
 }
 
 document.getElementById('logoutBtn').addEventListener('click', async () => {

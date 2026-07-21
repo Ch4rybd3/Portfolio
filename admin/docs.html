@@ -200,10 +200,17 @@
       background: none; border: none; padding: 0; color: inherit; font-size: .85em;
     }
     .ProseMirror hr { border: none; border-top: 1px solid var(--line); margin: 2em 0; }
-    .ProseMirror table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-    .ProseMirror th { background: var(--card-2); padding: 8px 12px; text-align: left; font-weight: 600; border: 1px solid var(--line); }
+    .ProseMirror table { border-collapse: collapse; width: 100%; margin: 1em 0; table-layout: fixed; }
+    .ProseMirror th { background: var(--card-2); padding: 8px 12px; text-align: left; font-weight: 700; color: var(--info); border: 1px solid var(--line); }
     .ProseMirror td { padding: 8px 12px; border: 1px solid var(--line); }
     .ProseMirror .selectedCell::after { background: rgba(45,212,191,.1); }
+    .ProseMirror .tableWrapper { overflow-x: auto; margin: 1em 0; }
+    .ProseMirror .tableWrapper table { margin: 0; }
+    .ProseMirror .column-resize-handle {
+      position: absolute; right: -2px; top: 0; bottom: -2px; width: 4px;
+      background: var(--green); pointer-events: none;
+    }
+    .ProseMirror.resize-cursor { cursor: col-resize; }
 
     /* WikiLink decoration */
     .wiki-link-deco {
@@ -241,6 +248,29 @@
     }
     .wiki-suggest-item.active .fa { color: var(--green); }
 
+    /* Table right-click context menu */
+    .table-ctx-menu {
+      position: fixed; z-index: 9000;
+      background: var(--card-2); border: 1px solid var(--line-2);
+      border-radius: 8px; box-shadow: 0 8px 28px rgba(0,0,0,.55);
+      min-width: 190px; padding: 4px; font-size: 12px; display: none;
+    }
+    .table-ctx-item {
+      padding: 7px 10px; border-radius: 5px; cursor: pointer;
+      color: var(--fg-2); transition: all .1s;
+    }
+    .table-ctx-item:hover { background: rgba(45,212,191,.08); color: var(--fg); }
+    .table-ctx-item.danger:hover { background: rgba(255,62,62,.1); color: var(--danger); }
+    .table-ctx-sep { height: 1px; background: var(--line-2); margin: 4px 2px; }
+
+    /* Relation graph panel */
+    .graph-edge { stroke: rgba(45,212,191,.25); stroke-width: 1.5; }
+    .graph-node-label { font-size: 9px; fill: var(--fg-3); pointer-events: none; }
+    .graph-node.current circle { fill: var(--warning); }
+    .graph-node.neighbor circle { fill: var(--green); cursor: pointer; transition: filter .12s; }
+    .graph-node.neighbor:hover circle { filter: brightness(1.25); }
+    .graph-node.neighbor:hover .graph-node-label { fill: var(--fg); }
+
     /* Resizable image */
     .resizable-img-wrap {
       display: inline-block; position: relative;
@@ -261,6 +291,59 @@
     .resize-handle.ne { top: -5px; right: -5px; cursor: ne-resize; }
     .resize-handle.sw { bottom: -5px; left: -5px; cursor: sw-resize; }
     .resize-handle.se { bottom: -5px; right: -5px; cursor: se-resize; }
+
+    /* Excalidraw diagram node */
+    .excalidraw-node-wrap {
+      position: relative; margin: 1em 0; border-radius: 8px; overflow: hidden;
+      border: 2px solid transparent; transition: border-color .15s; background: #fff;
+    }
+    .excalidraw-node-wrap.selected { border-color: var(--green); }
+    .excalidraw-node-svg { line-height: 0; }
+    .excalidraw-node-svg svg { display: block; width: 100%; height: auto; }
+    .excalidraw-node-edit-btn, .excalidraw-node-del-btn {
+      position: absolute; top: 8px; display: none;
+      background: rgba(20,29,43,.92); color: var(--fg-2); border: 1px solid var(--line-2);
+      border-radius: 6px; padding: 5px 10px; font-size: 11px; cursor: pointer;
+      align-items: center; gap: 5px;
+    }
+    .excalidraw-node-edit-btn { right: 8px; }
+    .excalidraw-node-del-btn { right: 92px; color: var(--danger); }
+    .excalidraw-node-wrap:hover .excalidraw-node-edit-btn,
+    .excalidraw-node-wrap:hover .excalidraw-node-del-btn { display: flex; }
+    .excalidraw-node-edit-btn:hover { color: var(--fg); border-color: var(--green); }
+    .excalidraw-node-del-btn:hover { background: rgba(255,62,62,.15); border-color: var(--danger); }
+
+    /* Excalidraw editing modal */
+    .excalidraw-modal-overlay {
+      position: fixed; inset: 0; z-index: 5100;
+      background: rgba(5,10,18,.86); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .excalidraw-modal {
+      width: 96vw; height: 92vh;
+      background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; box-shadow: 0 24px 64px rgba(0,0,0,.7);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .excalidraw-modal-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 18px; border-bottom: 1px solid var(--line);
+      flex-shrink: 0; background: var(--deep);
+    }
+    .excalidraw-modal-header-title {
+      font-family: var(--mono); font-size: 11px; font-weight: 600;
+      color: var(--green); text-transform: uppercase; letter-spacing: .12em; flex: 1;
+    }
+    .excalidraw-modal-canvas { flex: 1; min-height: 0; position: relative; background: #fff; }
+    .excalidraw-modal-footer {
+      display: flex; align-items: center; gap: 8px; justify-content: flex-end;
+      padding: 10px 16px; border-top: 1px solid var(--line);
+      background: var(--deep); flex-shrink: 0;
+    }
+    .excalidraw-modal-loading {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      color: var(--fg-3); font-family: var(--mono); font-size: 12px; background: #fff;
+    }
 
     /* ── Properties panel ── */
     .props-panel {
@@ -540,6 +623,8 @@
       <button data-cmd="link" title="Link"><i class="fa fa-link"></i></button>
       <button data-cmd="image" title="Image"><i class="fa fa-image"></i></button>
       <button data-cmd="wikilink" title="WikiLink">[[…]]</button>
+      <button data-cmd="table" title="Insert table"><i class="fa fa-table"></i></button>
+      <button data-cmd="diagram" title="Insert diagram"><i class="fa fa-diagram-project"></i></button>
       <div class="sep"></div>
       <button data-cmd="undo" title="Undo"><i class="fa fa-rotate-left"></i></button>
       <button data-cmd="redo" title="Redo"><i class="fa fa-rotate-right"></i></button>
@@ -601,6 +686,12 @@
       <button class="tpl-open-btn" id="openTplModal">
         <i class="fa fa-puzzle-piece"></i> Manage templates
       </button>
+    </div>
+
+    <!-- Relation graph (current note's wikilink neighbors) -->
+    <div class="props-group" id="graphGroup" style="border-top:1px solid var(--line);padding-top:14px;display:none">
+      <div class="props-group-label">Related notes</div>
+      <svg id="adminGraphSvg" viewBox="0 0 200 170" style="width:100%;height:170px;overflow:visible"></svg>
     </div>
   </div>
 

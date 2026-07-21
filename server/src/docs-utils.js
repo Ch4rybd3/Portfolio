@@ -69,4 +69,44 @@ function regenerateRootMoc(section = 'kb') {
   }
 }
 
-module.exports = { parseNote, pathError, PUBLIC_SQL, isPublicNote, regenerateRootMoc }
+/* ── Relation graph : notes reliées entre elles par [[wikilinks]] ──
+   Même syntaxe/résolution que le renderer public (public/docs/index.html) :
+   résolution par titre (insensible à la casse) puis par chemin. Calculé à la
+   volée à chaque appel — pas d'index dédié, le volume de notes reste faible. */
+const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g
+
+function buildGraph(section = 'kb', { publicOnly = false } = {}) {
+  const rows = db.prepare(`
+    SELECT path, title, content, properties FROM docs_notes
+    WHERE section = ? ${publicOnly ? `AND published = 1 AND ${PUBLIC_SQL}` : ''}
+  `).all(section).map(parseNote)
+    // La MOC racine lie toutes les notes par construction : l'exclure évite
+    // de transformer chaque note en "voisine" de toutes les autres.
+    .filter(n => n.properties?.type !== 'moc')
+
+  const byTitle = new Map(rows.map(n => [n.title.toLowerCase(), n]))
+  const byPath  = new Map(rows.map(n => [n.path, n]))
+  const edgeSet = new Set()
+  const edges = []
+
+  rows.forEach(note => {
+    WIKILINK_RE.lastIndex = 0
+    let m
+    while ((m = WIKILINK_RE.exec(note.content)) !== null) {
+      const target = m[1].trim()
+      const resolved = byTitle.get(target.toLowerCase()) || byPath.get(target) || byPath.get(target.toLowerCase())
+      if (!resolved || resolved.path === note.path) continue
+      const key = [note.path, resolved.path].sort().join('|')
+      if (edgeSet.has(key)) continue
+      edgeSet.add(key)
+      edges.push({ source: note.path, target: resolved.path })
+    }
+  })
+
+  return {
+    nodes: rows.map(n => ({ path: n.path, title: n.title })),
+    edges,
+  }
+}
+
+module.exports = { parseNote, pathError, PUBLIC_SQL, isPublicNote, regenerateRootMoc, buildGraph }

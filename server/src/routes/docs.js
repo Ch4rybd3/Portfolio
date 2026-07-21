@@ -29,9 +29,12 @@ const upload = multer({
   }
 })
 
+const DIAGRAM_DIR = path.join(DOC_UPLOADS_DIR, 'excalidraw')
+if (!fs.existsSync(DIAGRAM_DIR)) fs.mkdirSync(DIAGRAM_DIR, { recursive: true })
+
 const router = express.Router()
 
-const { parseNote, pathError, PUBLIC_SQL, regenerateRootMoc } = require('../docs-utils')
+const { parseNote, pathError, PUBLIC_SQL, regenerateRootMoc, buildGraph } = require('../docs-utils')
 
 /* ── helpers ── */
 function notePath(req) { return req.params[0] || '' }
@@ -57,6 +60,9 @@ router.get('/note/*', (req, res) => {
   res.json(parseNote(row))
 })
 
+// GET /api/docs/graph  — relation graph (wikilinks), published+public KB notes only
+router.get('/graph', (req, res) => res.json(buildGraph('kb', { publicOnly: true })))
+
 /* ══════════════════════════════════════════════
    ADMIN routes  (auth required)
 ══════════════════════════════════════════════ */
@@ -67,6 +73,9 @@ router.get('/admin/all', requireAuth, (req, res) => {
   const rows = db.prepare('SELECT path, title, properties, published, updated_at FROM docs_notes WHERE section = ? ORDER BY path').all(section)
   res.json(rows.map(parseNote))
 })
+
+// GET /api/docs/admin/graph  — relation graph (wikilinks), all notes incl. drafts/private
+router.get('/admin/graph', requireAuth, (req, res) => res.json(buildGraph(req.query.section || 'kb', { publicOnly: false })))
 
 // GET /api/docs/admin/note/*  — full note with content
 router.get('/admin/note/*', requireAuth, (req, res) => {
@@ -211,6 +220,15 @@ router.delete('/admin/templates/:id', requireAuth, (req, res) => {
 router.post('/admin/upload', requireAuth, upload.single('image'), (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' })
   res.json({ url: `/doc-uploads/${req.file.filename}` })
+})
+
+// POST /api/docs/admin/upload-diagram  — Excalidraw scene (editable source, JSON)
+router.post('/admin/upload-diagram', requireAuth, (req, res) => {
+  const scene = req.body?.scene
+  if (!scene) return res.status(400).json({ error: 'scene required' })
+  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.json`
+  fs.writeFileSync(path.join(DIAGRAM_DIR, filename), JSON.stringify(scene))
+  res.json({ url: `/doc-uploads/excalidraw/${filename}` })
 })
 
 module.exports = router
