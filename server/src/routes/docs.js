@@ -34,7 +34,7 @@ if (!fs.existsSync(DIAGRAM_DIR)) fs.mkdirSync(DIAGRAM_DIR, { recursive: true })
 
 const router = express.Router()
 
-const { parseNote, pathError, PUBLIC_SQL, regenerateRootMoc, buildGraph } = require('../docs-utils')
+const { parseNote, pathError, PUBLIC_SQL, regenerateRootMoc, buildGraph, syncWikilinkReferences } = require('../docs-utils')
 
 /* ── helpers ── */
 function notePath(req) { return req.params[0] || '' }
@@ -94,7 +94,7 @@ router.put('/admin/note/*', requireAuth, (req, res) => {
 
   // Métadonnées automatiques : `created`/`creator` figés à la création,
   // `updated` réécrit à chaque sauvegarde. Le serveur fait autorité sur ces clés.
-  const existing = db.prepare('SELECT properties, created_at FROM docs_notes WHERE path = ?').get(p)
+  const existing = db.prepare('SELECT title, properties, created_at FROM docs_notes WHERE path = ?').get(p)
   const prevProps = existing ? JSON.parse(existing.properties || '{}') : {}
   const today = new Date().toISOString().slice(0, 10)
   const props = {
@@ -115,6 +115,9 @@ router.put('/admin/note/*', requireAuth, (req, res) => {
       section = excluded.section,
       updated_at = CURRENT_TIMESTAMP
   `).run(p, title, content, JSON.stringify(props), published ? 1 : 0, section)
+  if (existing && existing.title !== title) {
+    syncWikilinkReferences(section, { oldTitle: existing.title, newTitle: title, excludePath: p })
+  }
   if (p !== 'moc') regenerateRootMoc(section)
   res.json({ ok: true, path: p, properties: props })
 })

@@ -109,4 +109,27 @@ function buildGraph(section = 'kb', { publicOnly = false } = {}) {
   }
 }
 
-module.exports = { parseNote, pathError, PUBLIC_SQL, isPublicNote, regenerateRootMoc, buildGraph }
+/* ── Renommage : reporte un changement de titre sur tous les [[wikilinks]]
+   qui le référencent dans les AUTRES notes (label `|...` préservé).
+   Le chemin (path) n'est jamais réécrit ici : la résolution se fait par
+   titre en priorité, le path n'étant qu'un fallback — un simple déplacement
+   de note (sans changement de titre) ne casse donc aucun wikilink. */
+function syncWikilinkReferences(section, { oldTitle, newTitle, excludePath }) {
+  if (!oldTitle || !newTitle || oldTitle.toLowerCase() === newTitle.toLowerCase()) return
+  const oldLower = oldTitle.toLowerCase()
+  const rows = db.prepare(`SELECT path, content FROM docs_notes WHERE section = ? AND path != ?`)
+    .all(section, excludePath || '')
+  const update = db.prepare(`UPDATE docs_notes SET content = ?, updated_at = CURRENT_TIMESTAMP WHERE path = ?`)
+
+  rows.forEach(row => {
+    let changed = false
+    const newContent = row.content.replace(WIKILINK_RE, (match, target, label) => {
+      if (target.trim().toLowerCase() !== oldLower) return match
+      changed = true
+      return label !== undefined ? `[[${newTitle}|${label}]]` : `[[${newTitle}]]`
+    })
+    if (changed) update.run(newContent, row.path)
+  })
+}
+
+module.exports = { parseNote, pathError, PUBLIC_SQL, isPublicNote, regenerateRootMoc, buildGraph, syncWikilinkReferences }

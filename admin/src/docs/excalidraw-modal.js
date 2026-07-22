@@ -8,7 +8,7 @@
 ════════════════════════════════════════════════ */
 import { createElement } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Excalidraw, exportToSvg } from '@excalidraw/excalidraw'
+import { Excalidraw, exportToSvg, restore } from '@excalidraw/excalidraw'
 
 let overlayEl = null
 let root = null
@@ -57,11 +57,26 @@ export async function openExcalidrawModal(initial, onSave) {
   el.querySelector('#excalidrawModalCancel').addEventListener('click', close)
   el.addEventListener('mousedown', e => { if (e.target === el) close() })
 
-  let initialData = { elements: [], appState: { viewBackgroundColor: '#ffffff' }, files: {} }
+  // Dark canvas by default for brand-new diagrams; an existing scene's own
+  // stored background (e.g. an older white-background diagram) is preserved
+  // as-is by restore() below rather than overwritten.
+  const darkLocalAppState = { theme: 'dark', viewBackgroundColor: '#121212' }
+  let initialData = { elements: [], appState: darkLocalAppState, files: {} }
   if (initial?.sceneUrl) {
     try {
       const scene = await (await fetch(initial.sceneUrl, { credentials: 'include' })).json()
-      initialData = { elements: scene.elements || [], appState: scene.appState || {}, files: scene.files || {} }
+      // Run the fetched scene through Excalidraw's own restore() rather than
+      // using the raw parsed JSON directly: a plain JSON round-trip loses
+      // non-JSON-safe AppState fields Excalidraw expects at runtime (e.g.
+      // `collaborators`, kept as a Map but flattened to {} by JSON.stringify),
+      // which otherwise crashes the initial render — the diagram modal opens
+      // but shows no shapes or tools at all. restore() is the officially
+      // documented way to load scene data from external storage.
+      initialData = restore(
+        { elements: scene.elements || [], appState: scene.appState || {}, files: scene.files || {} },
+        darkLocalAppState,
+        null
+      )
     } catch { /* fall back to a blank canvas if the scene file can't be loaded */ }
   }
 
@@ -71,6 +86,7 @@ export async function openExcalidrawModal(initial, onSave) {
     createElement(Excalidraw, {
       excalidrawAPI: api => { excalidrawAPI = api; loading.style.display = 'none' },
       initialData,
+      theme: 'dark',
     })
   )
 

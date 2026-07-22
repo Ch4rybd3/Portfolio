@@ -263,6 +263,16 @@
     .table-ctx-item.danger:hover { background: rgba(255,62,62,.1); color: var(--danger); }
     .table-ctx-sep { height: 1px; background: var(--line-2); margin: 4px 2px; }
 
+    /* Table hover +buttons — add a row/column from the table's bottom/right edge */
+    .table-hover-btn {
+      position: fixed; z-index: 8900; width: 20px; height: 20px;
+      align-items: center; justify-content: center; display: none;
+      background: var(--green); color: var(--deep); border-radius: 50%;
+      font-size: 10px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.4);
+      transition: transform .1s;
+    }
+    .table-hover-btn:hover { transform: scale(1.15); }
+
     /* Relation graph panel */
     .graph-edge { stroke: rgba(45,212,191,.25); stroke-width: 1.5; }
     .graph-node-label { font-size: 9px; fill: var(--fg-3); pointer-events: none; }
@@ -295,7 +305,7 @@
     /* Excalidraw diagram node */
     .excalidraw-node-wrap {
       position: relative; margin: 1em 0; border-radius: 8px; overflow: hidden;
-      border: 2px solid transparent; transition: border-color .15s; background: #fff;
+      border: 2px solid transparent; transition: border-color .15s;
     }
     .excalidraw-node-wrap.selected { border-color: var(--green); }
     .excalidraw-node-svg { line-height: 0; }
@@ -334,7 +344,7 @@
       font-family: var(--mono); font-size: 11px; font-weight: 600;
       color: var(--green); text-transform: uppercase; letter-spacing: .12em; flex: 1;
     }
-    .excalidraw-modal-canvas { flex: 1; min-height: 0; position: relative; background: #fff; }
+    .excalidraw-modal-canvas { flex: 1; min-height: 0; position: relative; background: #121212; }
     .excalidraw-modal-footer {
       display: flex; align-items: center; gap: 8px; justify-content: flex-end;
       padding: 10px 16px; border-top: 1px solid var(--line);
@@ -342,7 +352,7 @@
     }
     .excalidraw-modal-loading {
       position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      color: var(--fg-3); font-family: var(--mono); font-size: 12px; background: #fff;
+      color: var(--fg-3); font-family: var(--mono); font-size: 12px; background: #121212;
     }
 
     /* ── Properties panel ── */

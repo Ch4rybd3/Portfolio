@@ -1,6 +1,7 @@
 import './style.css'
 import { Editor, Extension, Node } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
+import Text from '@tiptap/extension-text'
 import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -14,6 +15,7 @@ import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state'
 import { DecorationSet, Decoration } from '@tiptap/pm/view'
 import { common, createLowlight } from 'lowlight'
 import { initTableContextMenu } from './docs/table-context-menu.js'
+import { initTableHoverControls, handleTableEnter } from './docs/table-hover-controls.js'
 import { loadGraphData, renderAdminGraphPanel } from './docs/graph-panel.js'
 import { createExcalidrawExtension } from './docs/excalidraw-node.js'
 
@@ -274,6 +276,49 @@ const WikiLinkExtension = Extension.create({
 })
 
 /* ════════════════════════════════════════════════
+   WIKI-SAFE TEXT NODE — markdown serialization
+   tiptap-markdown's default Text node escapes `[` `]` unconditionally
+   (prosemirror-markdown's state.esc()), which turns every saved
+   [[Wikilink]] into \[\[Wikilink\]\] — inert on the public page. This
+   editor never lets users type literal markdown link/table syntax by hand
+   (links use the toolbar's Link mark, tables use the Table node), so it's
+   safe to stop escaping `[` `]` `|` while still escaping everything else
+   prosemirror-markdown normally does (backtick/asterisk/backslash/tilde/
+   underscore + line-start list markers), preserving normal bold/italic/
+   code round-tripping. Verified via a disposable jsdom+Editor round-trip.
+════════════════════════════════════════════════ */
+function wikiSafeEsc(str, startOfLine) {
+  str = str.replace(/[`*\\~_]/g, (m, i) =>
+    m === '_' && i > 0 && i + 1 < str.length && /\w/.test(str[i - 1]) && /\w/.test(str[i + 1]) ? m : '\\' + m
+  )
+  if (startOfLine) {
+    str = str.replace(/^(\+[ ]|[\-*>])/, '\\$&')
+      .replace(/^(\s*)(#{1,6})(\s|$)/, '$1\\$2$3')
+      .replace(/^(\s*\d+)\.\s/, '$1\\. ')
+  }
+  return str
+}
+const WikiSafeText = Text.extend({
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state, node) {
+          const lines = (node.text || '').replace(/</g, '&lt;').replace(/>/g, '&gt;').split('\n')
+          lines.forEach((line, i) => {
+            state.write()
+            state.out += wikiSafeEsc(line, state.atBlockStart)
+            if (i !== lines.length - 1) state.out += '\n'
+          })
+        },
+        parse: {
+          // Handled by markdown-it's stock text parsing.
+        },
+      },
+    }
+  },
+})
+
+/* ════════════════════════════════════════════════
    WIKILINK AUTOCOMPLETE DROPDOWN
 ════════════════════════════════════════════════ */
 let wikiSuggestEl    = null
@@ -400,7 +445,8 @@ function initEditor() {
   editor = new Editor({
     element: document.getElementById('docsEditor'),
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
+      StarterKit.configure({ codeBlock: false, text: false }),
+      WikiSafeText,
       Markdown.configure({ html: true, transformPastedText: true, transformCopiedText: true }),
       ResizableImage.configure({ inline: false, allowBase64: false }),
       Link.configure({ openOnClick: false }),
@@ -418,26 +464,33 @@ function initEditor() {
       attributes: { class: 'ProseMirror', spellcheck: 'false' },
       handleKeyDown(_view, event) {
         // WikiLink dropdown navigation
-        if (!wikiSuggestEl || wikiSuggestEl.style.display === 'none' || !wikiSuggestItems.length) return false
-        if (event.key === 'ArrowDown') {
-          event.preventDefault()
-          wikiSuggestIdx = (wikiSuggestIdx + 1) % wikiSuggestItems.length
-          renderWikiSuggest()
-          return true
+        if (wikiSuggestEl && wikiSuggestEl.style.display !== 'none' && wikiSuggestItems.length) {
+          if (event.key === 'ArrowDown') {
+            event.preventDefault()
+            wikiSuggestIdx = (wikiSuggestIdx + 1) % wikiSuggestItems.length
+            renderWikiSuggest()
+            return true
+          }
+          if (event.key === 'ArrowUp') {
+            event.preventDefault()
+            wikiSuggestIdx = (wikiSuggestIdx - 1 + wikiSuggestItems.length) % wikiSuggestItems.length
+            renderWikiSuggest()
+            return true
+          }
+          if (event.key === 'Enter' || event.key === 'Tab') {
+            event.preventDefault()
+            applyWikiSuggest(wikiSuggestItems[wikiSuggestIdx])
+            return true
+          }
+          if (event.key === 'Escape') {
+            hideWikiSuggest()
+            return true
+          }
         }
-        if (event.key === 'ArrowUp') {
+        // Table: Enter in the last row appends a new row instead of just
+        // splitting the paragraph inside the cell.
+        if (event.key === 'Enter' && !event.shiftKey && handleTableEnter(editor)) {
           event.preventDefault()
-          wikiSuggestIdx = (wikiSuggestIdx - 1 + wikiSuggestItems.length) % wikiSuggestItems.length
-          renderWikiSuggest()
-          return true
-        }
-        if (event.key === 'Enter' || event.key === 'Tab') {
-          event.preventDefault()
-          applyWikiSuggest(wikiSuggestItems[wikiSuggestIdx])
-          return true
-        }
-        if (event.key === 'Escape') {
-          hideWikiSuggest()
           return true
         }
         return false
@@ -447,6 +500,7 @@ function initEditor() {
     onSelectionUpdate: () => { updateToolbar(); checkWikiSuggest() },
   })
   initTableContextMenu(editor, document.getElementById('docsEditor'))
+  initTableHoverControls(editor, document.getElementById('docsEditor'))
 }
 
 /* ════════════════════════════════════════════════
@@ -506,7 +560,7 @@ document.getElementById('toolbar').addEventListener('mousedown', e => {
     const selectedText = editor.state.doc.textBetween(sel.from, sel.to)
     c.insertContent(`[[${selectedText || 'Note Title'}]]`).run()
   }
-  else if (cmd === 'table') c.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  else if (cmd === 'table') c.insertTable({ rows: 2, cols: 2, withHeaderRow: true }).run()
   else if (cmd === 'diagram') {
     openDiagramEditor(null, ({ sceneUrl, svg }) => {
       editor.chain().focus().insertContent({ type: 'excalidrawDiagram', attrs: { sceneUrl, svg } }).run()
@@ -579,6 +633,90 @@ function updatePropSuggestions(key) {
   })
 }
 
+/* ════════════════════════════════════════════════
+   TAG AUTOSUGGESTION — reuses the wiki-suggest dropdown visuals
+   Only active when the property key being edited is "tags": a plain
+   <datalist> (used for every other key via updatePropSuggestions above)
+   can only match the whole input value, which is useless for a
+   comma-separated tag list. This suggests against the token currently
+   being typed after the last comma, sourced from every tag already used
+   across all notes — avoids near-duplicate tags ("recon" vs "Recon").
+════════════════════════════════════════════════ */
+function allTagTokens() {
+  const seen = new Set()
+  allNotes.forEach(n => {
+    const raw = n.properties?.tags
+    const tokens = Array.isArray(raw) ? raw
+      : (typeof raw === 'string' ? raw.split(',').map(t => t.trim()) : [])
+    tokens.filter(Boolean).forEach(t => seen.add(t))
+  })
+  return [...seen].sort((a, b) => a.localeCompare(b))
+}
+
+let tagSuggestEl    = null
+let tagSuggestItems = []
+let tagSuggestIdx   = 0
+
+function ensureTagDropdown() {
+  if (!tagSuggestEl) {
+    tagSuggestEl = document.createElement('div')
+    tagSuggestEl.id = 'tagSuggest'
+    tagSuggestEl.className = 'wiki-suggest'
+    tagSuggestEl.style.display = 'none'
+    document.body.appendChild(tagSuggestEl)
+  }
+  return tagSuggestEl
+}
+
+function hideTagSuggest() {
+  if (tagSuggestEl) tagSuggestEl.style.display = 'none'
+  tagSuggestItems = []
+  tagSuggestIdx   = 0
+}
+
+function renderTagSuggest() {
+  const el = ensureTagDropdown()
+  el.innerHTML = ''
+  tagSuggestItems.forEach((tag, i) => {
+    const item = document.createElement('div')
+    item.className = 'wiki-suggest-item' + (i === tagSuggestIdx ? ' active' : '')
+    item.innerHTML = `<i class="fa fa-tag"></i> ${escHtml(tag)}`
+    item.addEventListener('mousedown', e => { e.preventDefault(); applyTagSuggest(tagSuggestItems[i]) })
+    el.appendChild(item)
+  })
+}
+
+function checkTagSuggest() {
+  const keyInput = document.getElementById('propKeyInput')
+  const valInput = document.getElementById('propValInput')
+  if (keyInput.value.trim().toLowerCase() !== 'tags') { hideTagSuggest(); return }
+
+  const query   = valInput.value.split(',').pop().trim().toLowerCase()
+  const already = new Set(valInput.value.split(',').map(t => t.trim().toLowerCase()).filter(Boolean))
+  const items = allTagTokens()
+    .filter(t => !already.has(t.toLowerCase()) && (!query || t.toLowerCase().includes(query)))
+    .slice(0, 8)
+
+  if (!items.length) { hideTagSuggest(); return }
+  tagSuggestItems = items
+  if (tagSuggestIdx >= items.length) tagSuggestIdx = 0
+
+  renderTagSuggest()
+  const el = ensureTagDropdown()
+  const r  = valInput.getBoundingClientRect()
+  el.style.left    = r.left + 'px'
+  el.style.top     = (r.bottom + 4) + 'px'
+  el.style.display = 'block'
+}
+
+function applyTagSuggest(tag) {
+  const valInput = document.getElementById('propValInput')
+  const priorTokens = valInput.value.split(',').slice(0, -1).map(t => t.trim()).filter(Boolean)
+  valInput.value = [...priorTokens, tag].join(', ') + ', '
+  hideTagSuggest()
+  valInput.focus()
+}
+
 document.getElementById('publicToggle').addEventListener('change', function() {
   noteProps.public = this.checked
   scheduleAutosave()
@@ -593,17 +731,28 @@ function addProp() {
   document.getElementById('propKeyInput').value = ''
   document.getElementById('propValInput').value = ''
   document.getElementById('propValSuggestions').innerHTML = ''
+  hideTagSuggest()
   renderProperties()
   scheduleAutosave()
 }
 
 document.getElementById('propKeyInput').addEventListener('input', function() {
   updatePropSuggestions(this.value.trim())
+  hideTagSuggest()
 })
 document.getElementById('propKeyInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); document.getElementById('propValInput').focus() }
 })
+document.getElementById('propValInput').addEventListener('input', checkTagSuggest)
+document.getElementById('propValInput').addEventListener('blur', () => setTimeout(hideTagSuggest, 150))
 document.getElementById('propValInput').addEventListener('keydown', e => {
+  if (tagSuggestItems.length) {
+    if (e.key === 'ArrowDown') { e.preventDefault(); tagSuggestIdx = (tagSuggestIdx + 1) % tagSuggestItems.length; renderTagSuggest(); return }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); tagSuggestIdx = (tagSuggestIdx - 1 + tagSuggestItems.length) % tagSuggestItems.length; renderTagSuggest(); return }
+    if (e.key === 'Tab')       { e.preventDefault(); applyTagSuggest(tagSuggestItems[tagSuggestIdx]); return }
+    if (e.key === 'Escape')    { hideTagSuggest(); return }
+    if (e.key === 'Enter')     { e.preventDefault(); applyTagSuggest(tagSuggestItems[tagSuggestIdx]); return }
+  }
   if (e.key === 'Enter') { e.preventDefault(); addProp() }
 })
 document.getElementById('propAddBtn').addEventListener('click', addProp)
@@ -1372,7 +1521,8 @@ function initTplEditor() {
   tplEditor = new Editor({
     element: document.getElementById('tplEditorEl'),
     extensions: [
-      StarterKit.configure({ codeBlock: false }),
+      StarterKit.configure({ codeBlock: false, text: false }),
+      WikiSafeText,
       Markdown.configure({ html: true, transformPastedText: true, transformCopiedText: true }),
       Link.configure({ openOnClick: false }),
       Placeholder.configure({ placeholder: 'Template content…' }),
